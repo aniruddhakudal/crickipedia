@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Player Registration</title>
+<style>
+:root{--green:#0b6b45;--green2:#0f8b5b;--gold:#f5b942;--dark:#071b16;--light:#f5f8f6;--muted:#66756f;--white:#fff;--red:#c83c3c}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:var(--light);color:var(--dark)}
+.hero{background:linear-gradient(135deg,var(--dark) 0%,var(--green) 58%,var(--green2) 100%);color:white;padding:22px 18px 42px;position:relative;overflow:hidden}
+.hero:after{content:attr(data-emoji);position:absolute;right:6%;bottom:-30px;font-size:180px;opacity:.08;transform:rotate(-20deg)}
+.wrap{max-width:1050px;margin:auto}.brand{display:flex;align-items:center;gap:14px}
+.logo{width:58px;height:58px;border-radius:16px;background:#fff;color:var(--green);display:grid;place-items:center;font-size:31px;font-weight:900;overflow:hidden}
+.logo img{width:100%;height:100%;object-fit:cover}
+.brand h1{margin:0;font-size:25px}.brand p{margin:4px 0 0;opacity:.75}
+.hero h2{font-size:38px;max-width:650px;margin:45px 0 12px}.hero .sub{font-size:17px;opacity:.86;max-width:650px}
+.badges{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
+.badge{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);padding:9px 13px;border-radius:99px;font-size:14px}
+.grid{display:grid;grid-template-columns:1.5fr .8fr;gap:22px;margin-top:-24px;position:relative}
+.card{background:white;border-radius:20px;padding:24px;box-shadow:0 12px 35px rgba(5,35,25,.08);margin-bottom:20px}
+.card h3{margin:0 0 18px;font-size:21px}
+.notice{background:#fff8df;border-left:5px solid var(--gold);padding:14px 15px;border-radius:10px;margin-bottom:18px}
+.notice strong{display:block;margin-bottom:4px}
+form{display:grid;gap:16px}.row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+label{font-weight:700;font-size:14px;display:grid;gap:7px}
+input,select{width:100%;padding:13px 14px;border:1px solid #d8e2dd;border-radius:11px;font-size:15px;background:#fff;outline:none}
+input:focus,select:focus{border-color:var(--green2);box-shadow:0 0 0 3px rgba(15,139,91,.1)}
+.skills{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+.skill input{display:none}.skill span{display:block;text-align:center;padding:14px 7px;border:1px solid #d8e2dd;border-radius:12px;font-weight:700;font-size:13px;cursor:pointer}
+.skill input:checked+span{background:#e8f7f0;border-color:var(--green2);color:var(--green)}
+.photo{border:2px dashed #cddbd4;border-radius:13px;padding:16px;text-align:center;color:var(--muted)}
+.photo img{display:none;max-width:110px;max-height:110px;border-radius:14px;margin:10px auto}
+.pay{background:var(--dark);color:white;border-radius:16px;padding:18px;display:flex;justify-content:space-between;align-items:center;gap:15px}
+.pay .amount{font-size:30px;font-weight:900;color:#ffd369}
+.btn{border:0;border-radius:12px;padding:14px 18px;font-weight:800;font-size:15px;cursor:pointer}
+.primary{background:var(--green);color:white;width:100%}
+.primary:hover{background:var(--green2)}
+.ghost{background:#eef4f1;color:var(--dark);width:100%}
+.wa{background:#25d366;color:#fff;width:100%;text-decoration:none;display:block;text-align:center}
+.wa:hover{filter:brightness(0.95)}
+.wa.secondary{background:#128c7e}
+.sponsors{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sponsor{border:1px solid #e2eae6;border-radius:12px;padding:15px;text-align:center;font-weight:800}
+.sponsor img{max-height:36px;max-width:100%;display:block;margin:0 auto 8px}
+.sideitem{padding:13px 0;border-bottom:1px solid #edf1ef}.sideitem:last-child{border:0}
+.muted{color:var(--muted);font-size:13px}
+.footer{text-align:center;padding:28px;color:var(--muted);font-size:13px}
+.success{display:none;text-align:center}
+.success .check{font-size:58px}
+.regid{font-size:25px;font-weight:900;color:var(--green);background:#eef9f4;padding:14px;border-radius:12px;margin:14px 0}
+.hidden{display:none!important}
+.more{border:1px solid #e2eae6;border-radius:14px;padding:4px 4px 8px}
+.more summary{cursor:pointer;font-weight:800;padding:12px 14px;list-style:none}
+.more summary::-webkit-details-marker{display:none}
+.more .more-body{display:grid;gap:16px;padding:4px 12px 12px}
+.hint{background:#eef9f4;border-radius:12px;padding:12px 14px;font-size:14px}
+.hint a,.hint button.link{color:var(--green);font-weight:800;background:none;border:0;padding:0;cursor:pointer;font-size:14px}
+.status-pill{display:inline-block;padding:6px 10px;border-radius:99px;font-size:13px;font-weight:800}
+.status-pending{background:#fff4d6;color:#8a5a00}
+.status-paid{background:#e8f7f0;color:var(--green)}
+.actions{display:grid;gap:10px;margin-top:16px}
+.closed{text-align:center;padding:18px 8px}
+.closed .big{font-size:42px}
+.tourney-links{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:10px}
+.tourney-links a{color:var(--green);font-weight:700}
+@media(max-width:800px){
+  .hero h2{font-size:30px}.grid{grid-template-columns:1fr;margin-top:0}.row{grid-template-columns:1fr}
+  .skills{grid-template-columns:1fr 1fr}.hero{padding-bottom:30px}.card{padding:18px}
+}
+</style>
+</head>
+<body>
+<header class="hero" id="hero">
+  <div class="wrap">
+    <div class="brand">
+      <div class="logo" id="logo">🏏</div>
+      <div>
+        <h1 id="tName">Tournament</h1>
+        <p id="tTagline">Official Player Registration</p>
+      </div>
+    </div>
+    <h2 id="heroTitle"></h2>
+    <p class="sub" id="heroSub"></p>
+    <div class="badges" id="badges"></div>
+  </div>
+</header>
+
+<main class="wrap grid">
+  <section>
+    <div class="card hidden" id="apiDown">
+      <div class="closed">
+        <div class="big">🔌</div>
+        <h2>Can't reach the server</h2>
+        <p class="muted">Start Postgres and <code>npm start</code>, then refresh. Registration is saved in the database, not in this browser.</p>
+      </div>
+    </div>
+    <div class="card hidden" id="gateCard">
+      <div class="closed">
+        <div class="big" id="gateEmoji">🏏</div>
+        <h2 id="gateTitle">Coming soon</h2>
+        <p class="muted" id="gateText"></p>
+      </div>
+    </div>
+
+    <div class="card hidden" id="formCard">
+      <div class="notice">
+        <strong id="noticeTitle">Important</strong>
+        <span id="noticeText"></span>
+      </div>
+      <div class="hint hidden" id="dupHint"></div>
+      <h3>🏏 Player Registration</h3>
+      <form id="regForm">
+        <div class="row">
+          <label>Full Name *
+            <input id="name" required maxlength="150" autocomplete="name" placeholder="Enter full name">
+          </label>
+          <label>WhatsApp Number *
+            <input id="phone" type="tel" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" required placeholder="10-digit number">
+          </label>
+        </div>
+        <label id="flatWrap">Flat Number *
+          <input id="flat" required maxlength="30" placeholder="e.g. A-1203">
+        </label>
+        <label id="categoryWrap">Registration Category *
+          <select id="category" required>
+            <option value="">Select category</option>
+          </select>
+        </label>
+        <label>Playing Skill *
+          <div class="skills" id="skills"></div>
+        </label>
+        <details class="more" id="moreBox">
+          <summary>Add more details <span class="muted">(optional — you can do this later)</span></summary>
+          <div class="more-body" id="moreBody"></div>
+        </details>
+        <div class="pay">
+          <div>
+            <div class="muted" style="color:#b7c8c0">Pay after you get your ID</div>
+            <div class="amount" id="feeAmount">₹0</div>
+          </div>
+          <div>⚡ Instant ID</div>
+        </div>
+        <button class="btn primary" type="submit" id="submitBtn">Get Registration ID</button>
+      </form>
+    </div>
+
+    <div class="card success" id="success">
+      <div class="check" id="successEmoji">✅</div>
+      <h2 id="successTitle">You're in. ID ready.</h2>
+      <p id="successText">Share this ID. Pay when you are ready to confirm.</p>
+      <div class="regid" id="regId"></div>
+      <div><span class="status-pill status-pending" id="payPill">Reserved — pay to confirm</span></div>
+      <div class="actions">
+        <button class="btn primary" type="button" id="payBtn">Pay now</button>
+        <button class="btn ghost" type="button" id="copyBtn">Copy ID</button>
+        <a class="btn wa" id="waShare" href="https://wa.me/" target="_blank" rel="noopener">Share ID on WhatsApp</a>
+        <a class="btn wa secondary hidden" id="waDesk" href="https://wa.me/" target="_blank" rel="noopener">Message tournament desk</a>
+        <label class="photo hidden" id="successPhoto">
+          Add a photo later
+          <input id="photoLater" type="file" accept="image/*">
+          <img id="previewLater">
+        </label>
+        <button class="btn ghost" type="button" id="anotherBtn">Register another player</button>
+      </div>
+      <p class="muted" id="payNote">Phase 1 demo: payment is simulated. A real gateway comes in a later phase.</p>
+    </div>
+  </section>
+
+  <aside>
+    <div class="card">
+      <h3>📌 Tournament Info</h3>
+      <div class="sideitem"><strong>Registration</strong><br><span class="muted" id="infoDates"></span></div>
+      <div class="sideitem"><strong>Entry Fee</strong><br><span class="muted" id="infoFee"></span></div>
+      <div class="sideitem"><strong>Payment</strong><br><span class="muted">Required to confirm. ID is instant.</span></div>
+      <div class="sideitem"><strong>Registration ID</strong><br><span class="muted">Generated as soon as you tap register</span></div>
+      <div class="sideitem hidden" id="infoWa"><strong>WhatsApp</strong><br><a class="muted" id="infoWaLink" href="https://wa.me/" target="_blank" rel="noopener">Message the desk</a></div>
+    </div>
+    <div class="card" id="sponsorsCard">
+      <h3>🤝 Our Sponsors</h3>
+      <div class="sponsors" id="sponsors"></div>
+    </div>
+    <div class="card">
+      <h3>🏆 What's Next?</h3>
+      <p class="muted" id="whatsNext"></p>
+    </div>
+  </aside>
+</main>
+<footer class="footer">
+  <div id="footerText"></div>
+  <div class="tourney-links" id="otherTournaments"></div>
+</footer>
+
+<script src="app.js"></script>
+<script>
+(async function () {
+  var C = Crickipedia;
+  var preview = C.queryParam("preview") === "1";
+  var currentRecord = null;
+  var photoFile = null;
+  var all = [];
+  var tournament = null;
+  try {
+    all = await C.api.listPublic(preview);
+    var requested = C.queryParam("t");
+    if (requested) {
+      var cfg = await C.api.config(requested, preview);
+      tournament = cfg.tournament;
+    } else {
+      tournament = C.resolvePublicTournament(all);
+    }
+  } catch (err) {
+    document.getElementById("formCard").classList.add("hidden");
+    document.getElementById("apiDown").classList.remove("hidden");
+    return;
+  }
+  if (!tournament) {
+    document.getElementById("formCard").classList.add("hidden");
+    document.getElementById("apiDown").classList.remove("hidden");
+    document.querySelector("#apiDown h2").textContent = "No tournament found";
+    return;
+  }
+  var state = C.publicState(tournament);
+
+  C.applyTheme(tournament);
+  document.title = tournament.name + " — Register";
+  document.getElementById("hero").setAttribute("data-emoji", tournament.logoEmoji || "🏏");
+  if (tournament.logoUrl) {
+    document.getElementById("logo").innerHTML = '<img alt="" src="' + C.escapeHtml(tournament.logoUrl) + '">';
+  } else {
+    document.getElementById("logo").textContent = tournament.logoEmoji || "🏏";
+  }
+  document.getElementById("tName").textContent = tournament.name;
+  document.getElementById("tTagline").textContent = tournament.tagline || "Official Player Registration";
+  document.getElementById("heroTitle").innerHTML = C.nl2br(tournament.heroTitle || "Register now");
+  document.getElementById("heroSub").textContent = tournament.heroSub || "";
+  document.getElementById("noticeTitle").textContent = tournament.noticeTitle || "Important";
+  document.getElementById("noticeText").textContent = tournament.notice || "";
+  document.getElementById("feeAmount").textContent = C.formatMoney(tournament);
+  document.getElementById("infoDates").textContent = C.formatDateRange(tournament);
+  document.getElementById("infoFee").textContent = C.formatMoney(tournament) + " per player";
+  document.getElementById("whatsNext").textContent = tournament.whatsNext || "";
+  document.getElementById("footerText").textContent = "© 2026 " + (tournament.shortName || tournament.name) + " • Crickipedia";
+  document.getElementById("payBtn").textContent = "Pay " + C.formatMoney(tournament) + " now";
+  var deskNumber = tournament.supportWhatsapp || "";
+  if (deskNumber) {
+    document.getElementById("infoWa").classList.remove("hidden");
+    document.getElementById("infoWaLink").href = C.waMeUrl(deskNumber, "Hi, I have a question about " + tournament.name + ".");
+  }
+
+  document.getElementById("badges").innerHTML = [
+    '<span class="badge">' + (state === "OPEN" ? "🟢 " : state === "CLOSED" ? "🔴 " : "🟡 ") + C.escapeHtml(C.stateLabel(state)) + "</span>",
+    '<span class="badge">📅 ' + C.escapeHtml(C.formatDateRange(tournament)) + "</span>",
+    '<span class="badge">💰 Entry Fee ' + C.escapeHtml(C.formatMoney(tournament)) + "</span>"
+  ].join("");
+
+  var skills = tournament.skills && tournament.skills.length ? tournament.skills : C.defaultTournament().skills;
+  document.getElementById("skills").innerHTML = skills.map(function (skill) {
+    var value = skill.value || skill.label;
+    var label = skill.label || skill.value;
+    var emoji = skill.emoji || C.skillEmoji(value);
+    return '<label class="skill"><input name="skill" value="' + C.escapeHtml(value) + '" type="radio" required><span>' + C.escapeHtml(emoji + " " + label) + "</span></label>";
+  }).join("");
+
+  var fields = tournament.fields || {};
+  if (fields.flatNumber === false) {
+    document.getElementById("flatWrap").classList.add("hidden");
+    document.getElementById("flat").required = false;
+  }
+  var categories = tournament.categories && tournament.categories.length ? tournament.categories : C.defaultTournament().categories;
+  document.getElementById("category").innerHTML = '<option value="">Select category</option>' + categories.map(function (item) {
+    return '<option value="' + C.escapeHtml(item) + '">' + C.escapeHtml(item) + "</option>";
+  }).join("");
+  if (fields.category === false) {
+    document.getElementById("categoryWrap").classList.add("hidden");
+    document.getElementById("category").required = false;
+  }
+  var more = [];
+  if (fields.dob !== false) {
+    more.push('<label>Date of Birth<span class="muted">(optional)</span><input id="dob" type="date"></label>');
+  }
+  if (fields.jerseyNumber !== false) {
+    more.push('<label>Suggested Jersey No. <span class="muted">(optional)</span><input id="jersey" type="number" min="0" max="999" placeholder="e.g. 18"></label>');
+  }
+  if (fields.jerseySize !== false || fields.sleeve !== false) {
+    var row = '<div class="row">';
+    if (fields.jerseySize !== false) {
+      row += '<label>Jersey Size<span class="muted">(optional)</span><select id="size"><option value="">Select size</option>' +
+        (tournament.jerseySizes || []).map(function (size) {
+          return '<option>' + C.escapeHtml(size) + "</option>";
+        }).join("") + "</select></label>";
+    }
+    if (fields.sleeve !== false) {
+      row += '<label>Sleeve<span class="muted">(optional)</span><select id="sleeve"><option value="">Select</option>' +
+        (tournament.sleeves || []).map(function (sleeve) {
+          return '<option>' + C.escapeHtml(sleeve) + "</option>";
+        }).join("") + "</select></label>";
+    }
+    more.push(row + "</div>");
+  }
+  if (fields.photo !== false) {
+    more.push('<label>Player Photo<span class="muted">(optional)</span><div class="photo"><input id="photo" type="file" accept="image/*"><img id="preview"><div class="muted">Clear face/player photo. Does not delay your ID.</div></div></label>');
+  }
+  if (fields.cricheroes !== false || fields.instagram !== false) {
+    var social = '<div class="row">';
+    if (fields.cricheroes !== false) social += '<label>CricHeroes <span class="muted">(optional)</span><input id="cricheroes" type="url" placeholder="https://cricheroes.com/..."></label>';
+    if (fields.instagram !== false) social += '<label>Instagram <span class="muted">(optional)</span><input id="instagram" type="url" placeholder="https://instagram.com/..."></label>';
+    more.push(social + "</div>");
+  }
+  if (!more.length) document.getElementById("moreBox").classList.add("hidden");
+  document.getElementById("moreBody").innerHTML = more.join("");
+
+  var sponsors = (tournament.sponsors || []).filter(function (item) { return item && item.name; });
+  if (!sponsors.length) document.getElementById("sponsorsCard").classList.add("hidden");
+  document.getElementById("sponsors").innerHTML = sponsors.map(function (item) {
+    var inner = item.logoUrl ? '<img alt="" src="' + C.escapeHtml(item.logoUrl) + '">' : "";
+    inner += C.escapeHtml(item.name);
+    if (item.websiteUrl) return '<a class="sponsor" href="' + C.escapeHtml(item.websiteUrl) + '" target="_blank" rel="noopener">' + inner + "</a>";
+    return '<div class="sponsor">' + inner + "</div>";
+  }).join("");
+
+  var others = all.filter(function (item) {
+    return item.slug !== tournament.slug && (C.publicState(item) === "OPEN" || preview);
+  });
+  document.getElementById("otherTournaments").innerHTML = others.map(function (item) {
+    return '<a href="' + C.publicUrl(item.slug) + (preview ? "&preview=1" : "") + '">' + C.escapeHtml(item.shortName || item.name) + "</a>";
+  }).join("");
+
+  function val(id) {
+    var el = document.getElementById(id);
+    return el ? el.value.trim() : "";
+  }
+
+  function fillForm(data) {
+    if (!data) return;
+    ["name", "phone", "flat", "category", "dob", "jersey", "size", "sleeve", "cricheroes", "instagram"].forEach(function (id) {
+      if (data[id] != null && document.getElementById(id)) document.getElementById(id).value = data[id];
+    });
+    if (data.skill) {
+      var radio = document.querySelector('input[name="skill"][value="' + data.skill + '"]');
+      if (radio) radio.checked = true;
+    }
+    if (data.dob || data.jersey || data.size || data.sleeve || data.cricheroes || data.instagram) {
+      document.getElementById("moreBox").open = true;
+    }
+  }
+
+  fillForm(C.getDraft(tournament.slug));
+
+  var photo = document.getElementById("photo");
+  var previewImg = document.getElementById("preview");
+  if (photo) {
+    photo.addEventListener("change", function (event) {
+      photoFile = event.target.files[0] || null;
+      if (photoFile && previewImg) {
+        previewImg.src = URL.createObjectURL(photoFile);
+        previewImg.style.display = "block";
+      }
+    });
+  }
+
+  function persistDraft() {
+    C.saveDraft(tournament.slug, {
+      name: val("name"),
+      phone: val("phone"),
+      flat: val("flat"),
+      category: val("category"),
+      dob: val("dob"),
+      jersey: val("jersey"),
+      size: val("size"),
+      sleeve: val("sleeve"),
+      cricheroes: val("cricheroes"),
+      instagram: val("instagram"),
+      skill: document.querySelector('input[name="skill"]:checked')?.value || ""
+    });
+  }
+
+  document.getElementById("regForm").addEventListener("input", persistDraft);
+
+  function showExisting(record) {
+    currentRecord = record;
+    document.getElementById("formCard").classList.add("hidden");
+    document.getElementById("gateCard").classList.add("hidden");
+    document.getElementById("success").style.display = "block";
+    document.getElementById("regId").textContent = "Registration ID: " + record.id;
+    document.getElementById("successTitle").textContent = record.paymentStatus === "PAID" ? "You're confirmed." : "Welcome back.";
+    document.getElementById("successText").textContent = record.paymentStatus === "PAID"
+      ? "This WhatsApp number is already confirmed for this tournament."
+      : "This WhatsApp number already has an ID. Pay to confirm.";
+    updatePayUi(record);
+    updateWaLinks(record);
+  }
+
+  function updateWaLinks(record) {
+    var text = C.registrationWaText(tournament, record);
+    document.getElementById("waShare").href = C.waMeUrl("", text);
+    var desk = document.getElementById("waDesk");
+    if (deskNumber) {
+      desk.href = C.waMeUrl(deskNumber, text);
+      desk.classList.remove("hidden");
+    } else {
+      desk.classList.add("hidden");
+    }
+  }
+
+  function updatePayUi(record) {
+    var paid = record.paymentStatus === "PAID";
+    var pill = document.getElementById("payPill");
+    pill.textContent = paid ? "Confirmed" : "Reserved — pay to confirm";
+    pill.className = "status-pill " + (paid ? "status-paid" : "status-pending");
+    document.getElementById("payBtn").classList.toggle("hidden", paid);
+    document.getElementById("successPhoto").classList.toggle("hidden", paid || fields.photo === false);
+    updateWaLinks(record);
+  }
+
+  var lookupTimer = null;
+  var lastExisting = null;
+  function checkDuplicate() {
+    var phone = val("phone");
+    var hint = document.getElementById("dupHint");
+    lastExisting = null;
+    if (phone.length !== 10) {
+      hint.classList.add("hidden");
+      return Promise.resolve(null);
+    }
+    return C.api.lookup(tournament.slug, phone).then(function (existing) {
+      lastExisting = existing;
+      if (!existing) {
+        hint.classList.add("hidden");
+        return null;
+      }
+      hint.classList.remove("hidden");
+      hint.innerHTML = "This number already has <strong>" + C.escapeHtml(existing.id) + "</strong>. <button type='button' class='link' id='openExisting'>Open it</button>";
+      document.getElementById("openExisting").onclick = function () { showExisting(existing); };
+      return existing;
+    }).catch(function () { return null; });
+  }
+
+  document.getElementById("phone").addEventListener("input", function () {
+    this.value = this.value.replace(/\D/g, "").slice(0, 10);
+    clearTimeout(lookupTimer);
+    lookupTimer = setTimeout(checkDuplicate, 250);
+  });
+
+  if (!C.canRegister(tournament, preview)) {
+    document.getElementById("formCard").classList.add("hidden");
+    document.getElementById("gateCard").classList.remove("hidden");
+    document.getElementById("gateTitle").textContent = C.stateLabel(state);
+    document.getElementById("gateEmoji").textContent = state === "CLOSED" ? "🔒" : "⏳";
+    document.getElementById("gateText").textContent = state === "CLOSED"
+      ? "Registration for this tournament is closed."
+      : "Registration opens " + C.formatPrettyDate(tournament.registrationStart) + ".";
+  } else {
+    document.getElementById("formCard").classList.remove("hidden");
+  }
+
+  function sendPhoto(record, file) {
+    if (!record || !file) return Promise.resolve(record);
+    return C.api.uploadPhoto(tournament.slug, record.id, file).then(function (data) {
+      return data.record || record;
+    }).catch(function () { return record; });
+  }
+
+  document.getElementById("regForm").addEventListener("submit", async function (event) {
+    event.preventDefault();
+    var existing = lastExisting || await checkDuplicate();
+    if (existing) {
+      showExisting(existing);
+      sendPhoto(existing, photoFile);
+      return;
+    }
+    var skill = document.querySelector('input[name="skill"]:checked')?.value;
+    var submitBtn = document.getElementById("submitBtn");
+    submitBtn.disabled = true;
+    try {
+      var result = await C.api.register(tournament.slug, {
+        name: val("name"),
+        dob: val("dob"),
+        flat: val("flat"),
+        category: val("category"),
+        phone: val("phone"),
+        skill: skill,
+        jersey: val("jersey"),
+        size: val("size"),
+        sleeve: val("sleeve"),
+        cricheroes: val("cricheroes"),
+        instagram: val("instagram")
+      }, preview);
+      C.clearDraft(tournament.slug);
+      showExisting(result.record);
+      document.getElementById("successTitle").textContent = result.existing ? "Welcome back." : "You're in. ID ready.";
+      document.getElementById("successText").textContent = "Share this ID. Pay when you are ready to confirm.";
+      document.getElementById("successEmoji").textContent = "✅";
+      sendPhoto(result.record, photoFile).then(function (updated) {
+        currentRecord = updated;
+      });
+    } catch (err) {
+      document.getElementById("dupHint").classList.remove("hidden");
+      document.getElementById("dupHint").textContent = err.message || "Could not save. Try again.";
+    } finally {
+      submitBtn.disabled = false;
+    }
+  });
+
+  document.getElementById("payBtn").addEventListener("click", async function () {
+    if (!currentRecord) return;
+    this.disabled = true;
+    try {
+      currentRecord = await C.api.pay(tournament.slug, currentRecord.id);
+      document.getElementById("successTitle").textContent = "Payment confirmed.";
+      document.getElementById("successText").textContent = "You're locked in for " + tournament.name + ".";
+      updatePayUi(currentRecord);
+    } catch (err) {
+      document.getElementById("payNote").textContent = err.message || "Payment failed. Try again.";
+    } finally {
+      this.disabled = false;
+    }
+  });
+
+  document.getElementById("copyBtn").addEventListener("click", function () {
+    if (!currentRecord) return;
+    navigator.clipboard.writeText(currentRecord.id).then(function () {
+      document.getElementById("copyBtn").textContent = "Copied";
+      setTimeout(function () { document.getElementById("copyBtn").textContent = "Copy ID"; }, 1200);
+    });
+  });
+
+  document.getElementById("anotherBtn").addEventListener("click", function () {
+    location.href = C.publicUrl(tournament.slug) + (preview ? "&preview=1" : "");
+  });
+
+  var later = document.getElementById("photoLater");
+  var laterPreview = document.getElementById("previewLater");
+  later.addEventListener("change", async function (event) {
+    var file = event.target.files[0];
+    if (!file || !currentRecord) return;
+    laterPreview.src = URL.createObjectURL(file);
+    laterPreview.style.display = "block";
+    currentRecord = await sendPhoto(currentRecord, file);
+  });
+
+  if (location.hash === "#existing" && val("phone").length === 10) checkDuplicate();
+})();
+</script>
+</body>
+</html>

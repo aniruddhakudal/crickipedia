@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Crickipedia Admin</title>
+<style>
+:root{--green:#0b6b45;--green2:#0f8b5b;--gold:#f5b942;--dark:#08251c;--light:#f4f7f5;--muted:#5d6f68}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:var(--light);color:#092019}
+.top{background:var(--dark);color:white;padding:18px 0}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+.top-row{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.top h1{margin:0 0 4px;font-size:26px}.top p{margin:0;opacity:.75}
+.switcher{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+select,input,textarea{width:100%;padding:11px 12px;border:1px solid #d5e0db;border-radius:10px;font:inherit;background:#fff}
+select.slim{width:auto;min-width:220px}
+.btn{border:0;border-radius:10px;padding:10px 14px;font-weight:800;cursor:pointer;background:var(--green);color:#fff}
+.btn:hover{background:var(--green2)}.btn.ghost{background:#e7f0eb;color:#092019}.btn.danger{background:#b52e2e}
+.tabs{display:flex;gap:8px;margin:18px 0}
+.tab{background:#fff;color:#092019;border:1px solid #d7e3dd}
+.tab.on{background:var(--green);color:#fff;border-color:var(--green)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.stat,.panel{background:#fff;padding:20px;border-radius:14px;box-shadow:0 5px 20px #0000000b}
+.stat b{font-size:28px;display:block;margin-top:4px}
+.panel{margin-top:16px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+label{font-weight:700;font-size:13px;display:grid;gap:6px}
+.section{margin-top:22px;padding-top:8px;border-top:1px solid #edf2ef}
+.section h3{margin:0 0 14px}
+.checks{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.check{display:flex;align-items:center;gap:8px;font-weight:600;background:#f6faf8;padding:10px 12px;border-radius:10px}
+.check input{width:auto}
+.rowline{display:grid;grid-template-columns:70px 1fr 1fr auto;gap:8px;margin-bottom:8px;align-items:center}
+.srow{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;margin-bottom:8px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.toast{position:fixed;right:16px;bottom:16px;background:var(--dark);color:#fff;padding:12px 16px;border-radius:12px;display:none;z-index:5}
+table{border-collapse:collapse;width:100%;min-width:920px}
+th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14px}
+.tag{padding:5px 9px;border-radius:20px;background:#eaf7f1;color:#087247;font-weight:700;font-size:12px}
+.tag.pending{background:#fff4d6;color:#8a5a00}
+.preview{border-radius:16px;padding:18px;color:#fff;background:linear-gradient(135deg,var(--dark),var(--green),var(--green2));margin-bottom:16px}
+.preview h2{margin:8px 0 4px}.preview p{margin:0;opacity:.85}
+.hidden{display:none!important}
+.muted{color:var(--muted);font-size:13px}
+.modal-bg{position:fixed;inset:0;background:#0006;display:none;align-items:center;justify-content:center;padding:16px;z-index:6}
+.modal{background:#fff;border-radius:16px;padding:22px;max-width:420px;width:100%}
+#loginGate{position:fixed;inset:0;background:#08251c;color:#fff;z-index:9;display:flex;align-items:center;justify-content:center;padding:16px}
+#loginGate .box{background:#fff;color:#092019;border-radius:18px;padding:28px;max-width:380px;width:100%}
+#loginGate h2{margin:0 0 8px}
+#appRoot.locked{display:none}
+@media(max-width:800px){
+  .stats,.grid2,.grid3,.checks{grid-template-columns:1fr}
+  .rowline,.srow{grid-template-columns:1fr}
+  .top-row{align-items:flex-start}
+}
+</style>
+</head>
+<body>
+<div id="loginGate">
+  <div class="box">
+    <h2>Admin sign in</h2>
+    <p class="muted">Only staff can customize tournaments or see players.</p>
+    <label>Username<input id="loginUser" autocomplete="username"></label>
+    <label style="margin-top:10px">Password<input id="loginPass" type="password" autocomplete="current-password"></label>
+    <p class="muted" id="loginError"></p>
+    <div class="actions">
+      <button class="btn" type="button" id="loginBtn">Sign in</button>
+    </div>
+  </div>
+</div>
+<div id="appRoot" class="locked">
+<header class="top">
+  <div class="wrap top-row">
+    <div>
+      <h1>🏏 Crickipedia Admin</h1>
+      <p>Customize one tournament at a time. Players never see another event's data.</p>
+    </div>
+    <div class="switcher">
+      <select class="slim" id="tourneySelect" aria-label="Active tournament"></select>
+      <button class="btn ghost" type="button" id="newBtn">New tournament</button>
+      <a class="btn" id="viewBtn" href="index.html" target="_blank" rel="noopener">View site</a>
+      <button class="btn ghost" type="button" id="logoutBtn">Sign out</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="tabs">
+    <button class="btn tab on" type="button" data-tab="customize">Customize</button>
+    <button class="btn tab" type="button" data-tab="players">Players</button>
+  </div>
+
+  <section id="customize">
+    <div class="preview" id="preview">
+      <div class="muted" style="color:#fff9">Live preview</div>
+      <h2 id="previewName">Tournament</h2>
+      <p id="previewMeta"></p>
+    </div>
+
+    <div class="panel">
+      <h3 style="margin-top:0">Brand</h3>
+      <div class="grid2">
+        <label>Tournament name<input id="name"></label>
+        <label>Short name<input id="shortName" maxlength="12"></label>
+        <label>URL slug<input id="slug" maxlength="48"></label>
+        <label>Status
+          <select id="status">
+            <option value="DRAFT">Draft — coming soon</option>
+            <option value="OPEN">Open for registration</option>
+            <option value="CLOSED">Closed</option>
+          </select>
+        </label>
+        <label>Tagline<input id="tagline"></label>
+        <label>ID prefix<input id="idPrefix" maxlength="12"></label>
+      </div>
+      <div class="grid2" style="margin-top:14px">
+        <label>Hero title<textarea id="heroTitle" rows="3"></textarea></label>
+        <label>Hero subtitle<textarea id="heroSub" rows="3"></textarea></label>
+      </div>
+      <div class="grid3" style="margin-top:14px">
+        <label>Logo emoji<input id="logoEmoji" maxlength="4"></label>
+        <label>Logo image URL<input id="logoUrl" placeholder="https://..."></label>
+        <label>Support WhatsApp<input id="supportWhatsapp" maxlength="15" placeholder="10-digit or 91…"></label>
+      </div>
+      <div class="grid3" style="margin-top:14px">
+        <label>Primary color<input id="colorGreen" type="color"></label>
+        <label>Highlight color<input id="colorGreen2" type="color"></label>
+        <label>Gold / accent<input id="colorGold" type="color"></label>
+        <label>Dark<input id="colorDark" type="color"></label>
+        <label>Page background<input id="colorLight" type="color"></label>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3 style="margin-top:0">Registration window & fee</h3>
+      <div class="grid3">
+        <label>Opens<input id="registrationStart" type="date"></label>
+        <label>Ends<input id="registrationEnd" type="date"></label>
+        <label>Entry fee<input id="fee" type="number" min="0" step="1"></label>
+        <label>Currency symbol<input id="currency" maxlength="4"></label>
+      </div>
+      <div class="grid2" style="margin-top:14px">
+        <label>Notice title<input id="noticeTitle"></label>
+        <label>Notice text<textarea id="notice" rows="3"></textarea></label>
+      </div>
+      <label style="margin-top:14px">What's next<textarea id="whatsNext" rows="3"></textarea></label>
+    </div>
+
+    <div class="panel">
+      <h3 style="margin-top:0">Form fields</h3>
+      <p class="muted">Name, WhatsApp and skill stay required so registration stays fast. Everything else is optional extras.</p>
+      <div class="checks">
+        <label class="check"><input id="fieldCategory" type="checkbox"> Registration category</label>
+        <label class="check"><input id="fieldFlat" type="checkbox"> Flat number</label>
+        <label class="check"><input id="fieldDob" type="checkbox"> Date of birth</label>
+        <label class="check"><input id="fieldJerseyNumber" type="checkbox"> Jersey number</label>
+        <label class="check"><input id="fieldJerseySize" type="checkbox"> Jersey size</label>
+        <label class="check"><input id="fieldSleeve" type="checkbox"> Sleeve</label>
+        <label class="check"><input id="fieldPhoto" type="checkbox"> Photo</label>
+        <label class="check"><input id="fieldCricheroes" type="checkbox"> CricHeroes</label>
+        <label class="check"><input id="fieldInstagram" type="checkbox"> Instagram</label>
+      </div>
+      <div class="section">
+        <h3>Registration categories</h3>
+        <p class="muted">These appear in the player dropdown. Add, rename, or remove any.</p>
+        <div id="categoryRows"></div>
+        <button class="btn ghost" type="button" id="addCategory">Add category</button>
+      </div>
+      <div class="section">
+        <h3>Skills</h3>
+        <div id="skillRows"></div>
+        <button class="btn ghost" type="button" id="addSkill">Add skill</button>
+      </div>
+      <div class="section">
+        <h3>Jersey options</h3>
+        <label>Sizes (comma separated)<input id="jerseySizes"></label>
+        <label style="margin-top:10px">Sleeves (comma separated)<input id="sleeves"></label>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3 style="margin-top:0">Sponsors</h3>
+      <div id="sponsorRows"></div>
+      <button class="btn ghost" type="button" id="addSponsor">Add sponsor</button>
+    </div>
+
+    <div class="actions">
+      <button class="btn" type="button" id="saveBtn">Save tournament</button>
+      <a class="btn ghost" id="previewBtn" href="index.html" target="_blank" rel="noopener">Preview as player</a>
+      <button class="btn danger" type="button" id="deleteBtn">Delete tournament</button>
+    </div>
+  </section>
+
+  <section id="players" class="hidden">
+    <div class="stats">
+      <div class="stat">Registrations<b id="total">0</b></div>
+      <div class="stat">Confirmed<b id="paid">0</b></div>
+      <div class="stat">Reserved / unpaid<b id="pending">0</b></div>
+      <div class="stat">Unique WhatsApp<b id="playersCount">0</b></div>
+    </div>
+    <div class="panel">
+      <div class="actions" style="margin-top:0">
+        <button class="btn" type="button" id="exportBtn">Export CSV</button>
+        <button class="btn danger" type="button" id="clearBtn">Clear this tournament's players</button>
+      </div>
+      <h2>Players in this tournament only</h2>
+      <div style="overflow:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th><th>Name</th><th>Flat</th><th>Category</th><th>DOB</th><th>WhatsApp</th><th>Skill</th>
+              <th>Jersey</th><th>Size</th><th>Sleeve</th><th>Payment</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <h3 style="margin-top:0">New tournament</h3>
+    <p class="muted">Copies the current look and form, then you rename it. New event starts as Draft.</p>
+    <label>Name<input id="newName" placeholder="e.g. SRPL 2027"></label>
+    <div class="actions">
+      <button class="btn" type="button" id="createBtn">Create</button>
+      <button class="btn ghost" type="button" id="cancelCreate">Cancel</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast">Saved</div>
+</div>
+
+<script src="app.js"></script>
+<script>
+(async function () {
+  var C = Crickipedia;
+  var list = [];
+  var current = null;
+  var slug = "";
+  var dirty = false;
+
+  function showApp() {
+    document.getElementById("loginGate").style.display = "none";
+    document.getElementById("appRoot").classList.remove("locked");
+  }
+
+  async function boot() {
+    try {
+      await C.api.me();
+      showApp();
+      list = await C.api.listAdmin();
+      slug = C.getAdminSlug(list);
+      current = list.find(function (item) { return item.slug === slug; }) || list[0];
+      if (current) load(current);
+    } catch (err) {
+      document.getElementById("loginGate").style.display = "flex";
+      document.getElementById("appRoot").classList.add("locked");
+      if (err.status !== 401) {
+        document.getElementById("loginError").textContent = err.message || "Server is not running. Use npm start.";
+      }
+    }
+  }
+
+  function toast(text) {
+    var el = document.getElementById("toast");
+    el.textContent = text;
+    el.style.display = "block";
+    setTimeout(function () { el.style.display = "none"; }, 1600);
+  }
+
+  function fillSelect() {
+    document.getElementById("tourneySelect").innerHTML = list.map(function (item) {
+      return '<option value="' + C.escapeHtml(item.slug) + '"' + (item.slug === current.slug ? " selected" : "") + ">" +
+        C.escapeHtml(item.name) + " (" + C.escapeHtml(item.status) + ")</option>";
+    }).join("");
+  }
+
+  function csvList(value) {
+    return String(value || "").split(",").map(function (part) { return part.trim(); }).filter(Boolean);
+  }
+
+  function renderCategories(categories) {
+    document.getElementById("categoryRows").innerHTML = (categories || []).map(function (item, index) {
+      return '<div class="rowline" style="grid-template-columns:1fr auto">' +
+        '<input data-cat="' + index + '" value="' + C.escapeHtml(item) + '" placeholder="e.g. Resident">' +
+        '<button class="btn ghost" type="button" data-remove-cat="' + index + '">Remove</button></div>';
+    }).join("");
+  }
+
+  function readCategories() {
+    return Array.prototype.slice.call(document.querySelectorAll("[data-cat]")).map(function (input) {
+      return input.value.trim();
+    }).filter(Boolean);
+  }
+
+  function renderSkills(skills) {
+    document.getElementById("skillRows").innerHTML = (skills || []).map(function (skill, index) {
+      return '<div class="rowline">' +
+        '<input data-skill="' + index + '" data-k="emoji" value="' + C.escapeHtml(skill.emoji || "") + '" placeholder="🏏">' +
+        '<input data-skill="' + index + '" data-k="label" value="' + C.escapeHtml(skill.label || "") + '" placeholder="Label">' +
+        '<input data-skill="' + index + '" data-k="value" value="' + C.escapeHtml(skill.value || "") + '" placeholder="Value">' +
+        '<button class="btn ghost" type="button" data-remove-skill="' + index + '">Remove</button></div>';
+    }).join("");
+  }
+
+  function renderSponsors(sponsors) {
+    document.getElementById("sponsorRows").innerHTML = (sponsors || []).map(function (item, index) {
+      return '<div class="srow">' +
+        '<input data-sp="' + index + '" data-k="name" value="' + C.escapeHtml(item.name || "") + '" placeholder="Name">' +
+        '<input data-sp="' + index + '" data-k="logoUrl" value="' + C.escapeHtml(item.logoUrl || "") + '" placeholder="Logo URL">' +
+        '<input data-sp="' + index + '" data-k="websiteUrl" value="' + C.escapeHtml(item.websiteUrl || "") + '" placeholder="Website">' +
+        '<button class="btn ghost" type="button" data-remove-sp="' + index + '">Remove</button></div>';
+    }).join("");
+  }
+
+  function readSkills() {
+    var count = document.querySelectorAll("[data-skill][data-k='label']").length;
+    var rows = [];
+    for (var i = 0; i < count; i += 1) {
+      var label = document.querySelector('[data-skill="' + i + '"][data-k="label"]');
+      var value = document.querySelector('[data-skill="' + i + '"][data-k="value"]');
+      var emoji = document.querySelector('[data-skill="' + i + '"][data-k="emoji"]');
+      if (!label) continue;
+      var text = label.value.trim();
+      if (!text) continue;
+      rows.push({
+        label: text,
+        value: (value && value.value.trim()) || text,
+        emoji: (emoji && emoji.value.trim()) || C.skillEmoji(text)
+      });
+    }
+    return rows;
+  }
+
+  function readSponsors() {
+    var count = document.querySelectorAll("[data-sp][data-k='name']").length;
+    var rows = [];
+    for (var i = 0; i < count; i += 1) {
+      var name = document.querySelector('[data-sp="' + i + '"][data-k="name"]');
+      if (!name || !name.value.trim()) continue;
+      rows.push({
+        name: name.value.trim(),
+        logoUrl: document.querySelector('[data-sp="' + i + '"][data-k="logoUrl"]').value.trim(),
+        websiteUrl: document.querySelector('[data-sp="' + i + '"][data-k="websiteUrl"]').value.trim()
+      });
+    }
+    return rows;
+  }
+
+  function previewFromForm() {
+    document.getElementById("previewName").textContent = document.getElementById("name").value || "Tournament";
+    document.getElementById("previewMeta").textContent =
+      document.getElementById("status").value + " • " +
+      document.getElementById("registrationStart").value + " to " +
+      document.getElementById("registrationEnd").value + " • " +
+      (document.getElementById("currency").value || "₹") + document.getElementById("fee").value;
+    var fake = {
+      colors: {
+        green: document.getElementById("colorGreen").value,
+        green2: document.getElementById("colorGreen2").value,
+        gold: document.getElementById("colorGold").value,
+        dark: document.getElementById("colorDark").value,
+        light: document.getElementById("colorLight").value
+      }
+    };
+    C.applyTheme(fake);
+    document.getElementById("preview").style.background =
+      "linear-gradient(135deg," + fake.colors.dark + "," + fake.colors.green + "," + fake.colors.green2 + ")";
+  }
+
+  function collect() {
+    var nextSlug = C.slugify(document.getElementById("slug").value || document.getElementById("name").value);
+    return {
+      slug: nextSlug,
+      name: document.getElementById("name").value.trim() || "Untitled tournament",
+      shortName: document.getElementById("shortName").value.trim() || "CUP",
+      tagline: document.getElementById("tagline").value.trim(),
+      heroTitle: document.getElementById("heroTitle").value,
+      heroSub: document.getElementById("heroSub").value,
+      logoEmoji: document.getElementById("logoEmoji").value || "🏏",
+      logoUrl: document.getElementById("logoUrl").value.trim(),
+      colors: {
+        green: document.getElementById("colorGreen").value,
+        green2: document.getElementById("colorGreen2").value,
+        gold: document.getElementById("colorGold").value,
+        dark: document.getElementById("colorDark").value,
+        light: document.getElementById("colorLight").value
+      },
+      status: document.getElementById("status").value,
+      registrationStart: document.getElementById("registrationStart").value,
+      registrationEnd: document.getElementById("registrationEnd").value,
+      fee: Number(document.getElementById("fee").value || 0),
+      currency: document.getElementById("currency").value || "₹",
+      idPrefix: document.getElementById("idPrefix").value.trim() || C.prefixFromSlug(nextSlug),
+      noticeTitle: document.getElementById("noticeTitle").value.trim(),
+      notice: document.getElementById("notice").value,
+      whatsNext: document.getElementById("whatsNext").value,
+      supportWhatsapp: document.getElementById("supportWhatsapp").value.trim(),
+      fields: {
+        dob: document.getElementById("fieldDob").checked,
+        flatNumber: document.getElementById("fieldFlat").checked,
+        category: document.getElementById("fieldCategory").checked,
+        jerseyNumber: document.getElementById("fieldJerseyNumber").checked,
+        jerseySize: document.getElementById("fieldJerseySize").checked,
+        sleeve: document.getElementById("fieldSleeve").checked,
+        photo: document.getElementById("fieldPhoto").checked,
+        cricheroes: document.getElementById("fieldCricheroes").checked,
+        instagram: document.getElementById("fieldInstagram").checked
+      },
+      skills: readSkills().length ? readSkills() : C.defaultTournament().skills,
+      categories: readCategories().length ? readCategories() : C.defaultTournament().categories,
+      jerseySizes: csvList(document.getElementById("jerseySizes").value),
+      sleeves: csvList(document.getElementById("sleeves").value),
+      sponsors: readSponsors()
+    };
+  }
+
+  function load(tournament) {
+    current = tournament;
+    slug = tournament.slug;
+    C.setAdminSlug(slug);
+    document.getElementById("name").value = tournament.name || "";
+    document.getElementById("shortName").value = tournament.shortName || "";
+    document.getElementById("slug").value = tournament.slug || "";
+    document.getElementById("status").value = tournament.status || "DRAFT";
+    document.getElementById("tagline").value = tournament.tagline || "";
+    document.getElementById("idPrefix").value = tournament.idPrefix || "";
+    document.getElementById("heroTitle").value = tournament.heroTitle || "";
+    document.getElementById("heroSub").value = tournament.heroSub || "";
+    document.getElementById("logoEmoji").value = tournament.logoEmoji || "🏏";
+    document.getElementById("logoUrl").value = tournament.logoUrl || "";
+    document.getElementById("supportWhatsapp").value = tournament.supportWhatsapp || "";
+    document.getElementById("colorGreen").value = tournament.colors.green;
+    document.getElementById("colorGreen2").value = tournament.colors.green2;
+    document.getElementById("colorGold").value = tournament.colors.gold;
+    document.getElementById("colorDark").value = tournament.colors.dark;
+    document.getElementById("colorLight").value = tournament.colors.light;
+    document.getElementById("registrationStart").value = tournament.registrationStart || "";
+    document.getElementById("registrationEnd").value = tournament.registrationEnd || "";
+    document.getElementById("fee").value = tournament.fee;
+    document.getElementById("currency").value = tournament.currency || "₹";
+    document.getElementById("noticeTitle").value = tournament.noticeTitle || "";
+    document.getElementById("notice").value = tournament.notice || "";
+    document.getElementById("whatsNext").value = tournament.whatsNext || "";
+    var fields = tournament.fields || {};
+    document.getElementById("fieldDob").checked = fields.dob !== false;
+    document.getElementById("fieldFlat").checked = fields.flatNumber !== false;
+    document.getElementById("fieldCategory").checked = fields.category !== false;
+    document.getElementById("fieldJerseyNumber").checked = fields.jerseyNumber !== false;
+    document.getElementById("fieldJerseySize").checked = fields.jerseySize !== false;
+    document.getElementById("fieldSleeve").checked = fields.sleeve !== false;
+    document.getElementById("fieldPhoto").checked = fields.photo !== false;
+    document.getElementById("fieldCricheroes").checked = fields.cricheroes !== false;
+    document.getElementById("fieldInstagram").checked = fields.instagram !== false;
+    document.getElementById("jerseySizes").value = (tournament.jerseySizes || []).join(", ");
+    document.getElementById("sleeves").value = (tournament.sleeves || []).join(", ");
+    renderCategories(tournament.categories && tournament.categories.length ? tournament.categories : C.defaultTournament().categories);
+    renderSkills(tournament.skills || []);
+    renderSponsors(tournament.sponsors || []);
+    document.getElementById("viewBtn").href = C.publicUrl(slug);
+    document.getElementById("previewBtn").href = C.publicUrl(slug) + "&preview=1";
+    fillSelect();
+    previewFromForm();
+    renderPlayers();
+    dirty = false;
+  }
+
+  async function renderPlayers() {
+    var rows = [];
+    try {
+      rows = await C.api.registrations(current.slug);
+    } catch (err) {
+      toast(err.message || "Could not load players");
+    }
+    document.getElementById("total").textContent = rows.length;
+    document.getElementById("paid").textContent = rows.filter(function (row) { return row.paymentStatus === "PAID"; }).length;
+    document.getElementById("pending").textContent = rows.filter(function (row) { return row.paymentStatus !== "PAID"; }).length;
+    document.getElementById("playersCount").textContent = new Set(rows.map(function (row) { return row.phone; })).size;
+    document.getElementById("rows").innerHTML = rows.map(function (row) {
+      var paid = row.paymentStatus === "PAID";
+      return "<tr><td>" + C.escapeHtml(row.id) + "</td><td>" + C.escapeHtml(row.name) + "</td><td>" + C.escapeHtml(row.flat || "-") + "</td><td>" + C.escapeHtml(row.category || "-") + "</td><td>" + C.escapeHtml(row.dob || "-") +
+        "</td><td>" + C.escapeHtml(row.phone) + "</td><td>" + C.escapeHtml(row.skill) + "</td><td>" + C.escapeHtml(row.jersey || "-") +
+        "</td><td>" + C.escapeHtml(row.size || "-") + "</td><td>" + C.escapeHtml(row.sleeve || "-") +
+        '</td><td><span class="tag' + (paid ? "" : " pending") + '">' + (paid ? "Confirmed" : "Reserved") + "</span></td></tr>";
+    }).join("") || '<tr><td colspan="11" class="muted">No players in this tournament yet.</td></tr>';
+  }
+
+  async function save() {
+    var next = collect();
+    try {
+      var saved = await C.api.saveTournament(current.slug, next);
+      list = await C.api.listAdmin();
+      load(saved);
+      toast("Saved " + saved.name);
+    } catch (err) {
+      toast(err.message || "Save failed");
+    }
+  }
+
+  document.querySelectorAll(".tab").forEach(function (tab) {
+    tab.addEventListener("click", function () {
+      document.querySelectorAll(".tab").forEach(function (item) { item.classList.remove("on"); });
+      tab.classList.add("on");
+      document.getElementById("customize").classList.toggle("hidden", tab.dataset.tab !== "customize");
+      document.getElementById("players").classList.toggle("hidden", tab.dataset.tab !== "players");
+      if (tab.dataset.tab === "players") renderPlayers();
+    });
+  });
+
+  document.getElementById("customize").addEventListener("input", function () {
+    dirty = true;
+    previewFromForm();
+  });
+
+  document.getElementById("addCategory").addEventListener("click", function () {
+    var cats = readCategories();
+    cats.push("");
+    renderCategories(cats);
+    dirty = true;
+  });
+  document.getElementById("categoryRows").addEventListener("click", function (event) {
+    var index = event.target.getAttribute("data-remove-cat");
+    if (index == null) return;
+    var cats = readCategories();
+    cats.splice(Number(index), 1);
+    renderCategories(cats);
+    dirty = true;
+  });
+
+  document.getElementById("addSkill").addEventListener("click", function () {
+    var skills = readSkills();
+    skills.push({ emoji: "🏏", label: "", value: "" });
+    renderSkills(skills);
+    dirty = true;
+  });
+
+  document.getElementById("skillRows").addEventListener("click", function (event) {
+    var index = event.target.getAttribute("data-remove-skill");
+    if (index == null) return;
+    var skills = readSkills();
+    skills.splice(Number(index), 1);
+    renderSkills(skills);
+    dirty = true;
+  });
+
+  document.getElementById("addSponsor").addEventListener("click", function () {
+    var sponsors = readSponsors();
+    sponsors.push({ name: "", logoUrl: "", websiteUrl: "" });
+    renderSponsors(sponsors);
+    dirty = true;
+  });
+
+  document.getElementById("sponsorRows").addEventListener("click", function (event) {
+    var index = event.target.getAttribute("data-remove-sp");
+    if (index == null) return;
+    var sponsors = readSponsors();
+    sponsors.splice(Number(index), 1);
+    renderSponsors(sponsors);
+    dirty = true;
+  });
+
+  document.getElementById("saveBtn").addEventListener("click", save);
+
+  document.getElementById("tourneySelect").addEventListener("change", function () {
+    if (dirty && !confirm("Switch tournament? Unsaved edits will be lost.")) {
+      this.value = current.slug;
+      return;
+    }
+    var next = list.find(function (item) { return item.slug === document.getElementById("tourneySelect").value; });
+    if (next) load(next);
+  });
+
+  document.getElementById("newBtn").addEventListener("click", function () {
+    document.getElementById("newName").value = "";
+    document.getElementById("modal").style.display = "flex";
+    document.getElementById("newName").focus();
+  });
+  document.getElementById("cancelCreate").addEventListener("click", function () {
+    document.getElementById("modal").style.display = "none";
+  });
+  document.getElementById("createBtn").addEventListener("click", async function () {
+    var name = document.getElementById("newName").value.trim();
+    if (!name) return;
+    if (dirty) await save();
+    try {
+      var created = await C.api.createTournament({ name: name, copyFrom: current.slug });
+      list = await C.api.listAdmin();
+      document.getElementById("modal").style.display = "none";
+      load(created);
+      toast("Created " + created.name + " as Draft");
+    } catch (err) {
+      toast(err.message || "Create failed");
+    }
+  });
+
+  document.getElementById("deleteBtn").addEventListener("click", async function () {
+    if (list.length < 2) {
+      toast("Keep at least one tournament");
+      return;
+    }
+    if (!confirm("Delete " + current.name + " and its players?")) return;
+    try {
+      await C.api.deleteTournament(current.slug);
+      list = await C.api.listAdmin();
+      load(list[0]);
+      toast("Deleted");
+    } catch (err) {
+      toast(err.message || "Delete failed");
+    }
+  });
+
+  document.getElementById("exportBtn").addEventListener("click", function () {
+    C.api.exportCsv(current.slug).catch(function (err) { toast(err.message || "Export failed"); });
+  });
+  document.getElementById("clearBtn").addEventListener("click", async function () {
+    if (!confirm("Clear players for " + current.name + " only?")) return;
+    try {
+      await C.api.clearRegistrations(current.slug);
+      await renderPlayers();
+      toast("Players cleared for this tournament");
+    } catch (err) {
+      toast(err.message || "Clear failed");
+    }
+  });
+
+  document.getElementById("loginBtn").addEventListener("click", async function () {
+    document.getElementById("loginError").textContent = "";
+    try {
+      await C.api.login(document.getElementById("loginUser").value, document.getElementById("loginPass").value);
+      await boot();
+    } catch (err) {
+      document.getElementById("loginError").textContent = err.message || "Sign in failed";
+    }
+  });
+  document.getElementById("loginPass").addEventListener("keydown", function (event) {
+    if (event.key === "Enter") document.getElementById("loginBtn").click();
+  });
+  document.getElementById("logoutBtn").addEventListener("click", async function () {
+    await C.api.logout();
+    location.reload();
+  });
+
+  boot();
+})();
+</script>
+</body>
+</html>
