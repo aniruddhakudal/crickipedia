@@ -79,7 +79,7 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
     <div class="switcher">
       <select class="slim" id="tourneySelect" aria-label="Active tournament"></select>
       <button class="btn ghost" type="button" id="newBtn">New tournament</button>
-      <a class="btn" id="viewBtn" href="index.html" target="_blank" rel="noopener">View site</a>
+      <a class="btn" id="viewBtn" href="/" target="_blank" rel="noopener">View site</a>
       <button class="btn ghost" type="button" id="logoutBtn">Sign out</button>
     </div>
   </div>
@@ -103,7 +103,8 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
       <div class="grid2">
         <label>Tournament name<input id="name"></label>
         <label>Short name<input id="shortName" maxlength="12"></label>
-        <label>URL slug<input id="slug" maxlength="48"></label>
+        <label>Tournament URL key<input id="tournamentSlug" maxlength="48" placeholder="e.g. srpl, cpl"></label>
+        <label>Season URL key<input id="seasonSlug" maxlength="48" placeholder="e.g. 2026"></label>
         <label>Status
           <select id="status">
             <option value="DRAFT">Draft — coming soon</option>
@@ -145,6 +146,76 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
         <label>Notice text<textarea id="notice" rows="3"></textarea></label>
       </div>
       <label style="margin-top:14px">What's next<textarea id="whatsNext" rows="3"></textarea></label>
+    </div>
+
+    <div class="panel">
+      <h3 style="margin-top:0">Payment method</h3>
+      <p class="muted">Razorpay and QR + receipt are mutually exclusive for this tournament.</p>
+      <p class="muted hidden" id="paymentModeHint" style="color:#b45309"></p>
+      <div class="grid2">
+        <label>Mode
+          <select id="paymentMode">
+            <option value="razorpay">Razorpay (online checkout)</option>
+            <option value="manual_qr">QR code + receipt upload</option>
+          </select>
+        </label>
+        <label class="check" style="margin-top:28px"><input id="sendConfirmedOnRazorpay" type="checkbox"> Send WhatsApp confirmed message after Razorpay pay</label>
+      </div>
+      <div class="section" id="manualQrSection">
+        <h3>Manual QR payment</h3>
+        <div class="grid2">
+          <label>QR source
+            <select id="qrSource">
+              <option value="image">Upload or link QR image</option>
+              <option value="upi">Generate from UPI ID</option>
+            </select>
+          </label>
+          <label id="qrImageUrlWrap">QR image URL (optional if you upload)<input id="qrImageUrl" placeholder="https://..."></label>
+        </div>
+        <div id="qrImageUploadBlock" style="margin-top:10px">
+          <label>Upload payment QR image
+            <input id="qrFile" type="file" accept="image/*">
+          </label>
+          <p class="muted" id="qrUploadStatus" style="margin:6px 0 0"></p>
+          <img id="qrPreview" alt="" style="display:none;max-width:220px;margin-top:10px;border-radius:12px;border:1px solid #ddd">
+        </div>
+        <div class="grid2" style="margin-top:10px" id="upiFieldsBlock">
+          <label>UPI ID<input id="upiId" placeholder="name@upi"></label>
+          <label>UPI payee name<input id="upiPayeeName" placeholder="Tournament name"></label>
+        </div>
+        <label style="margin-top:10px">Payment instructions<textarea id="paymentInstructions" rows="3"></textarea></label>
+        <div class="grid2" style="margin-top:10px">
+          <label>Receipt image field
+            <select id="receiptImage">
+              <option value="required">Required</option>
+              <option value="optional">Optional</option>
+              <option value="hidden">Hidden</option>
+            </select>
+          </label>
+          <label>UPI transaction ID field
+            <select id="receiptUpiRef">
+              <option value="optional">Optional</option>
+              <option value="required">Required</option>
+              <option value="hidden">Hidden</option>
+            </select>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3 style="margin-top:0">WhatsApp notifications</h3>
+      <p class="muted">Requires Meta Cloud API env vars. Create templates with a single body variable {{1}} (full message text).</p>
+      <div class="grid3">
+        <label>Reserved template name<input id="templateReserved" placeholder="registration_reserved"></label>
+        <label>Confirmed template name<input id="templateConfirmed" placeholder="registration_confirmed"></label>
+        <label>Rejected template name<input id="templateRejected" placeholder="registration_rejected"></label>
+      </div>
+      <label style="margin-top:10px">Template language<input id="templateLanguage" maxlength="10" placeholder="en"></label>
+      <label style="margin-top:10px">Reserved message<textarea id="messageReserved" rows="5"></textarea></label>
+      <label style="margin-top:10px">Confirmed message<textarea id="messageConfirmed" rows="5"></textarea></label>
+      <label style="margin-top:10px">Rejected message<textarea id="messageRejected" rows="4"></textarea></label>
+      <p class="muted">Placeholders: {{tournamentName}}, {{name}}, {{category}}, {{fee}}, {{groupLink}}, {{paymentInstructions}}, {{rejectReason}}. Players are not shown a registration ID on the site.</p>
     </div>
 
     <div class="panel">
@@ -210,7 +281,7 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
           <thead>
             <tr>
               <th>ID</th><th>Name</th><th>Flat</th><th>Category</th><th>DOB</th><th>WhatsApp</th><th>Skill</th>
-              <th>Jersey</th><th>Size</th><th>Sleeve</th><th>Payment</th>
+              <th>Jersey</th><th>Size</th><th>Sleeve</th><th>Payment</th><th>Receipt</th><th></th>
             </tr>
           </thead>
           <tbody id="rows"></tbody>
@@ -234,7 +305,7 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
 <div class="toast" id="toast">Saved</div>
 </div>
 
-<script src="app.js"></script>
+<script src="/app.js"></script>
 <script>
 (async function () {
   var C = Crickipedia;
@@ -252,6 +323,10 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
     try {
       await C.api.me();
       showApp();
+      C.api.health().then(function (health) {
+        serverPaymentsMode = health.payments || null;
+        refreshPaymentModeHint();
+      }).catch(function () {});
       list = await C.api.listAdmin();
       slug = C.getAdminSlug(list);
       current = list.find(function (item) { return item.slug === slug; }) || list[0];
@@ -284,17 +359,71 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
   }
 
   function renderCategories(categories) {
-    document.getElementById("categoryRows").innerHTML = (categories || []).map(function (item, index) {
-      return '<div class="rowline" style="grid-template-columns:1fr auto">' +
-        '<input data-cat="' + index + '" value="' + C.escapeHtml(item) + '" placeholder="e.g. Resident">' +
+    var list = C.normalizeCategories(categories);
+    document.getElementById("categoryRows").innerHTML = list.map(function (item, index) {
+      return '<div class="srow">' +
+        '<input data-cat="' + index + '" data-k="name" value="' + C.escapeHtml(item.name) + '" placeholder="Category name">' +
+        '<input data-cat="' + index + '" data-k="group" value="' + C.escapeHtml(item.whatsappGroupUrl || "") + '" placeholder="WhatsApp group invite link">' +
         '<button class="btn ghost" type="button" data-remove-cat="' + index + '">Remove</button></div>';
     }).join("");
   }
 
   function readCategories() {
-    return Array.prototype.slice.call(document.querySelectorAll("[data-cat]")).map(function (input) {
-      return input.value.trim();
-    }).filter(Boolean);
+    var count = document.querySelectorAll("[data-cat][data-k='name']").length;
+    var rows = [];
+    for (var i = 0; i < count; i += 1) {
+      var nameEl = document.querySelector('[data-cat="' + i + '"][data-k="name"]');
+      var groupEl = document.querySelector('[data-cat="' + i + '"][data-k="group"]');
+      if (!nameEl || !nameEl.value.trim()) continue;
+      rows.push({
+        name: nameEl.value.trim(),
+        whatsappGroupUrl: groupEl ? groupEl.value.trim() : ""
+      });
+    }
+    return rows;
+  }
+
+  var serverPaymentsMode = null;
+
+  function refreshPaymentModeHint() {
+    var hint = document.getElementById("paymentModeHint");
+    var razorpay = document.getElementById("paymentMode").value !== "manual_qr";
+    if (razorpay && serverPaymentsMode === "demo") {
+      hint.textContent = "Razorpay is selected, but the server has no RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET. Players will not get checkout until you add keys (e.g. on Render) and restart.";
+      hint.classList.remove("hidden");
+    } else {
+      hint.classList.add("hidden");
+      hint.textContent = "";
+    }
+  }
+
+  function togglePaymentSections() {
+    var manual = document.getElementById("paymentMode").value === "manual_qr";
+    document.getElementById("manualQrSection").style.display = manual ? "block" : "none";
+    toggleQrSourceFields();
+    refreshPaymentModeHint();
+  }
+
+  function toggleQrSourceFields() {
+    var upi = document.getElementById("qrSource").value === "upi";
+    document.getElementById("upiFieldsBlock").style.display = upi ? "grid" : "none";
+    document.getElementById("qrImageUploadBlock").style.display = upi ? "none" : "block";
+    document.getElementById("qrImageUrlWrap").style.display = upi ? "none" : "block";
+  }
+
+  function refreshQrPreview(url) {
+    var img = document.getElementById("qrPreview");
+    if (!url && !(current && current.tournamentSlug && current.seasonSlug)) {
+      img.style.display = "none";
+      img.removeAttribute("src");
+      return;
+    }
+    if (current && current.tournamentSlug && current.seasonSlug) {
+      img.src = C.api.paymentQrImageUrl(current);
+    } else {
+      img.src = url;
+    }
+    img.style.display = "block";
   }
 
   function renderSkills(skills) {
@@ -373,9 +502,13 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
   }
 
   function collect() {
-    var nextSlug = C.slugify(document.getElementById("slug").value || document.getElementById("name").value);
+    var tournamentSlug = C.slugify(document.getElementById("tournamentSlug").value || document.getElementById("name").value);
+    var seasonSlug = C.slugify(document.getElementById("seasonSlug").value || "season");
+    var nextSlug = tournamentSlug + "-" + seasonSlug;
     return {
       slug: nextSlug,
+      tournamentSlug: tournamentSlug,
+      seasonSlug: seasonSlug,
       name: document.getElementById("name").value.trim() || "Untitled tournament",
       shortName: document.getElementById("shortName").value.trim() || "CUP",
       tagline: document.getElementById("tagline").value.trim(),
@@ -415,7 +548,27 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
       categories: readCategories().length ? readCategories() : C.defaultTournament().categories,
       jerseySizes: csvList(document.getElementById("jerseySizes").value),
       sleeves: csvList(document.getElementById("sleeves").value),
-      sponsors: readSponsors()
+      sponsors: readSponsors(),
+      payment: {
+        mode: document.getElementById("paymentMode").value,
+        qrSource: document.getElementById("qrSource").value,
+        qrImageUrl: document.getElementById("qrImageUrl").value.trim(),
+        upiId: document.getElementById("upiId").value.trim(),
+        upiPayeeName: document.getElementById("upiPayeeName").value.trim(),
+        paymentInstructions: document.getElementById("paymentInstructions").value,
+        receiptImage: document.getElementById("receiptImage").value,
+        receiptUpiRef: document.getElementById("receiptUpiRef").value,
+        sendConfirmedOnRazorpay: document.getElementById("sendConfirmedOnRazorpay").checked
+      },
+      whatsapp: {
+        templateReserved: document.getElementById("templateReserved").value.trim(),
+        templateConfirmed: document.getElementById("templateConfirmed").value.trim(),
+        templateRejected: document.getElementById("templateRejected").value.trim(),
+        templateLanguage: document.getElementById("templateLanguage").value.trim() || "en",
+        messageReserved: document.getElementById("messageReserved").value,
+        messageConfirmed: document.getElementById("messageConfirmed").value,
+        messageRejected: document.getElementById("messageRejected").value
+      }
     };
   }
 
@@ -425,7 +578,8 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
     C.setAdminSlug(slug);
     document.getElementById("name").value = tournament.name || "";
     document.getElementById("shortName").value = tournament.shortName || "";
-    document.getElementById("slug").value = tournament.slug || "";
+    document.getElementById("tournamentSlug").value = tournament.tournamentSlug || "";
+    document.getElementById("seasonSlug").value = tournament.seasonSlug || "";
     document.getElementById("status").value = tournament.status || "DRAFT";
     document.getElementById("tagline").value = tournament.tagline || "";
     document.getElementById("idPrefix").value = tournament.idPrefix || "";
@@ -458,11 +612,32 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
     document.getElementById("fieldInstagram").checked = fields.instagram !== false;
     document.getElementById("jerseySizes").value = (tournament.jerseySizes || []).join(", ");
     document.getElementById("sleeves").value = (tournament.sleeves || []).join(", ");
+    var payment = tournament.payment || C.defaultTournament().payment;
+    var wa = tournament.whatsapp || C.defaultTournament().whatsapp;
+    document.getElementById("paymentMode").value = payment.mode === "manual_qr" ? "manual_qr" : "razorpay";
+    document.getElementById("sendConfirmedOnRazorpay").checked = payment.sendConfirmedOnRazorpay !== false;
+    document.getElementById("qrSource").value = payment.qrSource || "image";
+    document.getElementById("qrImageUrl").value = payment.qrImageUrl || "";
+    refreshQrPreview(payment.qrSource !== "upi" ? payment.qrImageUrl || "" : "");
+    document.getElementById("qrUploadStatus").textContent = "";
+    document.getElementById("upiId").value = payment.upiId || "";
+    document.getElementById("upiPayeeName").value = payment.upiPayeeName || "";
+    document.getElementById("paymentInstructions").value = payment.paymentInstructions || "";
+    document.getElementById("receiptImage").value = payment.receiptImage || "required";
+    document.getElementById("receiptUpiRef").value = payment.receiptUpiRef || "optional";
+    document.getElementById("templateReserved").value = wa.templateReserved || "registration_reserved";
+    document.getElementById("templateConfirmed").value = wa.templateConfirmed || "registration_confirmed";
+    document.getElementById("templateRejected").value = wa.templateRejected || "registration_rejected";
+    document.getElementById("templateLanguage").value = wa.templateLanguage || "en";
+    document.getElementById("messageReserved").value = wa.messageReserved || "";
+    document.getElementById("messageConfirmed").value = wa.messageConfirmed || "";
+    document.getElementById("messageRejected").value = wa.messageRejected || "";
+    togglePaymentSections();
     renderCategories(tournament.categories && tournament.categories.length ? tournament.categories : C.defaultTournament().categories);
     renderSkills(tournament.skills || []);
     renderSponsors(tournament.sponsors || []);
-    document.getElementById("viewBtn").href = C.publicUrl(slug);
-    document.getElementById("previewBtn").href = C.publicUrl(slug) + "&preview=1";
+    document.getElementById("viewBtn").href = "/";
+    document.getElementById("previewBtn").href = C.publicUrl(tournament, { preview: true });
     fillSelect();
     previewFromForm();
     renderPlayers();
@@ -482,22 +657,70 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
     document.getElementById("playersCount").textContent = new Set(rows.map(function (row) { return row.phone; })).size;
     document.getElementById("rows").innerHTML = rows.map(function (row) {
       var paid = row.paymentStatus === "PAID";
+      var payLabel = paid ? "Confirmed" : (row.verificationStatus === "SUBMITTED" ? "Review" : row.verificationStatus === "REJECTED" ? "Resubmit" : "Reserved");
+      var receiptCell = row.receiptUrl
+        ? '<a href="' + C.escapeHtml(row.receiptUrl) + '" target="_blank" rel="noopener">View</a>'
+        : (row.receiptUpiRef ? C.escapeHtml(row.receiptUpiRef) : "-");
+      var actions = "";
+      if (!paid && row.verificationStatus === "SUBMITTED") {
+        actions = '<button class="btn" type="button" data-approve="' + C.escapeHtml(row.id) + '">Approve</button> ' +
+          '<button class="btn ghost" type="button" data-reject="' + C.escapeHtml(row.id) + '">Decline</button>';
+      }
       return "<tr><td>" + C.escapeHtml(row.id) + "</td><td>" + C.escapeHtml(row.name) + "</td><td>" + C.escapeHtml(row.flat || "-") + "</td><td>" + C.escapeHtml(row.category || "-") + "</td><td>" + C.escapeHtml(row.dob || "-") +
         "</td><td>" + C.escapeHtml(row.phone) + "</td><td>" + C.escapeHtml(row.skill) + "</td><td>" + C.escapeHtml(row.jersey || "-") +
         "</td><td>" + C.escapeHtml(row.size || "-") + "</td><td>" + C.escapeHtml(row.sleeve || "-") +
-        '</td><td><span class="tag' + (paid ? "" : " pending") + '">' + (paid ? "Confirmed" : "Reserved") + "</span></td></tr>";
-    }).join("") || '<tr><td colspan="11" class="muted">No players in this tournament yet.</td></tr>';
+        '</td><td><span class="tag' + (paid ? "" : " pending") + '">' + payLabel + "</span></td><td>" + receiptCell +
+        "</td><td>" + actions + "</td></tr>";
+    }).join("") || '<tr><td colspan="13" class="muted">No players in this tournament yet.</td></tr>';
+    document.getElementById("rows").querySelectorAll("[data-approve]").forEach(function (btn) {
+      btn.addEventListener("click", async function () {
+        try {
+          await C.api.approveRegistration(current.slug, btn.getAttribute("data-approve"));
+          toast("Approved");
+          renderPlayers();
+        } catch (err) {
+          toast(err.message || "Approve failed");
+        }
+      });
+    });
+    document.getElementById("rows").querySelectorAll("[data-reject]").forEach(function (btn) {
+      btn.addEventListener("click", async function () {
+        var reason = prompt("Reason for declining receipt (shown to player):", "Receipt could not be verified");
+        if (reason === null) return;
+        try {
+          await C.api.rejectRegistration(current.slug, btn.getAttribute("data-reject"), reason);
+          toast("Declined — player can resubmit");
+          renderPlayers();
+        } catch (err) {
+          toast(err.message || "Decline failed");
+        }
+      });
+    });
+  }
+
+  function upsertTournamentInList(saved, previousSlug) {
+    list = list.filter(function (item) { return item.slug !== previousSlug; });
+    var index = list.findIndex(function (item) { return item.slug === saved.slug; });
+    if (index >= 0) list[index] = saved;
+    else list.push(saved);
+    list.sort(function (a, b) { return String(a.name || "").localeCompare(String(b.name || "")); });
   }
 
   async function save() {
     var next = collect();
+    var previousSlug = current.slug;
+    var saveBtn = document.getElementById("saveBtn");
+    saveBtn.disabled = true;
     try {
-      var saved = await C.api.saveTournament(current.slug, next);
-      list = await C.api.listAdmin();
+      var saved = await C.api.saveTournament(previousSlug, next);
+      upsertTournamentInList(saved, previousSlug);
+      fillSelect();
       load(saved);
       toast("Saved " + saved.name);
     } catch (err) {
       toast(err.message || "Save failed");
+    } finally {
+      saveBtn.disabled = false;
     }
   }
 
@@ -518,10 +741,32 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
 
   document.getElementById("addCategory").addEventListener("click", function () {
     var cats = readCategories();
-    cats.push("");
+    cats.push({ name: "New category", whatsappGroupUrl: "" });
     renderCategories(cats);
     dirty = true;
   });
+  document.getElementById("paymentMode").addEventListener("change", togglePaymentSections);
+  document.getElementById("qrSource").addEventListener("change", toggleQrSourceFields);
+  document.getElementById("qrFile").addEventListener("change", async function (event) {
+    var file = event.target.files[0];
+    if (!file || !slug) return;
+    var status = document.getElementById("qrUploadStatus");
+    status.textContent = "Uploading…";
+    try {
+      var data = await C.api.uploadPaymentQr(slug, file);
+      document.getElementById("qrImageUrl").value = data.qrImageUrl || "";
+      document.getElementById("qrSource").value = "image";
+      toggleQrSourceFields();
+      refreshQrPreview(data.qrImageUrl);
+      if (data.tournament) load(data.tournament);
+      status.textContent = "QR uploaded. Save tournament to keep other edits.";
+      dirty = true;
+    } catch (err) {
+      status.textContent = err.message || "Upload failed";
+    }
+    event.target.value = "";
+  });
+
   document.getElementById("categoryRows").addEventListener("click", function (event) {
     var index = event.target.getAttribute("data-remove-cat");
     if (index == null) return;

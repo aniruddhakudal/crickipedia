@@ -14,6 +14,8 @@
   function defaultTournament() {
     return {
       slug: "cpl-2026",
+      tournamentSlug: "cpl",
+      seasonSlug: "2026",
       name: "Celebria Premier League 2026",
       shortName: "CPL",
       tagline: "Official Player Registration",
@@ -35,7 +37,7 @@
       currency: "₹",
       idPrefix: "CPL2026",
       noticeTitle: "Important",
-      notice: "Your spot is reserved as soon as you get a Registration ID. Pay the entry fee to confirm.",
+      notice: "Your spot is reserved as soon as you register. Pay the entry fee to confirm.",
       whatsNext: "Your registration is the first step. Later phases add auctions, teams, live scoring and prizes.",
       supportWhatsapp: "",
       fields: {
@@ -56,7 +58,28 @@
         { value: "All Rounder", label: "All Rounder", emoji: "🔥" }
       ],
       jerseySizes: ["S", "M", "L", "XL", "XXL", "XXXL"],
-      categories: ["Resident", "Guest", "Kids"],
+      categories: [
+        { name: "Resident", whatsappGroupUrl: "" },
+        { name: "Guest", whatsappGroupUrl: "" },
+        { name: "Kids", whatsappGroupUrl: "" }
+      ],
+      payment: {
+        mode: "razorpay",
+        qrSource: "image",
+        qrImageUrl: "",
+        upiId: "",
+        upiPayeeName: "",
+        paymentInstructions: "",
+        receiptImage: "required",
+        receiptUpiRef: "optional",
+        sendConfirmedOnRazorpay: true
+      },
+      whatsapp: {
+        templateReserved: "registration_reserved",
+        templateConfirmed: "registration_confirmed",
+        templateRejected: "registration_rejected",
+        templateLanguage: "en"
+      },
       sleeves: ["Full Sleeve", "Half Sleeve"],
       sponsors: [
         { name: "Sponsor 1", logoUrl: "", websiteUrl: "" },
@@ -99,17 +122,81 @@
     return new URLSearchParams(location.search).get(name);
   }
 
+  var PATH_RESERVED = {
+    api: true, uploads: true, admin: true, "admin.html": true, "index.html": true, "register.html": true, "app.js": true
+  };
+
+  function parsePublicUrl() {
+    var tournament = queryParam("tournament") || queryParam("t");
+    var season = queryParam("season") || queryParam("s");
+    if (tournament && season) {
+      return { tournament: tournament, season: season };
+    }
+    if (tournament && !season) {
+      return { legacySlug: tournament };
+    }
+    var parts = location.pathname.replace(/\\/g, "/").split("/").filter(Boolean);
+    if (parts.length && /\.html$/i.test(parts[parts.length - 1])) {
+      parts.pop();
+    }
+    if (parts.length >= 2 && !PATH_RESERVED[parts[0].toLowerCase()]) {
+      return { tournament: decodeURIComponent(parts[0]), season: decodeURIComponent(parts[1]) };
+    }
+    return {};
+  }
+
+  function tournamentKeys(tournament) {
+    if (!tournament) return { slug: "" };
+    if (tournament.tournamentSlug && tournament.seasonSlug) {
+      return { tournament: tournament.tournamentSlug, season: tournament.seasonSlug };
+    }
+    if (typeof tournament === "string") return { slug: tournament };
+    return { slug: tournament.slug || "" };
+  }
+
+  function apiTournamentPath(ref) {
+    var keys = tournamentKeys(ref);
+    if (keys.tournament && keys.season) {
+      return "/api/t/" + encodeURIComponent(keys.tournament) + "/" + encodeURIComponent(keys.season);
+    }
+    return "/api/t/" + encodeURIComponent(keys.slug);
+  }
+
+  function sameSeason(a, b) {
+    if (!a || !b) return false;
+    if (a.tournamentSlug && a.seasonSlug && b.tournamentSlug && b.seasonSlug) {
+      return a.tournamentSlug === b.tournamentSlug && a.seasonSlug === b.seasonSlug;
+    }
+    return a.slug === b.slug;
+  }
+
   function resolvePublicTournament(list) {
-    var requested = queryParam("t");
+    var parsed = parsePublicUrl();
     var items = list || [];
-    if (requested) {
-      var match = items.find(function (item) { return item.slug === requested; });
+    if (parsed.tournament && parsed.season) {
+      var byPath = items.find(function (item) {
+        return item.tournamentSlug === parsed.tournament && item.seasonSlug === parsed.season;
+      });
+      if (byPath) return byPath;
+    }
+    if (parsed.legacySlug) {
+      var match = items.find(function (item) { return item.slug === parsed.legacySlug; });
       if (match) return match;
     }
     return items.find(function (item) { return publicState(item) === "OPEN"; }) || items[0] || null;
   }
 
   function getAdminSlug(list) {
+    var parsed = parsePublicUrl();
+    if (parsed.tournament && parsed.season) {
+      var hit = list.find(function (item) {
+        return item.tournamentSlug === parsed.tournament && item.seasonSlug === parsed.season;
+      });
+      if (hit) {
+        localStorage.setItem(KEYS.adminSlug, hit.slug);
+        return hit.slug;
+      }
+    }
     var fromUrl = queryParam("t");
     if (fromUrl && list.some(function (item) { return item.slug === fromUrl; })) {
       localStorage.setItem(KEYS.adminSlug, fromUrl);
@@ -184,23 +271,25 @@
     root.setProperty("--light", tournament.colors.light || "#f5f8f6");
   }
 
-  function draftKey(slug) {
-    return slug || "default";
+  function draftKey(tournament) {
+    var keys = tournamentKeys(tournament);
+    if (keys.tournament && keys.season) return keys.tournament + "/" + keys.season;
+    return keys.slug || "default";
   }
 
-  function getDraft(slug) {
-    return readJson(KEYS.drafts, {})[draftKey(slug)] || null;
+  function getDraft(tournament) {
+    return readJson(KEYS.drafts, {})[draftKey(tournament)] || null;
   }
 
-  function saveDraft(slug, draft) {
+  function saveDraft(tournament, draft) {
     var all = readJson(KEYS.drafts, {});
-    all[draftKey(slug)] = draft;
+    all[draftKey(tournament)] = draft;
     writeJson(KEYS.drafts, all);
   }
 
-  function clearDraft(slug) {
+  function clearDraft(tournament) {
     var all = readJson(KEYS.drafts, {});
-    delete all[draftKey(slug)];
+    delete all[draftKey(tournament)];
     writeJson(KEYS.drafts, all);
   }
 
@@ -218,8 +307,47 @@
     return SKILL_EMOJI[skill] || "🏏";
   }
 
-  function publicUrl(slug) {
-    return "index.html?t=" + encodeURIComponent(slug);
+  function normalizeCategories(raw) {
+    var list = raw || [];
+    var out = [];
+    for (var i = 0; i < list.length; i += 1) {
+      var item = list[i];
+      if (typeof item === "string" && item.trim()) {
+        out.push({ name: item.trim(), whatsappGroupUrl: "" });
+      } else if (item && item.name) {
+        out.push({
+          name: String(item.name).trim(),
+          whatsappGroupUrl: String(item.whatsappGroupUrl || "").trim()
+        });
+      }
+    }
+    return out.length ? out : defaultTournament().categories;
+  }
+
+  function categoryNames(categories) {
+    return normalizeCategories(categories).map(function (item) { return item.name; });
+  }
+
+  function publicUrl(tournament, options) {
+    var preview = options && options.preview;
+    var keys = tournamentKeys(typeof tournament === "string" ? { slug: tournament } : tournament);
+    var path;
+    if (keys.tournament && keys.season) {
+      path = "/register.html?tournament=" + encodeURIComponent(keys.tournament) +
+        "&season=" + encodeURIComponent(keys.season);
+    } else {
+      path = "/register.html?t=" + encodeURIComponent(keys.slug);
+    }
+    if (preview) path += "&preview=1";
+    return path;
+  }
+
+  function publicPathUrl(tournament) {
+    var keys = tournamentKeys(typeof tournament === "string" ? { slug: tournament } : tournament);
+    if (keys.tournament && keys.season) {
+      return "/" + encodeURIComponent(keys.tournament) + "/" + encodeURIComponent(keys.season);
+    }
+    return publicUrl(tournament);
   }
 
   function waDigits(phone) {
@@ -239,7 +367,6 @@
     var paid = record && record.paymentStatus === "PAID";
     return [
       tournament.name,
-      "Registration ID: " + (record && record.id ? record.id : ""),
       record && record.name ? "Name: " + record.name : "",
       record && record.flat ? "Flat: " + record.flat : "",
       record && record.category ? "Category: " + record.category : "",
@@ -278,30 +405,148 @@
         return data.tournaments || [];
       });
     },
-    config: function (slug, preview) {
-      return request("/api/t/" + encodeURIComponent(slug) + "/config" + (preview ? "?preview=1" : ""));
+    config: function (ref, preview) {
+      return request(apiTournamentPath(ref) + "/config" + (preview ? "?preview=1" : ""));
     },
-    lookup: function (slug, phone) {
-      return request("/api/t/" + encodeURIComponent(slug) + "/lookup?phone=" + encodeURIComponent(phone)).then(function (data) {
+    lookup: function (ref, phone) {
+      return request(apiTournamentPath(ref) + "/lookup?phone=" + encodeURIComponent(phone)).then(function (data) {
         return data.record || null;
       });
     },
-    register: function (slug, body, preview) {
-      return request("/api/t/" + encodeURIComponent(slug) + "/register" + (preview ? "?preview=1" : ""), {
+    register: function (ref, body, preview) {
+      return request(apiTournamentPath(ref) + "/register" + (preview ? "?preview=1" : ""), {
         method: "POST",
         body: body
       });
     },
-    pay: function (slug, id) {
-      return request("/api/t/" + encodeURIComponent(slug) + "/registrations/" + encodeURIComponent(id) + "/pay", {
+    paymentConfig: function () {
+      return request("/api/payments/config");
+    },
+    tournamentPaymentConfig: function (ref) {
+      return request(apiTournamentPath(ref) + "/payments/config");
+    },
+    paymentQr: function (ref, id) {
+      return request(apiTournamentPath(ref) + "/registrations/" + encodeURIComponent(id) + "/payment-qr");
+    },
+    paymentQrPreview: function (ref) {
+      return request(apiTournamentPath(ref) + "/payment-qr");
+    },
+    paymentQrImageUrl: function (ref) {
+      return apiTournamentPath(ref) + "/payment-qr-image";
+    },
+    uploadPaymentQr: function (slug, file) {
+      var form = new FormData();
+      form.append("qr", file);
+      return request("/api/admin/tournaments/" + encodeURIComponent(slug) + "/payment-qr", {
+        method: "POST",
+        body: form
+      });
+    },
+    createPaymentOrder: function (ref, id) {
+      return request(apiTournamentPath(ref) + "/registrations/" + encodeURIComponent(id) + "/payment-order", {
+        method: "POST",
+        body: {}
+      });
+    },
+    verifyPayment: function (ref, id, payload) {
+      return request(apiTournamentPath(ref) + "/registrations/" + encodeURIComponent(id) + "/pay-verify", {
+        method: "POST",
+        body: payload
+      }).then(function (data) { return data.record; });
+    },
+    payDemo: function (ref, id) {
+      return request(apiTournamentPath(ref) + "/registrations/" + encodeURIComponent(id) + "/pay", {
         method: "POST",
         body: {}
       }).then(function (data) { return data.record; });
     },
-    uploadPhoto: function (slug, id, file) {
+    loadRazorpayCheckout: function () {
+      return new Promise(function (resolve, reject) {
+        if (global.Razorpay) {
+          resolve();
+          return;
+        }
+        var script = document.createElement("script");
+        script.src = "https://checkout.razorpay.com/v1/checkout.js";
+        script.async = true;
+        script.onload = function () { resolve(); };
+        script.onerror = function () { reject(new Error("Could not load payment checkout")); };
+        document.head.appendChild(script);
+      });
+    },
+    uploadReceipt: function (ref, id, file, upiRef) {
+      var form = new FormData();
+      if (file) form.append("receipt", file);
+      if (upiRef) form.append("upiRef", upiRef);
+      return request(apiTournamentPath(ref) + "/registrations/" + encodeURIComponent(id) + "/receipt", {
+        method: "POST",
+        body: form
+      }).then(function (data) { return data.record; });
+    },
+    approveRegistration: function (slug, id) {
+      return request("/api/admin/tournaments/" + encodeURIComponent(slug) + "/registrations/" + encodeURIComponent(id) + "/approve", {
+        method: "POST",
+        body: {}
+      }).then(function (data) { return data.record; });
+    },
+    rejectRegistration: function (slug, id, reason) {
+      return request("/api/admin/tournaments/" + encodeURIComponent(slug) + "/registrations/" + encodeURIComponent(id) + "/reject", {
+        method: "POST",
+        body: { reason: reason }
+      }).then(function (data) { return data.record; });
+    },
+    pay: function (ref, id) {
+      return api.tournamentPaymentConfig(ref).then(function (cfg) {
+        if (cfg.mode === "manual_qr") {
+          return Promise.reject(new Error("Pay via QR and upload your receipt below"));
+        }
+        if (cfg.mode !== "razorpay") {
+          return api.payDemo(ref, id);
+        }
+        if (cfg.razorpayAvailable === false) {
+          return Promise.reject(new Error("Online payments are not configured on the server yet. Contact the organizer."));
+        }
+        return api.createPaymentOrder(ref, id).then(function (order) {
+          if (order.alreadyPaid && order.record) return order.record;
+          return api.loadRazorpayCheckout().then(function () {
+            return new Promise(function (resolve, reject) {
+              var options = {
+                key: order.keyId || cfg.razorpayKeyId,
+                amount: order.amount,
+                currency: order.currency,
+                name: order.name,
+                description: order.description,
+                order_id: order.orderId,
+                prefill: order.prefill || {},
+                theme: { color: "#0b6b45" },
+                handler: function (response) {
+                  api.verifyPayment(ref, id, {
+                    razorpay_order_id: response.razorpay_order_id,
+                    razorpay_payment_id: response.razorpay_payment_id,
+                    razorpay_signature: response.razorpay_signature
+                  }).then(resolve).catch(reject);
+                },
+                modal: {
+                  ondismiss: function () {
+                    reject(new Error("Payment cancelled"));
+                  }
+                }
+              };
+              var checkout = new global.Razorpay(options);
+              checkout.on("payment.failed", function (event) {
+                var desc = event && event.error && event.error.description;
+                reject(new Error(desc || "Payment failed"));
+              });
+              checkout.open();
+            });
+          });
+        });
+      });
+    },
+    uploadPhoto: function (ref, id, file) {
       var form = new FormData();
       form.append("photo", file);
-      return request("/api/t/" + encodeURIComponent(slug) + "/registrations/" + encodeURIComponent(id) + "/photo", {
+      return request(apiTournamentPath(ref) + "/registrations/" + encodeURIComponent(id) + "/photo", {
         method: "POST",
         body: form
       });
@@ -353,6 +598,9 @@
     slugify: slugify,
     prefixFromSlug: prefixFromSlug,
     queryParam: queryParam,
+    parsePublicUrl: parsePublicUrl,
+    tournamentKeys: tournamentKeys,
+    sameSeason: sameSeason,
     resolvePublicTournament: resolvePublicTournament,
     getAdminSlug: getAdminSlug,
     setAdminSlug: setAdminSlug,
@@ -369,7 +617,10 @@
     escapeHtml: escapeHtml,
     nl2br: nl2br,
     skillEmoji: skillEmoji,
+    normalizeCategories: normalizeCategories,
+    categoryNames: categoryNames,
     publicUrl: publicUrl,
+    publicPathUrl: publicPathUrl,
     waDigits: waDigits,
     waMeUrl: waMeUrl,
     registrationWaText: registrationWaText,

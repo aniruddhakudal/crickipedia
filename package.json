@@ -9,12 +9,14 @@
     "dev": "node server/index.js"
   },
   "dependencies": {
+    "@electric-sql/pglite": "^0.3.14",
+    "@supabase/supabase-js": "^2.57.4",
     "dotenv": "^16.6.1",
     "express": "^4.21.2",
     "express-session": "^1.18.1",
     "multer": "^2.0.2",
     "pg": "^8.16.3",
-    "@electric-sql/pglite": "^0.3.14",
-    "@supabase/supabase-js": "^2.57.4"
+    "qrcode": "^1.5.4",
+    "razorpay": "^2.9.8"
   }
 }

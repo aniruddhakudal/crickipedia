@@ -64,7 +64,7 @@ Do not use `python -m http.server` for Phase 2. The pages must be served by `npm
 - Loads config from `GET /api/t/:slug/config`
 - Required: name, WhatsApp, skill
 - ID is created on the server, then photo uploads in the background
-- Pay is still a demo tap; it writes `PAID` in Postgres (Razorpay is Phase 3)
+- **Pay:** Razorpay Checkout when `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` are set; otherwise demo tap writes `PAID`
 
 **Admin**
 
@@ -76,7 +76,21 @@ Do not use `python -m http.server` for Phase 2. The pages must be served by `npm
 
 Celebria Premier League 2026 (`cpl-2026`) is inserted if the database is empty.
 
+## Payments
+
+Per tournament (Admin → **Payment method**):
+
+- **Razorpay** — online checkout (needs `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` on the server).
+- **QR + receipt** — UPI QR (uploaded image or generated from UPI ID), receipt upload, admin **Approve** / **Decline** (player can resubmit).
+
+## WhatsApp (Cloud API)
+
+1. Create Meta templates with one body variable `{{1}}` (full message text): e.g. `registration_reserved`, `registration_confirmed`, `registration_rejected`.
+2. Set `WHATSAPP_ACCESS_TOKEN` and `WHATSAPP_PHONE_NUMBER_ID` in `.env`.
+3. Customize templates and category group links in Admin → **WhatsApp notifications** and **Registration categories**.
+
+Messages fire on: new registration (reserved), Razorpay success (if enabled), admin approve (confirmed), admin decline (rejected).
+
 ## Later phases
 
-3. Razorpay / UPI + WhatsApp after the ID exists  
-4. Next.js / Spring Boot / S3 if you outgrow this Node API
+Auctions, teams, live scoring, and stats integration.

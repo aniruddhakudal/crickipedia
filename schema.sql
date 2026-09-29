@@ -1,7 +1,18 @@
 -- Phase 2 PostgreSQL schema. One platform, many tournaments.
+-- Full reset (destructive). Run this file manually in SQL editor to recreate from scratch.
+-- App startup migrate() skips DROP statements so live data is not cleared on deploy.
+DROP TABLE IF EXISTS payments;
+DROP TABLE IF EXISTS registrations;
+DROP TABLE IF EXISTS player_preferences;
+DROP TABLE IF EXISTS sponsors;
+DROP TABLE IF EXISTS players;
+DROP TABLE IF EXISTS tournaments;
+
 CREATE TABLE IF NOT EXISTS tournaments (
   id BIGSERIAL PRIMARY KEY,
   slug VARCHAR(64) UNIQUE NOT NULL,
+  tournament_slug VARCHAR(48) NOT NULL DEFAULT 'tournament',
+  season_slug VARCHAR(48) NOT NULL DEFAULT 'season',
   name VARCHAR(150) NOT NULL,
   short_name VARCHAR(20),
   logo_url TEXT,
@@ -53,7 +64,12 @@ CREATE TABLE IF NOT EXISTS payments (
   amount NUMERIC(10,2) NOT NULL,
   payment_status VARCHAR(30) NOT NULL DEFAULT 'PENDING',
   gateway VARCHAR(50),
+  gateway_order_id VARCHAR(150),
   gateway_transaction_id VARCHAR(150),
+  receipt_url TEXT,
+  receipt_upi_ref VARCHAR(120),
+  verification_status VARCHAR(40),
+  reject_reason TEXT,
   paid_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -73,6 +89,7 @@ CREATE INDEX IF NOT EXISTS idx_registrations_tournament ON registrations(tournam
 CREATE INDEX IF NOT EXISTS idx_registrations_status ON registrations(status);
 CREATE INDEX IF NOT EXISTS idx_payments_status ON payments(payment_status);
 CREATE INDEX IF NOT EXISTS idx_tournaments_slug ON tournaments(slug);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_tournaments_tournament_season ON tournaments(tournament_slug, season_slug);
 
 -- Future phases can add:
 -- auction_players / auctions / bids
