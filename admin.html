@@ -43,8 +43,18 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
 .preview h2{margin:8px 0 4px}.preview p{margin:0;opacity:.85}
 .hidden{display:none!important}
 .muted{color:var(--muted);font-size:13px}
+.admin-cat-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 12px}
+.admin-cat-tab{border:1px solid #d7e3dd;background:#fff;padding:8px 14px;border-radius:10px;font-weight:800;font-size:13px;cursor:pointer;font-family:inherit}
+.admin-cat-tab.on{background:var(--green);color:#fff;border-color:var(--green)}
+.admin-player-photo{width:40px;height:40px;border-radius:50%;object-fit:cover;background:#e8f0eb;display:block}
+.admin-player-photo-ph{width:40px;height:40px;border-radius:50%;background:#e8f0eb;color:var(--green);font-weight:800;font-size:12px;display:grid;place-items:center}
+.receipt-thumb{max-width:72px;max-height:72px;border-radius:8px;border:1px solid #e7eeea;vertical-align:middle;display:block;cursor:pointer}
+.receipt-link{border:0;background:none;padding:0;font:inherit;font-weight:700;cursor:pointer}
 .modal-bg{position:fixed;inset:0;background:#0006;display:none;align-items:center;justify-content:center;padding:16px;z-index:6}
 .modal{background:#fff;border-radius:16px;padding:22px;max-width:420px;width:100%}
+.modal-receipt{max-width:min(560px,96vw)}
+.receipt-modal-body{margin-top:12px;text-align:center;background:#f5f8f6;border-radius:12px;padding:12px;max-height:min(70vh,640px);overflow:auto}
+.receipt-modal-body img{max-width:100%;max-height:min(65vh,600px);width:auto;height:auto;border-radius:8px;vertical-align:middle}
 #loginGate{position:fixed;inset:0;background:#08251c;color:#fff;z-index:9;display:flex;align-items:center;justify-content:center;padding:16px}
 #loginGate .box{background:#fff;color:#092019;border-radius:18px;padding:28px;max-width:380px;width:100%}
 #loginGate h2{margin:0 0 8px}
@@ -233,6 +243,11 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
         <label class="check"><input id="fieldInstagram" type="checkbox"> Instagram</label>
       </div>
       <div class="section">
+        <h3>Public player list</h3>
+        <p class="muted">When enabled, the registration page shows a &quot;View registered players&quot; button with names and photos by category.</p>
+        <label class="check"><input id="showPublicRoster" type="checkbox"> Show &quot;View registered players&quot; on registration page</label>
+      </div>
+      <div class="section">
         <h3>Registration categories</h3>
         <p class="muted">These appear in the player dropdown. Add, rename, or remove any.</p>
         <div id="categoryRows"></div>
@@ -275,13 +290,14 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
         <button class="btn" type="button" id="exportBtn">Export CSV</button>
         <button class="btn danger" type="button" id="clearBtn">Clear this tournament's players</button>
       </div>
-      <h2>Players in this tournament only</h2>
+      <h2>Registered players</h2>
+      <p class="muted">Browse by category. Open receipts and approve or decline payments when a receipt is submitted.</p>
+      <div class="admin-cat-tabs" id="adminPlayerTabs" role="tablist"></div>
       <div style="overflow:auto">
         <table>
           <thead>
             <tr>
-              <th>ID</th><th>Name</th><th>Flat</th><th>Category</th><th>DOB</th><th>WhatsApp</th><th>Skill</th>
-              <th>Jersey</th><th>Size</th><th>Sleeve</th><th>Payment</th><th>Receipt</th><th></th>
+              <th>#</th><th>Photo</th><th>Name</th><th>WhatsApp</th><th>Registered</th><th>Status</th><th>Receipt</th><th>Actions</th>
             </tr>
           </thead>
           <tbody id="rows"></tbody>
@@ -299,6 +315,18 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
     <div class="actions">
       <button class="btn" type="button" id="createBtn">Create</button>
       <button class="btn ghost" type="button" id="cancelCreate">Cancel</button>
+    </div>
+  </div>
+</div>
+<div class="modal-bg" id="receiptModal" role="dialog" aria-modal="true" aria-labelledby="receiptModalTitle">
+  <div class="modal modal-receipt">
+    <div class="actions" style="margin-top:0;align-items:center">
+      <h3 style="margin:0;flex:1" id="receiptModalTitle">Payment receipt</h3>
+      <button class="btn ghost" type="button" id="closeReceiptModal">Close</button>
+    </div>
+    <p class="muted" id="receiptModalMeta" style="margin:8px 0 0"></p>
+    <div class="receipt-modal-body">
+      <img id="receiptModalImg" alt="Payment receipt">
     </div>
   </div>
 </div>
@@ -329,8 +357,12 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
       }).catch(function () {});
       list = await C.api.listAdmin();
       slug = C.getAdminSlug(list);
-      current = list.find(function (item) { return item.slug === slug; }) || list[0];
+      current = list.find(function (item) { return item.slug === slug; }) || list[0] || null;
       if (current) load(current);
+      else {
+        fillSelect();
+        toast("No tournaments yet — create your first one.");
+      }
     } catch (err) {
       document.getElementById("loginGate").style.display = "flex";
       document.getElementById("appRoot").classList.add("locked");
@@ -348,8 +380,14 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
   }
 
   function fillSelect() {
-    document.getElementById("tourneySelect").innerHTML = list.map(function (item) {
-      return '<option value="' + C.escapeHtml(item.slug) + '"' + (item.slug === current.slug ? " selected" : "") + ">" +
+    var sel = document.getElementById("tourneySelect");
+    if (!list.length) {
+      sel.innerHTML = '<option value="">No tournaments yet</option>';
+      return;
+    }
+    var activeSlug = current && current.slug ? current.slug : "";
+    sel.innerHTML = list.map(function (item) {
+      return '<option value="' + C.escapeHtml(item.slug) + '"' + (item.slug === activeSlug ? " selected" : "") + ">" +
         C.escapeHtml(item.name) + " (" + C.escapeHtml(item.status) + ")</option>";
     }).join("");
   }
@@ -533,6 +571,7 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
       notice: document.getElementById("notice").value,
       whatsNext: document.getElementById("whatsNext").value,
       supportWhatsapp: document.getElementById("supportWhatsapp").value.trim(),
+      showPublicRoster: document.getElementById("showPublicRoster").checked,
       fields: {
         dob: document.getElementById("fieldDob").checked,
         flatNumber: document.getElementById("fieldFlat").checked,
@@ -608,6 +647,7 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
     document.getElementById("fieldJerseySize").checked = fields.jerseySize !== false;
     document.getElementById("fieldSleeve").checked = fields.sleeve !== false;
     document.getElementById("fieldPhoto").checked = fields.photo !== false;
+    document.getElementById("showPublicRoster").checked = tournament.showPublicRoster !== false;
     document.getElementById("fieldCricheroes").checked = fields.cricheroes !== false;
     document.getElementById("fieldInstagram").checked = fields.instagram !== false;
     document.getElementById("jerseySizes").value = (tournament.jerseySizes || []).join(", ");
@@ -644,59 +684,195 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
     dirty = false;
   }
 
+  var adminPlayerRows = [];
+  var adminPlayerTab = "";
+
+  function adminPlayerStatus(row) {
+    if (row.paymentStatus === "PAID") return "Confirmed";
+    if (row.verificationStatus === "SUBMITTED") return "Pending verification";
+    if (row.verificationStatus === "REJECTED") return "Payment declined";
+    return "Reserved";
+  }
+
+  function adminPlayerInitials(name) {
+    var parts = String(name || "").trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return "?";
+    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+    return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+  }
+
+  function adminPlayerTabNames() {
+    var configured = C.normalizeCategories(current.categories || []).map(function (c) { return c.name; });
+    var fromRows = {};
+    adminPlayerRows.forEach(function (row) {
+      fromRows[row.category || "Uncategorized"] = true;
+    });
+    var tabs = configured.slice();
+    Object.keys(fromRows).forEach(function (cat) {
+      if (tabs.indexOf(cat) === -1) tabs.push(cat);
+    });
+    if (!tabs.length) tabs = Object.keys(fromRows);
+    return tabs;
+  }
+
+  function adminPlayersInTab(tab) {
+    return adminPlayerRows.filter(function (row) {
+      return (row.category || "Uncategorized") === tab;
+    });
+  }
+
+  function adminPhotoCell(row) {
+    if (row.photoUrl) {
+      var src = C.api.adminPlayerPhotoUrl(current.slug, row.id);
+      return '<img class="admin-player-photo" alt="" src="' + C.escapeHtml(src) + '">';
+    }
+    return '<div class="admin-player-photo-ph" aria-hidden="true">' + C.escapeHtml(adminPlayerInitials(row.name)) + "</div>";
+  }
+
+  function openAdminReceiptModal(src, name, upiRef) {
+    document.getElementById("receiptModalTitle").textContent = name ? "Receipt — " + name : "Payment receipt";
+    var meta = document.getElementById("receiptModalMeta");
+    meta.textContent = upiRef ? "UPI reference: " + upiRef : "";
+    meta.style.display = upiRef ? "block" : "none";
+    document.getElementById("receiptModalImg").src = src;
+    document.getElementById("receiptModal").style.display = "flex";
+  }
+
+  function closeAdminReceiptModal() {
+    document.getElementById("receiptModal").style.display = "none";
+    document.getElementById("receiptModalImg").removeAttribute("src");
+  }
+
+  function adminReceiptCell(row) {
+    var parts = [];
+    if (row.receiptUrl) {
+      var src = C.api.adminReceiptImageUrl(current.slug, row.id);
+      var label = C.escapeHtml(row.name || "Player");
+      var upi = row.receiptUpiRef ? C.escapeHtml(row.receiptUpiRef) : "";
+      parts.push(
+        '<button type="button" class="receipt-link" data-view-receipt="' + C.escapeHtml(src) + '" data-receipt-name="' + label + '"' +
+        (upi ? ' data-receipt-upi="' + upi + '"' : "") + ' title="View receipt">' +
+        '<img class="receipt-thumb" alt="View receipt" src="' + C.escapeHtml(src) + '"></button>'
+      );
+    }
+    if (row.receiptUpiRef) {
+      parts.push('<div class="muted" style="font-size:12px;margin-top:4px">UPI: ' + C.escapeHtml(row.receiptUpiRef) + "</div>");
+    }
+    return parts.length ? parts.join("") : '<span class="muted">—</span>';
+  }
+
+  function renderAdminPlayerTable() {
+    var tabs = adminPlayerTabNames();
+    if (!tabs.length) {
+      document.getElementById("adminPlayerTabs").innerHTML = "";
+      document.getElementById("rows").innerHTML = '<tr><td colspan="8" class="muted">No players in this tournament yet.</td></tr>';
+      return;
+    }
+    if (!adminPlayerTab || tabs.indexOf(adminPlayerTab) === -1) adminPlayerTab = tabs[0];
+    document.getElementById("adminPlayerTabs").innerHTML = tabs.map(function (tab) {
+      var count = adminPlayersInTab(tab).length;
+      var on = tab === adminPlayerTab ? " on" : "";
+      return '<button type="button" class="admin-cat-tab' + on + '" data-admin-cat="' + C.escapeHtml(tab) + '">' +
+        C.escapeHtml(tab) + " (" + count + ")</button>";
+    }).join("");
+    var players = adminPlayersInTab(adminPlayerTab);
+    document.getElementById("rows").innerHTML = players.length ? players.map(function (row, index) {
+      var paid = row.paymentStatus === "PAID";
+      var status = adminPlayerStatus(row);
+      var actions = "";
+      if (!paid && row.verificationStatus === "SUBMITTED") {
+        actions =
+          '<button class="btn" type="button" data-approve="' + C.escapeHtml(row.id) + '">Approve</button> ' +
+          '<button class="btn ghost" type="button" data-reject="' + C.escapeHtml(row.id) + '">Decline</button>';
+      } else if (!paid && row.verificationStatus === "REJECTED") {
+        actions = '<span class="muted">Awaiting resubmit</span>';
+      } else if (paid) {
+        actions = '<span class="muted">—</span>';
+      } else {
+        actions = '<span class="muted">No receipt yet</span>';
+      }
+      return "<tr>" +
+        "<td>" + (index + 1) + "</td>" +
+        "<td>" + adminPhotoCell(row) + "</td>" +
+        '<td><strong>' + C.escapeHtml(row.name) + '</strong><div class="muted" style="font-size:11px">' + C.escapeHtml(row.id) + "</div></td>" +
+        "<td>" + C.escapeHtml(row.phone) + "</td>" +
+        "<td>" + C.escapeHtml(C.formatDateTime(row.createdAt)) + "</td>" +
+        '<td><span class="tag' + (paid ? "" : " pending") + '">' + C.escapeHtml(status) + "</span></td>" +
+        "<td>" + adminReceiptCell(row) + "</td>" +
+        "<td>" + actions + "</td>" +
+        "</tr>";
+    }).join("") : '<tr><td colspan="8" class="muted">No players in this category yet.</td></tr>';
+  }
+
   async function renderPlayers() {
-    var rows = [];
+    if (!current || !current.slug) {
+      document.getElementById("adminPlayerTabs").innerHTML = "";
+      document.getElementById("rows").innerHTML = '<tr><td colspan="8" class="muted">Create a tournament to manage players.</td></tr>';
+      document.getElementById("total").textContent = "0";
+      document.getElementById("paid").textContent = "0";
+      document.getElementById("pending").textContent = "0";
+      document.getElementById("playersCount").textContent = "0";
+      return;
+    }
+    adminPlayerRows = [];
     try {
-      rows = await C.api.registrations(current.slug);
+      adminPlayerRows = await C.api.registrations(current.slug);
     } catch (err) {
       toast(err.message || "Could not load players");
     }
-    document.getElementById("total").textContent = rows.length;
-    document.getElementById("paid").textContent = rows.filter(function (row) { return row.paymentStatus === "PAID"; }).length;
-    document.getElementById("pending").textContent = rows.filter(function (row) { return row.paymentStatus !== "PAID"; }).length;
-    document.getElementById("playersCount").textContent = new Set(rows.map(function (row) { return row.phone; })).size;
-    document.getElementById("rows").innerHTML = rows.map(function (row) {
-      var paid = row.paymentStatus === "PAID";
-      var payLabel = paid ? "Confirmed" : (row.verificationStatus === "SUBMITTED" ? "Review" : row.verificationStatus === "REJECTED" ? "Resubmit" : "Reserved");
-      var receiptCell = row.receiptUrl
-        ? '<a href="' + C.escapeHtml(row.receiptUrl) + '" target="_blank" rel="noopener">View</a>'
-        : (row.receiptUpiRef ? C.escapeHtml(row.receiptUpiRef) : "-");
-      var actions = "";
-      if (!paid && row.verificationStatus === "SUBMITTED") {
-        actions = '<button class="btn" type="button" data-approve="' + C.escapeHtml(row.id) + '">Approve</button> ' +
-          '<button class="btn ghost" type="button" data-reject="' + C.escapeHtml(row.id) + '">Decline</button>';
-      }
-      return "<tr><td>" + C.escapeHtml(row.id) + "</td><td>" + C.escapeHtml(row.name) + "</td><td>" + C.escapeHtml(row.flat || "-") + "</td><td>" + C.escapeHtml(row.category || "-") + "</td><td>" + C.escapeHtml(row.dob || "-") +
-        "</td><td>" + C.escapeHtml(row.phone) + "</td><td>" + C.escapeHtml(row.skill) + "</td><td>" + C.escapeHtml(row.jersey || "-") +
-        "</td><td>" + C.escapeHtml(row.size || "-") + "</td><td>" + C.escapeHtml(row.sleeve || "-") +
-        '</td><td><span class="tag' + (paid ? "" : " pending") + '">' + payLabel + "</span></td><td>" + receiptCell +
-        "</td><td>" + actions + "</td></tr>";
-    }).join("") || '<tr><td colspan="13" class="muted">No players in this tournament yet.</td></tr>';
-    document.getElementById("rows").querySelectorAll("[data-approve]").forEach(function (btn) {
-      btn.addEventListener("click", async function () {
-        try {
-          await C.api.approveRegistration(current.slug, btn.getAttribute("data-approve"));
-          toast("Approved");
-          renderPlayers();
-        } catch (err) {
-          toast(err.message || "Approve failed");
-        }
-      });
-    });
-    document.getElementById("rows").querySelectorAll("[data-reject]").forEach(function (btn) {
-      btn.addEventListener("click", async function () {
-        var reason = prompt("Reason for declining receipt (shown to player):", "Receipt could not be verified");
-        if (reason === null) return;
-        try {
-          await C.api.rejectRegistration(current.slug, btn.getAttribute("data-reject"), reason);
-          toast("Declined — player can resubmit");
-          renderPlayers();
-        } catch (err) {
-          toast(err.message || "Decline failed");
-        }
-      });
-    });
+    document.getElementById("total").textContent = adminPlayerRows.length;
+    document.getElementById("paid").textContent = adminPlayerRows.filter(function (row) { return row.paymentStatus === "PAID"; }).length;
+    document.getElementById("pending").textContent = adminPlayerRows.filter(function (row) { return row.paymentStatus !== "PAID"; }).length;
+    document.getElementById("playersCount").textContent = new Set(adminPlayerRows.map(function (row) { return row.phone; })).size;
+    renderAdminPlayerTable();
   }
+
+  document.getElementById("adminPlayerTabs").addEventListener("click", function (event) {
+    var tab = event.target.getAttribute("data-admin-cat");
+    if (!tab) return;
+    adminPlayerTab = tab;
+    renderAdminPlayerTable();
+  });
+
+  document.getElementById("closeReceiptModal").addEventListener("click", closeAdminReceiptModal);
+  document.getElementById("receiptModal").addEventListener("click", function (event) {
+    if (event.target.id === "receiptModal") closeAdminReceiptModal();
+  });
+
+  document.getElementById("rows").addEventListener("click", async function (event) {
+    var receiptBtn = event.target.closest("[data-view-receipt]");
+    if (receiptBtn) {
+      openAdminReceiptModal(
+        receiptBtn.getAttribute("data-view-receipt"),
+        receiptBtn.getAttribute("data-receipt-name") || "",
+        receiptBtn.getAttribute("data-receipt-upi") || ""
+      );
+      return;
+    }
+    var approveId = event.target.getAttribute("data-approve");
+    var rejectId = event.target.getAttribute("data-reject");
+    if (approveId) {
+      try {
+        await C.api.approveRegistration(current.slug, approveId);
+        toast("Approved");
+        renderPlayers();
+      } catch (err) {
+        toast(err.message || "Approve failed");
+      }
+      return;
+    }
+    if (rejectId) {
+      var reason = prompt("Reason for declining receipt (shown to player):", "Receipt could not be verified");
+      if (reason === null) return;
+      try {
+        await C.api.rejectRegistration(current.slug, rejectId, reason);
+        toast("Declined — player can resubmit");
+        renderPlayers();
+      } catch (err) {
+        toast(err.message || "Decline failed");
+      }
+    }
+  });
 
   function upsertTournamentInList(saved, previousSlug) {
     list = list.filter(function (item) { return item.slug !== previousSlug; });
@@ -707,6 +883,10 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
   }
 
   async function save() {
+    if (!current || !current.slug) {
+      toast("Create a tournament first (New tournament).");
+      return;
+    }
     var next = collect();
     var previousSlug = current.slug;
     var saveBtn = document.getElementById("saveBtn");
@@ -812,7 +992,7 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
 
   document.getElementById("tourneySelect").addEventListener("change", function () {
     if (dirty && !confirm("Switch tournament? Unsaved edits will be lost.")) {
-      this.value = current.slug;
+      if (current && current.slug) this.value = current.slug;
       return;
     }
     var next = list.find(function (item) { return item.slug === document.getElementById("tourneySelect").value; });
@@ -830,9 +1010,11 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
   document.getElementById("createBtn").addEventListener("click", async function () {
     var name = document.getElementById("newName").value.trim();
     if (!name) return;
-    if (dirty) await save();
+    if (dirty && current && current.slug) await save();
     try {
-      var created = await C.api.createTournament({ name: name, copyFrom: current.slug });
+      var payload = { name: name };
+      if (current && current.slug) payload.copyFrom = current.slug;
+      var created = await C.api.createTournament(payload);
       list = await C.api.listAdmin();
       document.getElementById("modal").style.display = "none";
       load(created);
@@ -843,6 +1025,7 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
   });
 
   document.getElementById("deleteBtn").addEventListener("click", async function () {
+    if (!current || !current.slug) return;
     if (list.length < 2) {
       toast("Keep at least one tournament");
       return;

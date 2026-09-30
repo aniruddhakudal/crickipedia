@@ -38,10 +38,16 @@ a:hover{text-decoration:underline}
 .btn-ghost:hover{background:rgba(255,255,255,.2)}
 main{padding:0 0 56px}
 .section-title{font-size:1.35rem;font-weight:800;margin:0 0 8px;letter-spacing:-.02em}
-.section-sub{color:var(--muted);margin:0 0 24px;font-size:.95rem}
-.features{margin-top:-40px;position:relative;z-index:2}
+.section-sub{color:var(--muted);margin:0 0 24px;font-size:.95rem;max-width:52ch}
+.features{margin-top:-52px;position:relative;z-index:2}
+.features-panel{background:var(--white);border-radius:28px;padding:28px 28px 32px;border:1px solid var(--line);box-shadow:var(--shadow)}
+.features-intro{text-align:center;max-width:640px;margin:0 auto 28px;padding-bottom:24px;border-bottom:1px solid var(--line)}
+.features-eyebrow{margin:0 0 10px;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:var(--green)}
+.features-title{font-size:clamp(1.35rem,3.2vw,1.75rem);font-weight:800;margin:0 0 12px;letter-spacing:-.03em;line-height:1.2;color:var(--dark)}
+.features-lead{margin:0 auto;font-size:1rem;color:var(--muted);line-height:1.55;max-width:48ch}
 .feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
-.feature{background:var(--white);border-radius:20px;padding:22px;border:1px solid rgba(255,255,255,.9);box-shadow:var(--shadow)}
+.feature{background:linear-gradient(180deg,#fafcfb 0%,var(--white) 100%);border-radius:20px;padding:22px;border:1px solid var(--line);box-shadow:0 4px 16px rgba(7,27,22,.04);transition:transform .15s,box-shadow .15s}
+.feature:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(7,27,22,.08)}
 .feature .icon{font-size:1.75rem;line-height:1;margin-bottom:10px}
 .feature h3{margin:0 0 6px;font-size:1.05rem;font-weight:800}
 .feature p{margin:0;font-size:.88rem;color:var(--muted);line-height:1.45}
@@ -62,6 +68,8 @@ main{padding:0 0 56px}
 @media(max-width:640px){
   .topbar{align-items:flex-start;flex-direction:column}
   .t-card{align-items:flex-start}
+  .features-panel{padding:22px 18px 26px;border-radius:22px}
+  .features-intro{padding-bottom:20px;margin-bottom:22px}
 }
 </style>
 </head>
@@ -94,9 +102,13 @@ main{padding:0 0 56px}
 
 <main class="wrap">
   <section class="features" aria-labelledby="features-heading">
-    <h2 class="section-title" id="features-heading">Everything you need on the pitch and off it</h2>
-    <p class="section-sub">Start with registration today. More modules roll out as your league grows.</p>
-    <div class="feature-grid">
+    <div class="features-panel">
+      <header class="features-intro">
+        <p class="features-eyebrow">Platform</p>
+        <h2 class="features-title" id="features-heading">Everything you need on the pitch and off it</h2>
+        <p class="features-lead">Start with registration today. More modules roll out as your league grows.</p>
+      </header>
+      <div class="feature-grid">
       <article class="feature">
         <span class="pill pill-live">Available now</span>
         <div class="icon" aria-hidden="true">📝</div>
@@ -121,6 +133,7 @@ main{padding:0 0 56px}
         <h3>Live scores</h3>
         <p>Ball-by-ball scoring, shareable scorecards, and fixtures your community can follow in real time.</p>
       </article>
+      </div>
     </div>
   </section>
 

@@ -96,6 +96,7 @@ function defaultSettings() {
     notice: "Your spot is reserved as soon as you register. Pay the entry fee to confirm.",
     whatsNext: "Your registration is the first step. Later phases add auctions, teams, live scoring and prizes.",
     supportWhatsapp: "",
+    showPublicRoster: true,
     fields: {
       dob: true,
       flatNumber: true,
@@ -168,6 +169,7 @@ function toClient(row, sponsors) {
     notice: settings.notice || "",
     whatsNext: settings.whatsNext || "",
     supportWhatsapp: settings.supportWhatsapp || "",
+    showPublicRoster: settings.showPublicRoster !== false,
     fields: settings.fields || defaultSettings().fields,
     skills: settings.skills || defaultSettings().skills,
     jerseySizes: settings.jerseySizes || defaultSettings().jerseySizes,
@@ -198,6 +200,7 @@ function settingsFromClient(body) {
     notice: body.notice || "",
     whatsNext: body.whatsNext || "",
     supportWhatsapp: body.supportWhatsapp || "",
+    showPublicRoster: body.showPublicRoster !== false,
     fields: body.fields || defaultSettings().fields,
     skills: body.skills && body.skills.length ? body.skills : defaultSettings().skills,
     jerseySizes: body.jerseySizes || [],
@@ -207,6 +210,25 @@ function settingsFromClient(body) {
     sleeves: body.sleeves || [],
     payment: settingsUtil.mergePaymentSettings({ payment: body.payment }),
     whatsapp: settingsUtil.mergeWhatsappSettings({ whatsapp: body.whatsapp })
+  };
+}
+
+function rosterStatusLabel(row) {
+  if (row.payment_status === "PAID" || row.status === "PAID") return "Confirmed";
+  if (row.verification_status === "SUBMITTED") return "Pending verification";
+  if (row.verification_status === "REJECTED") return "Payment declined";
+  if (row.verification_status === "AWAITING_RECEIPT") return "Awaiting payment";
+  return "Reserved";
+}
+
+function rosterToClient(row) {
+  return {
+    name: row.full_name,
+    category: row.category || "",
+    photoUrl: row.photo_url || "",
+    photoRef: row.registration_number || "",
+    registeredAt: row.registered_at,
+    status: rosterStatusLabel(row)
   };
 }
 
@@ -476,6 +498,7 @@ module.exports = {
   toClient,
   settingsFromClient,
   registrationToClient,
+  rosterToClient,
   loadTournament,
   loadTournamentByKeys,
   loadTournamentFromParams,

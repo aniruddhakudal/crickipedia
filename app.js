@@ -213,8 +213,13 @@
 
   function parseDate(value) {
     if (!value) return null;
-    var parts = String(value).split("-");
-    if (parts.length !== 3) return new Date(value);
+    var str = String(value);
+    if (/[T\s]/.test(str) || str.indexOf(":") >= 0) {
+      var parsed = new Date(str);
+      return isNaN(parsed.getTime()) ? null : parsed;
+    }
+    var parts = str.split("-");
+    if (parts.length !== 3) return new Date(str);
     return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
   }
 
@@ -248,6 +253,24 @@
     var date = parseDate(value);
     if (!date || isNaN(date.getTime())) return value || "";
     return date.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+  }
+
+  function formatDateTime(value) {
+    var date = parseDate(value);
+    if (!date || isNaN(date.getTime())) return value || "";
+    return date.toLocaleString("en-IN", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit"
+    });
+  }
+
+  function resolvePhotoUrl(url) {
+    if (!url) return "";
+    if (/^https?:\/\//i.test(url) || url.startsWith("/")) return url;
+    return "/uploads/" + url.replace(/^\/+/, "");
   }
 
   function formatDateRange(tournament) {
@@ -413,6 +436,11 @@
         return data.record || null;
       });
     },
+    roster: function (ref, preview) {
+      return request(apiTournamentPath(ref) + "/roster" + (preview ? "?preview=1" : "")).then(function (data) {
+        return { categories: data.categories || [], players: data.players || [] };
+      });
+    },
     register: function (ref, body, preview) {
       return request(apiTournamentPath(ref) + "/register" + (preview ? "?preview=1" : ""), {
         method: "POST",
@@ -433,6 +461,9 @@
     },
     paymentQrImageUrl: function (ref) {
       return apiTournamentPath(ref) + "/payment-qr-image";
+    },
+    playerPhotoImageUrl: function (ref, registrationNumber) {
+      return apiTournamentPath(ref) + "/registrations/" + encodeURIComponent(registrationNumber) + "/photo-image";
     },
     uploadPaymentQr: function (slug, file) {
       var form = new FormData();
@@ -482,6 +513,12 @@
         method: "POST",
         body: form
       }).then(function (data) { return data.record; });
+    },
+    adminPlayerPhotoUrl: function (slug, registrationId) {
+      return "/api/admin/tournaments/" + encodeURIComponent(slug) + "/registrations/" + encodeURIComponent(registrationId) + "/photo-image";
+    },
+    adminReceiptImageUrl: function (slug, registrationId) {
+      return "/api/admin/tournaments/" + encodeURIComponent(slug) + "/registrations/" + encodeURIComponent(registrationId) + "/receipt-image";
     },
     approveRegistration: function (slug, id) {
       return request("/api/admin/tournaments/" + encodeURIComponent(slug) + "/registrations/" + encodeURIComponent(id) + "/approve", {
@@ -608,6 +645,8 @@
     canRegister: canRegister,
     formatMoney: formatMoney,
     formatPrettyDate: formatPrettyDate,
+    formatDateTime: formatDateTime,
+    resolvePhotoUrl: resolvePhotoUrl,
     formatDateRange: formatDateRange,
     stateLabel: stateLabel,
     applyTheme: applyTheme,

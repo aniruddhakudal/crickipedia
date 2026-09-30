@@ -338,6 +338,47 @@ async function paymentQrPayload(slug, registrationId) {
   return { upiUri, qrDataUrl, qrImageUrl: payment.qrImageUrl || "" };
 }
 
+mountTournamentRoute("get", "/registrations/:id/photo-image", async (req, res) => {
+  try {
+    const loaded = await loadTournamentFromParams(req.params);
+    if (!loaded) {
+      res.status(404).end();
+      return;
+    }
+    if (loaded.tournament.status === "DRAFT" && req.query.preview !== "1") {
+      res.status(404).end();
+      return;
+    }
+    if (loaded.tournament.showPublicRoster === false) {
+      res.status(404).end();
+      return;
+    }
+    const found = await db.query(
+      `SELECT p.photo_url
+       FROM registrations r
+       JOIN tournaments t ON t.id = r.tournament_id
+       JOIN players p ON p.id = r.player_id
+       WHERE t.slug = $1 AND r.registration_number = $2`,
+      [loaded.row.slug, req.params.id]
+    );
+    const photoUrl = found.rows[0] ? found.rows[0].photo_url : "";
+    if (!photoUrl) {
+      res.status(404).end();
+      return;
+    }
+    const file = await photoStorage.streamPaymentQr(photoUrl);
+    if (!file) {
+      res.status(404).end();
+      return;
+    }
+    res.setHeader("Content-Type", file.contentType);
+    res.setHeader("Cache-Control", "public, max-age=300");
+    res.send(file.buffer);
+  } catch (err) {
+    res.status(500).end();
+  }
+});
+
 mountTournamentRoute("get", "/payment-qr-image", async (req, res) => {
   try {
     const loaded = await loadTournamentFromParams(req.params);
@@ -436,6 +477,44 @@ mountTournamentRoute("get", "/lookup", async (req, res) => {
     }
     const slug = await resolveRouteSlug(req.params);
     res.json({ record: await findRegistration(slug, phone) });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+mountTournamentRoute("get", "/roster", async (req, res) => {
+  try {
+    const loaded = await loadTournamentFromParams(req.params);
+    if (!loaded) {
+      res.status(404).json({ error: "Tournament not found" });
+      return;
+    }
+    if (loaded.tournament.status === "DRAFT" && req.query.preview !== "1") {
+      res.status(404).json({ error: "Not found" });
+      return;
+    }
+    if (loaded.tournament.showPublicRoster === false) {
+      res.status(404).json({ error: "Not found" });
+      return;
+    }
+    const slug = loaded.row.slug;
+    const result = await db.query(
+      `SELECT r.registration_number, r.category, r.status, r.registered_at,
+              p.full_name, p.photo_url,
+              pay.payment_status, pay.verification_status
+       FROM registrations r
+       JOIN tournaments t ON t.id = r.tournament_id
+       JOIN players p ON p.id = r.player_id
+       LEFT JOIN payments pay ON pay.registration_id = r.id
+       WHERE t.slug = $1
+       ORDER BY r.registered_at ASC`,
+      [slug]
+    );
+    const categories = settingsUtil.categoryNames(loaded.tournament.categories);
+    res.json({
+      categories,
+      players: result.rows.map(db.rosterToClient)
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -979,6 +1058,63 @@ app.delete("/api/admin/tournaments/:slug", requireAdmin, async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+async function adminRegistrationAsset(slug, registrationNumber, field) {
+  const result = await db.query(
+    `SELECT p.photo_url, pay.receipt_url
+     FROM registrations r
+     JOIN tournaments t ON t.id = r.tournament_id
+     JOIN players p ON p.id = r.player_id
+     LEFT JOIN payments pay ON pay.registration_id = r.id
+     WHERE t.slug = $1 AND r.registration_number = $2`,
+    [slug, registrationNumber]
+  );
+  if (!result.rows[0]) return null;
+  const row = result.rows[0];
+  if (field === "photo") return row.photo_url || "";
+  if (field === "receipt") return row.receipt_url || "";
+  return "";
+}
+
+app.get("/api/admin/tournaments/:slug/registrations/:id/photo-image", requireAdmin, async (req, res) => {
+  try {
+    const photoUrl = await adminRegistrationAsset(req.params.slug, req.params.id, "photo");
+    if (!photoUrl) {
+      res.status(404).end();
+      return;
+    }
+    const file = await photoStorage.streamPaymentQr(photoUrl);
+    if (!file) {
+      res.status(404).end();
+      return;
+    }
+    res.setHeader("Content-Type", file.contentType);
+    res.setHeader("Cache-Control", "private, max-age=120");
+    res.send(file.buffer);
+  } catch (err) {
+    res.status(500).end();
+  }
+});
+
+app.get("/api/admin/tournaments/:slug/registrations/:id/receipt-image", requireAdmin, async (req, res) => {
+  try {
+    const receiptUrl = await adminRegistrationAsset(req.params.slug, req.params.id, "receipt");
+    if (!receiptUrl) {
+      res.status(404).end();
+      return;
+    }
+    const file = await photoStorage.streamPaymentQr(receiptUrl);
+    if (!file) {
+      res.status(404).end();
+      return;
+    }
+    res.setHeader("Content-Type", file.contentType);
+    res.setHeader("Cache-Control", "private, max-age=120");
+    res.send(file.buffer);
+  } catch (err) {
+    res.status(500).end();
   }
 });
 
