@@ -62,6 +62,27 @@ function adminTournamentSlug(req) {
 
 const app = express();
 
+app.get("/api/ping", (req, res) => {
+  res.json({ ok: true, service: "crickipedia", ts: new Date().toISOString() });
+});
+
+app.get("/api/webhooks/whatsapp", (req, res) => {
+  try {
+    const challenge = whatsapp.verifyWebhookSubscription(req.query);
+    if (challenge != null) {
+      res.status(200).type("text/plain").send(challenge);
+      return;
+    }
+    if (!whatsapp.webhookConfigured()) {
+      res.status(503).type("text/plain").send("Set WHATSAPP_WEBHOOK_VERIFY_TOKEN in server .env");
+      return;
+    }
+    res.status(403).type("text/plain").send("Forbidden");
+  } catch (err) {
+    res.status(500).type("text/plain").send("Webhook error");
+  }
+});
+
 app.post("/api/webhooks/razorpay", express.raw({ type: "application/json" }), async (req, res) => {
   try {
     const signature = req.headers["x-razorpay-signature"];
@@ -102,19 +123,6 @@ app.post("/api/webhooks/razorpay", express.raw({ type: "application/json" }), as
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-});
-
-app.get("/api/webhooks/whatsapp", (req, res) => {
-  const challenge = whatsapp.verifyWebhookSubscription(req.query);
-  if (challenge != null) {
-    res.status(200).type("text/plain").send(challenge);
-    return;
-  }
-  if (!whatsapp.webhookConfigured()) {
-    res.status(503).type("text/plain").send("Set WHATSAPP_WEBHOOK_VERIFY_TOKEN in server .env");
-    return;
-  }
-  res.status(403).type("text/plain").send("Forbidden");
 });
 
 app.use(express.json({ limit: "1mb" }));
@@ -1413,13 +1421,19 @@ app.use((err, req, res, next) => {
 app.use(express.static(siteRoot, { index: false }));
 
 async function start() {
-  await db.connect();
-  await db.migrate();
-  await db.seed();
-  await photoStorage.init();
-  app.listen(PORT, () => {
-    console.log(`Crickipedia Phase 2 http://localhost:${PORT}`);
+  const host = process.env.HOST || "0.0.0.0";
+  app.listen(PORT, host, () => {
+    console.log(`Crickipedia Phase 2 http://${host === "0.0.0.0" ? "localhost" : host}:${PORT}`);
   });
+  try {
+    await db.connect();
+    await db.migrate();
+    await db.seed();
+    await photoStorage.init();
+  } catch (err) {
+    console.error("Database/storage startup failed:", err.message);
+    console.error("Fix DATABASE_URL on the server. /api/ping and WhatsApp webhook verify may still work.");
+  }
 }
 
 start().catch((err) => {

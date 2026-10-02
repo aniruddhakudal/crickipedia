@@ -14,11 +14,14 @@ function webhookConfigured() {
 
 /** Meta GET /api/webhooks/whatsapp — hub.mode, hub.verify_token, hub.challenge */
 function verifyWebhookSubscription(query) {
-  const mode = String(query["hub.mode"] || "");
-  const token = String(query["hub.verify_token"] || "");
+  const mode = String(query["hub.mode"] || "").trim();
+  const token = String(query["hub.verify_token"] || "").trim();
   const challenge = query["hub.challenge"];
   const expected = webhookVerifyToken();
-  if (mode !== "subscribe" || !expected || token !== expected || challenge == null) {
+  if (mode !== "subscribe" || !expected || challenge == null || challenge === "") {
+    return null;
+  }
+  if (token !== expected) {
     return null;
   }
   return String(challenge);

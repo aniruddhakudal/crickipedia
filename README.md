@@ -51,6 +51,8 @@ Default admin login: `admin` / `admin123` (change in `.env`).
 
 Do not use `python -m http.server` for Phase 2. The pages must be served by `npm start` so they can talk to `/api`.
 
+**Production:** see [deploy/DEPLOY.md](deploy/DEPLOY.md). If `https://your-domain/api/health` is unreachable, the Node app is usually not running or not proxied — try `/api/ping` first.
+
 ## How it works
 
 **Database**
