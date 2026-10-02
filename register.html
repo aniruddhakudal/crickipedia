@@ -4,13 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Player Registration</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;0,9..40,800&display=swap" rel="stylesheet">
 <style>
 :root{--green:#0b6b45;--green2:#0f8b5b;--gold:#f5b942;--dark:#071b16;--light:#f3f7f5;--muted:#5f6f69;--white:#fff;--line:#e3ebe6;--shadow:0 16px 48px rgba(7,27,22,.07)}
 *{box-sizing:border-box}
-body{margin:0;font-family:"DM Sans",system-ui,-apple-system,Segoe UI,sans-serif;background:var(--light);color:var(--dark);line-height:1.5;-webkit-font-smoothing:antialiased}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--light);color:var(--dark);line-height:1.5;-webkit-font-smoothing:antialiased}
 .hero{background:linear-gradient(145deg,var(--dark) 0%,var(--green) 52%,var(--green2) 100%);color:white;padding:28px 0 56px;position:relative;overflow:hidden}
 .hero:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 85% 20%,rgba(245,185,66,.18),transparent 45%)}
 .hero:after{content:attr(data-emoji);position:absolute;right:4%;bottom:-40px;font-size:200px;opacity:.07;transform:rotate(-12deg);pointer-events:none}
@@ -34,6 +31,7 @@ body{margin:0;font-family:"DM Sans",system-ui,-apple-system,Segoe UI,sans-serif;
 .notice strong{display:block;margin-bottom:4px;font-size:.95rem;color:#6b4f00}
 form{display:flex;flex-direction:column;gap:28px}
 .form-section{display:flex;flex-direction:column;gap:16px}
+.ordered-form-fields{display:flex;flex-direction:column;gap:16px}
 .form-section-title{font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--green);margin:0}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 label{font-weight:600;font-size:.88rem;display:grid;gap:8px;color:#1a2e26}
@@ -70,6 +68,20 @@ input:focus,select:focus{border-color:var(--green2);background:#fff;box-shadow:0
 .sponsors{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .sponsor{border:1px solid var(--line);border-radius:14px;padding:16px;text-align:center;font-weight:700;font-size:.85rem;background:#fafcfb}
 .sponsor img{max-height:36px;max-width:100%;display:block;margin:0 auto 8px}
+.jersey-size-row{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
+.jersey-size-select{flex:1;min-width:140px}
+.jersey-size-chart{flex:0 0 auto;max-width:min(100%,200px)}
+.jersey-size-chart img{width:100%;max-height:160px;object-fit:contain;border-radius:12px;border:1px solid var(--line);cursor:zoom-in}
+.sponsor-footer{margin:0 auto 28px;max-width:1080px;padding:0 20px}
+.sponsor-footer.hidden{display:none!important}
+.sponsor-footer-title{text-align:center;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:0 0 14px}
+.sponsor-carousel-mask{overflow:hidden;mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
+.sponsor-carousel-track{display:flex;gap:32px;align-items:center;width:max-content;animation:sponsor-scroll 40s linear infinite}
+.sponsor-carousel-track:hover{animation-play-state:paused}
+.sponsor-carousel-item{flex:0 0 auto;display:flex;align-items:center;justify-content:center;min-width:120px;max-width:160px;padding:8px 12px}
+.sponsor-carousel-item img{max-height:48px;max-width:140px;object-fit:contain;display:block}
+.sponsor-carousel-item span{font-weight:700;font-size:.85rem;color:var(--dark)}
+@keyframes sponsor-scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
 .aside-card h3{font-size:1rem;margin-bottom:16px}
 .info-grid{display:grid;gap:12px}
 .info-chip{padding:14px 16px;border-radius:14px;background:#f6faf8;border:1px solid var(--line)}
@@ -84,10 +96,6 @@ input:focus,select:focus{border-color:var(--green2);background:#fff;box-shadow:0
 .success .lead{margin:0 0 20px;color:var(--muted);font-size:.95rem;line-height:1.5}
 .regid{font-size:1.35rem;font-weight:800;color:var(--green);background:linear-gradient(180deg,#eef9f4,#e4f5ec);padding:18px 20px;border-radius:16px;margin:0 0 16px;letter-spacing:.02em;border:1px solid #c8e8d8}
 .hidden{display:none!important}
-.more{border:1px solid var(--line);border-radius:16px;background:#fafcfb;overflow:hidden}
-.more summary{cursor:pointer;font-weight:700;padding:16px 18px;list-style:none;font-size:.92rem}
-.more summary::-webkit-details-marker{display:none}
-.more .more-body{display:grid;gap:16px;padding:0 18px 18px}
 .hint{background:#eef9f4;border-radius:14px;padding:14px 16px;font-size:.88rem;line-height:1.45;border:1px solid #d4eddf}
 .hint a,.hint button.link{color:var(--green);font-weight:700;background:none;border:0;padding:0;cursor:pointer;font-size:inherit}
 .status-pill{display:inline-block;padding:8px 14px;border-radius:999px;font-size:.8rem;font-weight:800}
@@ -202,25 +210,7 @@ input:focus,select:focus{border-color:var(--green2);background:#fff;box-shadow:0
               <input id="phone" type="tel" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" required placeholder="10 digits">
             </label>
           </div>
-          <label id="flatWrap">Flat number *
-            <input id="flat" required maxlength="30" placeholder="e.g. A-1203">
-          </label>
-          <label id="categoryWrap">Category *
-            <select id="category" required>
-              <option value="">Choose one</option>
-            </select>
-          </label>
-        </div>
-        <div class="form-section hidden" id="photoWrap">
-          <p class="form-section-title">Profile picture <span class="opt">(optional)</span></p>
-          <div class="profile-upload">
-            <div class="profile-preview" id="profilePreview" aria-hidden="true">📷</div>
-            <div class="profile-upload-actions">
-              <label class="pick-photo" for="photo">Choose photo</label>
-              <input id="photo" type="file" accept="image/*">
-              <p class="profile-hint">JPG or PNG. You can also add one after you register.</p>
-            </div>
-          </div>
+          <div id="orderedFormFields" class="ordered-form-fields"></div>
         </div>
         <div class="form-section">
           <p class="form-section-title">Playing role</p>
@@ -228,10 +218,6 @@ input:focus,select:focus{border-color:var(--green2);background:#fff;box-shadow:0
             <div class="skills" id="skills"></div>
           </label>
         </div>
-        <details class="more" id="moreBox">
-          <summary>More details <span class="muted">(optional)</span></summary>
-          <div class="more-body" id="moreBody"></div>
-        </details>
         <div class="form-section hidden" id="formPaymentSection">
           <p class="form-section-title">Pay entry fee</p>
           <p class="muted" id="formPaymentInstructions"></p>
@@ -302,10 +288,6 @@ input:focus,select:focus{border-color:var(--green2);background:#fff;box-shadow:0
       </div>
       <button type="button" class="btn roster-open" id="rosterOpenBtn">View registered players</button>
     </div>
-    <div class="card" id="sponsorsCard">
-      <h3>🤝 Our Sponsors</h3>
-      <div class="sponsors" id="sponsors"></div>
-    </div>
     <div class="card">
       <h3>🏆 What's Next?</h3>
       <p class="muted" id="whatsNext"></p>
@@ -327,6 +309,13 @@ input:focus,select:focus{border-color:var(--green2);background:#fff;box-shadow:0
   </div>
 </div>
 
+<div class="sponsor-footer hidden" id="sponsorFooter" aria-label="Sponsors">
+  <p class="sponsor-footer-title">Our sponsors</p>
+  <div class="sponsor-carousel-mask">
+    <div class="sponsor-carousel-track" id="sponsorCarouselTrack"></div>
+  </div>
+</div>
+
 <footer class="footer">
   <div id="footerText"></div>
   <div class="tourney-links"><a href="/">← Crickipedia home</a><span id="otherTournaments"></span></div>
@@ -343,17 +332,27 @@ input:focus,select:focus{border-color:var(--green2);background:#fff;box-shadow:0
   var suppressPayPanels = false;
   var all = [];
   var tournament = null;
+  var parsed = C.parsePublicUrl();
+  var hasDirectRef = (parsed.tournament && parsed.season) || parsed.legacySlug;
   try {
-    all = await C.api.listPublic(preview);
-    var parsed = C.parsePublicUrl();
-    if (parsed.tournament && parsed.season) {
-      var cfg = await C.api.config({ tournamentSlug: parsed.tournament, seasonSlug: parsed.season }, preview);
-      tournament = cfg.tournament;
-    } else if (parsed.legacySlug) {
-      var cfgLegacy = await C.api.config(parsed.legacySlug, preview);
-      tournament = cfgLegacy.tournament;
+    if (hasDirectRef) {
+      if (parsed.tournament && parsed.season) {
+        var cfg = await C.api.config({ tournamentSlug: parsed.tournament, seasonSlug: parsed.season }, preview);
+        tournament = cfg.tournament;
+        paymentCfg = cfg.paymentConfig || null;
+      } else {
+        var cfgLegacy = await C.api.config(parsed.legacySlug, preview);
+        tournament = cfgLegacy.tournament;
+        paymentCfg = cfgLegacy.paymentConfig || null;
+      }
     } else {
+      all = await C.api.listPublic(preview);
       tournament = C.resolvePublicTournament(all);
+      if (tournament) {
+        var cfgList = await C.api.config(tournament, preview);
+        tournament = cfgList.tournament;
+        paymentCfg = cfgList.paymentConfig || null;
+      }
     }
   } catch (err) {
     document.getElementById("formCard").classList.add("hidden");
@@ -459,19 +458,22 @@ input:focus,select:focus{border-color:var(--green2);background:#fff;box-shadow:0
     }
   }
 
-  paymentCfg = {
-    mode: (tournament.payment && tournament.payment.mode === "manual_qr") ? "manual_qr" : "razorpay",
-    payment: tournament.payment || {},
-    razorpayAvailable: true
-  };
-  applyPaymentUi(paymentCfg);
-
-  C.api.tournamentPaymentConfig(tournament).then(function (cfg) {
-    paymentCfg = cfg;
-    applyPaymentUi(cfg);
-  }).catch(function () {
-    document.getElementById("payNote").textContent = "Could not load payment settings. Refresh the page or contact the organizer.";
-  });
+  if (paymentCfg) {
+    applyPaymentUi(paymentCfg);
+  } else {
+    paymentCfg = {
+      mode: (tournament.payment && tournament.payment.mode === "manual_qr") ? "manual_qr" : "razorpay",
+      payment: tournament.payment || {},
+      razorpayAvailable: true
+    };
+    applyPaymentUi(paymentCfg);
+    C.api.tournamentPaymentConfig(tournament).then(function (cfg) {
+      paymentCfg = cfg;
+      applyPaymentUi(cfg);
+    }).catch(function () {
+      document.getElementById("payNote").textContent = "Could not load payment settings. Refresh the page or contact the organizer.";
+    });
+  }
   if (tournament.showPublicRoster === false) {
     document.getElementById("rosterOpenBtn").classList.add("hidden");
   }
@@ -496,71 +498,171 @@ input:focus,select:focus{border-color:var(--green2);background:#fff;box-shadow:0
     return '<label class="skill"><input name="skill" value="' + C.escapeHtml(value) + '" type="radio" required><span>' + C.escapeHtml(emoji + " " + label) + "</span></label>";
   }).join("");
 
-  var fields = tournament.fields || {};
-  if (fields.flatNumber === false) {
-    document.getElementById("flatWrap").classList.add("hidden");
-    document.getElementById("flat").required = false;
+  function fm(key) {
+    return C.fieldModeForTournament(tournament, key);
+  }
+  function fieldSuffix(key) {
+    var mode = fm(key);
+    if (mode === "required") return " *";
+    if (mode === "optional") return ' <span class="opt">(optional)</span>';
+    return "";
   }
   var categories = C.normalizeCategories(tournament.categories);
-  document.getElementById("category").innerHTML = '<option value="">Select category</option>' + categories.map(function (item) {
+  var categoryOptionsHtml = '<option value="">Select category</option>' + categories.map(function (item) {
     return '<option value="' + C.escapeHtml(item.name) + '">' + C.escapeHtml(item.name) + "</option>";
   }).join("");
-  if (fields.category === false) {
-    document.getElementById("categoryWrap").classList.add("hidden");
-    document.getElementById("category").required = false;
+
+  function fieldSuffixFromMode(mode) {
+    if (mode === "required") return " *";
+    if (mode === "optional") return ' <span class="opt">(optional)</span>';
+    return "";
   }
-  if (fields.photo === false) {
-    document.getElementById("photoWrap").classList.add("hidden");
-  } else {
-    document.getElementById("photoWrap").classList.remove("hidden");
+
+  function buildSimpleField(text, mode, inputHtml) {
+    var reqAttr = mode === "required" ? " required" : "";
+    return "<label>" + text + fieldSuffixFromMode(mode) + inputHtml.replace(/^(<\w+)/, "$1" + reqAttr) + "</label>";
   }
-  var more = [];
-  if (fields.dob !== false) {
-    more.push('<label>Date of birth <span class="opt">(optional)</span><input id="dob" type="date"></label>');
+
+  function htmlCustomField(field) {
+    var suffix = fieldSuffixFromMode(field.mode);
+    var reqAttr = field.mode === "required" ? " required" : "";
+    var key = C.escapeHtml(field.id);
+    if (field.type === "select") {
+      var opts = '<option value="">Select</option>' + (field.options || []).map(function (opt) {
+        return "<option>" + C.escapeHtml(opt) + "</option>";
+      }).join("");
+      return "<label>" + C.escapeHtml(field.label) + suffix +
+        '<select data-custom-field="' + key + '"' + reqAttr + ">" + opts + "</select></label>";
+    }
+    var inputType = field.type === "number" ? "number" : field.type === "date" ? "date" : field.type === "url" ? "url" : "text";
+    var extra = field.type === "url" ? ' placeholder="https://"' : "";
+    return "<label>" + C.escapeHtml(field.label) + suffix +
+      '<input data-custom-field="' + key + '" type="' + inputType + '"' + reqAttr + extra + "></label>";
   }
-  if (fields.jerseyNumber !== false) {
-    more.push('<label>Suggested jersey no. <span class="opt">(optional)</span><input id="jersey" type="number" min="0" max="999" placeholder="e.g. 18"></label>');
-  }
-  if (fields.jerseySize !== false || fields.sleeve !== false) {
-    var row = '<div class="row">';
-    if (fields.jerseySize !== false) {
-      row += '<label>Jersey size <span class="opt">(optional)</span><select id="size"><option value="">Select size</option>' +
+
+  function htmlBuiltinField(field) {
+    var mode = field.mode;
+    var reqAttr = mode === "required" ? " required" : "";
+    var labels = C.BUILTIN_FIELD_LABELS;
+    if (field.id === "flatNumber") {
+      return '<label><span>Flat number' + fieldSuffixFromMode(mode) + '</span><input id="flat" maxlength="30" placeholder="e.g. A-1203"' + reqAttr + "></label>";
+    }
+    if (field.id === "category") {
+      return '<label><span>Category' + fieldSuffixFromMode(mode) + '</span><select id="category"' + reqAttr + ">" + categoryOptionsHtml + "</select></label>";
+    }
+    if (field.id === "photo") {
+      return '<div class="profile-field"><p class="form-section-title" style="margin:0 0 8px">Profile picture' + fieldSuffixFromMode(mode) + '</p><div class="profile-upload">' +
+        '<div class="profile-preview" id="profilePreview" aria-hidden="true">📷</div>' +
+        '<div class="profile-upload-actions"><label class="pick-photo" for="photo">Choose photo</label>' +
+        '<input id="photo" type="file" accept="image/*"' + (mode === "required" ? " required" : "") + '>' +
+        '<p class="profile-hint">JPG or PNG. You can also add one after you register.</p></div></div></div>';
+    }
+    if (field.id === "dob") {
+      return buildSimpleField("Date of birth", mode, '<input id="dob" type="date">');
+    }
+    if (field.id === "jerseyNumber") {
+      return buildSimpleField("Suggested jersey no.", mode, '<input id="jersey" type="number" min="0" max="999" placeholder="e.g. 18">');
+    }
+    if (field.id === "jerseySize") {
+      var chartSrc = tournament.jerseySizeChartUrl ? C.api.jerseySizeChartImageUrl(tournament) : "";
+      var sizeInner = '<div class="jersey-size-row"><div class="jersey-size-select"><select id="size"' + reqAttr + '><option value="">Select size</option>' +
         (tournament.jerseySizes || []).map(function (size) {
-          return '<option>' + C.escapeHtml(size) + "</option>";
-        }).join("") + "</select></label>";
+          return "<option>" + C.escapeHtml(size) + "</option>";
+        }).join("") + "</select></div>";
+      if (chartSrc) {
+        sizeInner += '<a class="jersey-size-chart" href="' + C.escapeHtml(chartSrc) + '" target="_blank" rel="noopener" title="Open size chart">' +
+          '<img src="' + C.escapeHtml(chartSrc) + '" alt="Jersey size chart"></a>';
+      }
+      sizeInner += "</div>";
+      return "<label>Jersey size" + fieldSuffixFromMode(mode) + sizeInner + "</label>";
     }
-    if (fields.sleeve !== false) {
-      row += '<label>Sleeve <span class="opt">(optional)</span><select id="sleeve"><option value="">Select</option>' +
+    if (field.id === "sleeve") {
+      return buildSimpleField("Sleeve", mode, '<select id="sleeve"><option value="">Select</option>' +
         (tournament.sleeves || []).map(function (sleeve) {
-          return '<option>' + C.escapeHtml(sleeve) + "</option>";
-        }).join("") + "</select></label>";
+          return "<option>" + C.escapeHtml(sleeve) + "</option>";
+        }).join("") + "</select>");
     }
-    more.push(row + "</div>");
+    if (field.id === "cricheroes") {
+      return buildSimpleField("CricHeroes", mode, '<input id="cricheroes" type="url" placeholder="https://crickeroes.com/...">');
+    }
+    if (field.id === "instagram") {
+      return buildSimpleField("Instagram", mode, '<input id="instagram" type="url" placeholder="https://instagram.com/...">');
+    }
+    return "";
   }
-  if (fields.cricheroes !== false || fields.instagram !== false) {
-    var social = '<div class="row">';
-    if (fields.cricheroes !== false) social += '<label>CricHeroes <span class="opt">(optional)</span><input id="cricheroes" type="url" placeholder="https://crickeroes.com/..."></label>';
-    if (fields.instagram !== false) social += '<label>Instagram <span class="opt">(optional)</span><input id="instagram" type="url" placeholder="https://instagram.com/..."></label>';
-    more.push(social + "</div>");
+
+  function collectCustomFieldValues() {
+    var out = {};
+    document.querySelectorAll("[data-custom-field]").forEach(function (el) {
+      var key = el.getAttribute("data-custom-field");
+      if (!key) return;
+      out[key] = el.value.trim();
+    });
+    return out;
   }
-  if (!more.length) document.getElementById("moreBox").classList.add("hidden");
-  document.getElementById("moreBody").innerHTML = more.join("");
 
-  var sponsors = (tournament.sponsors || []).filter(function (item) { return item && item.name; });
-  if (!sponsors.length) document.getElementById("sponsorsCard").classList.add("hidden");
-  document.getElementById("sponsors").innerHTML = sponsors.map(function (item) {
-    var inner = item.logoUrl ? '<img alt="" src="' + C.escapeHtml(item.logoUrl) + '">' : "";
-    inner += C.escapeHtml(item.name);
-    if (item.websiteUrl) return '<a class="sponsor" href="' + C.escapeHtml(item.websiteUrl) + '" target="_blank" rel="noopener">' + inner + "</a>";
-    return '<div class="sponsor">' + inner + "</div>";
-  }).join("");
+  function bindPhotoInput() {
+    var photo = document.getElementById("photo");
+    var profilePreview = document.getElementById("profilePreview");
+    if (!photo || photo.dataset.bound === "1") return;
+    photo.dataset.bound = "1";
+    photo.addEventListener("change", function (event) {
+      photoFile = event.target.files[0] || null;
+      if (photoFile && profilePreview) {
+        profilePreview.innerHTML = "";
+        var img = document.createElement("img");
+        img.alt = "Profile preview";
+        img.src = URL.createObjectURL(photoFile);
+        profilePreview.appendChild(img);
+        profilePreview.setAttribute("aria-hidden", "false");
+      }
+    });
+  }
 
-  var others = all.filter(function (item) {
-    return !C.sameSeason(item, tournament) && (C.publicState(item) === "OPEN" || preview);
-  });
-  document.getElementById("otherTournaments").innerHTML = others.map(function (item) {
-    return ' <a href="' + C.escapeHtml(C.publicUrl(item, { preview: preview })) + '">' + C.escapeHtml(item.shortName || item.name) + "</a>";
-  }).join("");
+  function renderOrderedFormFields() {
+    var fields = C.normalizeFormFields(tournament.formFields, tournament.fields);
+    var parts = [];
+    fields.forEach(function (field) {
+      if (field.source === "custom") parts.push(htmlCustomField(field));
+      else {
+        var html = htmlBuiltinField(field);
+        if (html) parts.push(html);
+      }
+    });
+    document.getElementById("orderedFormFields").innerHTML = parts.join("");
+    bindPhotoInput();
+  }
+  renderOrderedFormFields();
+
+  function sponsorSlideHtml(item) {
+    var logo = item.logoUrl ? '<img alt="" src="' + C.escapeHtml(item.logoUrl) + '">' : "<span>" + C.escapeHtml(item.name) + "</span>";
+    if (item.websiteUrl) {
+      return '<a class="sponsor-carousel-item" href="' + C.escapeHtml(item.websiteUrl) + '" target="_blank" rel="noopener">' + logo + "</a>";
+    }
+    return '<div class="sponsor-carousel-item">' + logo + "</div>";
+  }
+
+  var sponsors = (tournament.sponsors || []).filter(function (item) { return item && (item.name || item.logoUrl); });
+  var sponsorFooter = document.getElementById("sponsorFooter");
+  var sponsorTrack = document.getElementById("sponsorCarouselTrack");
+  if (!sponsors.length) {
+    sponsorFooter.classList.add("hidden");
+  } else {
+    sponsorFooter.classList.remove("hidden");
+    var slides = sponsors.map(sponsorSlideHtml).join("");
+    sponsorTrack.innerHTML = slides + slides;
+  }
+
+  function fillOtherTournaments(list) {
+    var others = (list || []).filter(function (item) {
+      return !C.sameSeason(item, tournament) && (C.publicState(item) === "OPEN" || preview);
+    });
+    document.getElementById("otherTournaments").innerHTML = others.map(function (item) {
+      return ' <a href="' + C.escapeHtml(C.publicUrl(item, { preview: preview })) + '">' + C.escapeHtml(item.shortName || item.name) + "</a>";
+    }).join("");
+  }
+  if (all.length) fillOtherTournaments(all);
+  else C.api.listPublic(preview).then(fillOtherTournaments).catch(function () {});
 
   function val(id) {
     var el = document.getElementById(id);
@@ -572,34 +674,19 @@ input:focus,select:focus{border-color:var(--green2);background:#fff;box-shadow:0
     ["name", "phone", "flat", "category", "dob", "jersey", "size", "sleeve", "cricheroes", "instagram"].forEach(function (id) {
       if (data[id] != null && document.getElementById(id)) document.getElementById(id).value = data[id];
     });
+    if (data.customFields) {
+      Object.keys(data.customFields).forEach(function (key) {
+        var el = document.querySelector('[data-custom-field="' + key + '"]');
+        if (el) el.value = data.customFields[key];
+      });
+    }
     if (data.skill) {
       var radio = document.querySelector('input[name="skill"][value="' + data.skill + '"]');
       if (radio) radio.checked = true;
     }
-    if (data.dob || data.jersey || data.size || data.sleeve || data.cricheroes || data.instagram) {
-      document.getElementById("moreBox").open = true;
-    }
   }
 
   fillForm(C.getDraft(tournament));
-
-  var photo = document.getElementById("photo");
-  var profilePreview = document.getElementById("profilePreview");
-  function showProfilePreview(file) {
-    if (!profilePreview || !file) return;
-    profilePreview.innerHTML = "";
-    var img = document.createElement("img");
-    img.alt = "Profile preview";
-    img.src = URL.createObjectURL(file);
-    profilePreview.appendChild(img);
-    profilePreview.setAttribute("aria-hidden", "false");
-  }
-  if (photo) {
-    photo.addEventListener("change", function (event) {
-      photoFile = event.target.files[0] || null;
-      if (photoFile) showProfilePreview(photoFile);
-    });
-  }
 
   function persistDraft() {
     C.saveDraft(tournament, {
@@ -613,7 +700,8 @@ input:focus,select:focus{border-color:var(--green2);background:#fff;box-shadow:0
       sleeve: val("sleeve"),
       cricheroes: val("cricheroes"),
       instagram: val("instagram"),
-      skill: document.querySelector('input[name="skill"]:checked')?.value || ""
+      skill: document.querySelector('input[name="skill"]:checked')?.value || "",
+      customFields: collectCustomFieldValues()
     });
   }
 
@@ -736,7 +824,7 @@ input:focus,select:focus{border-color:var(--green2);background:#fff;box-shadow:0
     pill.className = "status-pill " + (paid ? "status-paid" : "status-pending");
     var hidePay = paid || (paymentCfg && paymentCfg.mode === "manual_qr");
     document.getElementById("payBtn").classList.toggle("hidden", hidePay || suppressPayPanels);
-    document.getElementById("successPhoto").classList.toggle("hidden", paid || fields.photo === false || suppressPayPanels);
+    document.getElementById("successPhoto").classList.toggle("hidden", paid || fm("photo") === "off" || suppressPayPanels);
     document.getElementById("waShare").classList.toggle("hidden", suppressPayPanels);
     document.getElementById("payNote").classList.toggle("hidden", suppressPayPanels);
     loadManualPayUi(record);
@@ -802,6 +890,11 @@ input:focus,select:focus{border-color:var(--green2);background:#fff;box-shadow:0
     var skill = document.querySelector('input[name="skill"]:checked')?.value;
     var receiptFile = document.getElementById("formReceiptFile").files[0];
     var receiptUpi = document.getElementById("formReceiptUpi").value.trim();
+    if (fm("photo") === "required" && !photoFile) {
+      document.getElementById("dupHint").classList.remove("hidden");
+      document.getElementById("dupHint").textContent = "Please add a profile photo.";
+      return;
+    }
     if (paymentCfg && paymentCfg.mode === "manual_qr") {
       var pay = paymentCfg.payment || {};
       if (pay.receiptImage === "required" && !receiptFile) {
@@ -829,7 +922,8 @@ input:focus,select:focus{border-color:var(--green2);background:#fff;box-shadow:0
         size: val("size"),
         sleeve: val("sleeve"),
         cricheroes: val("cricheroes"),
-        instagram: val("instagram")
+        instagram: val("instagram"),
+        customFields: collectCustomFieldValues()
       }, preview);
       C.clearDraft(tournament);
       showExisting(result.record, result.existing);

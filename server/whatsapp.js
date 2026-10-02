@@ -4,6 +4,34 @@ function enabled() {
   return Boolean(process.env.WHATSAPP_ACCESS_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID);
 }
 
+function webhookVerifyToken() {
+  return String(process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN || "").trim();
+}
+
+function webhookConfigured() {
+  return Boolean(webhookVerifyToken());
+}
+
+/** Meta GET /api/webhooks/whatsapp — hub.mode, hub.verify_token, hub.challenge */
+function verifyWebhookSubscription(query) {
+  const mode = String(query["hub.mode"] || "");
+  const token = String(query["hub.verify_token"] || "");
+  const challenge = query["hub.challenge"];
+  const expected = webhookVerifyToken();
+  if (mode !== "subscribe" || !expected || token !== expected || challenge == null) {
+    return null;
+  }
+  return String(challenge);
+}
+
+/** Meta POST payload — acknowledge quickly; optional logging only for now */
+function handleWebhookPayload(body) {
+  if (process.env.WHATSAPP_WEBHOOK_LOG === "1") {
+    console.log("[whatsapp webhook]", JSON.stringify(body));
+  }
+  return { ok: true };
+}
+
 function normalizePhone(phone) {
   const digits = String(phone || "").replace(/\D/g, "");
   if (digits.length === 10) return "91" + digits;
@@ -54,6 +82,9 @@ async function sendTemplate(toPhone, templateName, languageCode, bodyParameters)
 
 module.exports = {
   enabled,
+  webhookConfigured,
+  verifyWebhookSubscription,
+  handleWebhookPayload,
   sendTemplate,
   normalizePhone
 };

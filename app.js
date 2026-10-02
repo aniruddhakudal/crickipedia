@@ -11,6 +11,139 @@
     "All Rounder": "🔥"
   };
 
+  var REGISTRATION_FIELD_DEFAULTS = {
+    flatNumber: "required",
+    category: "required",
+    dob: "optional",
+    jerseyNumber: "optional",
+    jerseySize: "optional",
+    sleeve: "optional",
+    photo: "optional",
+    cricheroes: "optional",
+    instagram: "optional"
+  };
+
+  function normalizeFieldMode(value, key) {
+    var fallback = REGISTRATION_FIELD_DEFAULTS[key] || "optional";
+    if (value === false || value === "off" || value === "hidden") return "off";
+    if (value === "required" || value === "optional") return value;
+    if (value === true) return fallback;
+    if (value == null || value === "") return fallback;
+    return fallback;
+  }
+
+  function fieldMode(fields, key) {
+    return normalizeFieldMode(fields && fields[key], key);
+  }
+
+  function mergeFieldsSettings(fields) {
+    var out = {};
+    Object.keys(REGISTRATION_FIELD_DEFAULTS).forEach(function (key) {
+      out[key] = normalizeFieldMode(fields && fields[key], key);
+    });
+    return out;
+  }
+
+  function defaultFieldsSettings() {
+    return mergeFieldsSettings(null);
+  }
+
+  var BUILTIN_FIELD_LABELS = {
+    flatNumber: "Flat number",
+    category: "Registration category",
+    dob: "Date of birth",
+    jerseyNumber: "Jersey number",
+    jerseySize: "Jersey size",
+    sleeve: "Sleeve",
+    photo: "Profile photo",
+    cricheroes: "CricHeroes",
+    instagram: "Instagram"
+  };
+
+  function normalizeCustomFormField(raw) {
+    if (!raw || !raw.id) return null;
+    var id = String(raw.id).trim();
+    if (id.indexOf("cf_") !== 0) return null;
+    var type = ["text", "number", "date", "url", "select"].indexOf(raw.type) >= 0 ? raw.type : "text";
+    var mode = raw.mode === "required" ? "required" : "optional";
+    var label = String(raw.label || "Custom field").trim().slice(0, 80) || "Custom field";
+    var options = [];
+    if (Array.isArray(raw.options)) {
+      options = raw.options.map(function (o) { return String(o).trim(); }).filter(Boolean);
+    } else if (raw.options) {
+      options = String(raw.options).split(",").map(function (o) { return o.trim(); }).filter(Boolean);
+    }
+    return { id: id, source: "custom", label: label, type: type, mode: mode, options: options };
+  }
+
+  function defaultFormFieldsArray() {
+    return Object.keys(REGISTRATION_FIELD_DEFAULTS).map(function (id) {
+      return {
+        id: id,
+        source: "builtin",
+        mode: REGISTRATION_FIELD_DEFAULTS[id] === "required" ? "required" : "optional"
+      };
+    });
+  }
+
+  function normalizeFormFields(raw, legacyFields) {
+    if (Array.isArray(raw) && raw.length) {
+      var out = [];
+      var seenBuiltin = {};
+      raw.forEach(function (item) {
+        if (!item) return;
+        if (item.source === "custom" || String(item.id || "").indexOf("cf_") === 0) {
+          var custom = normalizeCustomFormField(item);
+          if (custom) out.push(custom);
+          return;
+        }
+        var id = String(item.id || "").trim();
+        if (!REGISTRATION_FIELD_DEFAULTS[id] || seenBuiltin[id]) return;
+        seenBuiltin[id] = true;
+        out.push({
+          id: id,
+          source: "builtin",
+          mode: item.mode === "required" ? "required" : "optional"
+        });
+      });
+      return out;
+    }
+    var merged = mergeFieldsSettings(legacyFields);
+    var legacyOut = [];
+    Object.keys(REGISTRATION_FIELD_DEFAULTS).forEach(function (id) {
+      if (merged[id] === "off") return;
+      legacyOut.push({
+        id: id,
+        source: "builtin",
+        mode: merged[id] === "required" ? "required" : "optional"
+      });
+    });
+    return legacyOut;
+  }
+
+  function fieldModeForTournament(tournament, key) {
+    var list = normalizeFormFields(tournament.formFields, tournament.fields);
+    if (tournament.formFields && tournament.formFields.length) {
+      for (var i = 0; i < list.length; i += 1) {
+        if (list[i].source === "builtin" && list[i].id === key) {
+          return list[i].mode === "required" ? "required" : "optional";
+        }
+      }
+      return "off";
+    }
+    return fieldMode(tournament.fields, key);
+  }
+
+  function customFormFields(tournament) {
+    return normalizeFormFields(tournament.formFields, tournament.fields).filter(function (f) {
+      return f.source === "custom";
+    });
+  }
+
+  function newCustomFieldId() {
+    return "cf_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  }
+
   function defaultTournament() {
     return {
       slug: "cpl-2026",
@@ -40,17 +173,8 @@
       notice: "Your spot is reserved as soon as you register. Pay the entry fee to confirm.",
       whatsNext: "Your registration is the first step. Later phases add auctions, teams, live scoring and prizes.",
       supportWhatsapp: "",
-      fields: {
-        dob: true,
-        flatNumber: true,
-        category: true,
-        jerseyNumber: true,
-        jerseySize: true,
-        sleeve: true,
-        photo: true,
-        cricheroes: true,
-        instagram: true
-      },
+      fields: defaultFieldsSettings(),
+      formFields: defaultFormFieldsArray(),
       skills: [
         { value: "Batter", label: "Batter", emoji: "🏏" },
         { value: "Bowler", label: "Bowler", emoji: "🎯" },
@@ -411,7 +535,10 @@
       if (type.indexOf("text/csv") !== -1) return res;
       return res.json().catch(function () { return {}; }).then(function (data) {
         if (!res.ok) {
-          var error = new Error(data.error || "Request failed");
+          var fallback = res.status === 401 ? "Sign in required — open Admin and log in again"
+            : res.status === 404 ? "Not found — restart the server (npm start) if you recently updated"
+            : "Request failed (" + res.status + ")";
+          var error = new Error(data.error || fallback);
           error.status = res.status;
           error.data = data;
           throw error;
@@ -462,6 +589,9 @@
     paymentQrImageUrl: function (ref) {
       return apiTournamentPath(ref) + "/payment-qr-image";
     },
+    jerseySizeChartImageUrl: function (ref) {
+      return apiTournamentPath(ref) + "/jersey-size-chart-image";
+    },
     playerPhotoImageUrl: function (ref, registrationNumber) {
       return apiTournamentPath(ref) + "/registrations/" + encodeURIComponent(registrationNumber) + "/photo-image";
     },
@@ -469,6 +599,22 @@
       var form = new FormData();
       form.append("qr", file);
       return request("/api/admin/tournaments/" + encodeURIComponent(slug) + "/payment-qr", {
+        method: "POST",
+        body: form
+      });
+    },
+    uploadJerseySizeChart: function (slug, file) {
+      var form = new FormData();
+      form.append("chart", file);
+      return request("/api/admin/tournaments/" + encodeURIComponent(slug) + "/jersey-size-chart", {
+        method: "POST",
+        body: form
+      });
+    },
+    uploadSponsorLogo: function (slug, file) {
+      var form = new FormData();
+      form.append("logo", file);
+      return request("/api/admin/tournaments/" + encodeURIComponent(slug) + "/sponsor-logo", {
         method: "POST",
         body: form
       });
@@ -656,6 +802,15 @@
     escapeHtml: escapeHtml,
     nl2br: nl2br,
     skillEmoji: skillEmoji,
+    fieldMode: fieldMode,
+    fieldModeForTournament: fieldModeForTournament,
+    mergeFieldsSettings: mergeFieldsSettings,
+    defaultFieldsSettings: defaultFieldsSettings,
+    defaultFormFieldsArray: defaultFormFieldsArray,
+    normalizeFormFields: normalizeFormFields,
+    customFormFields: customFormFields,
+    newCustomFieldId: newCustomFieldId,
+    BUILTIN_FIELD_LABELS: BUILTIN_FIELD_LABELS,
     normalizeCategories: normalizeCategories,
     categoryNames: categoryNames,
     publicUrl: publicUrl,

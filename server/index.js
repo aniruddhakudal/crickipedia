@@ -30,15 +30,35 @@ const storage = photoStorage.enabled()
 
 const upload = multer({
   storage,
-  limits: { fileSize: 2 * 1024 * 1024 },
+  limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter(req, file, done) {
-    if (!String(file.mimetype || "").startsWith("image/")) {
-      done(new Error("Photo must be an image"));
+    const mime = String(file.mimetype || "").toLowerCase();
+    if (!mime.startsWith("image/")) {
+      done(new Error("File must be an image (JPG, PNG, WebP, etc.)"));
       return;
     }
     done(null, true);
   }
 });
+
+function withUpload(fieldName) {
+  return function uploadMiddleware(req, res, next) {
+    upload.single(fieldName)(req, res, function (err) {
+      if (err) {
+        const message = err.code === "LIMIT_FILE_SIZE"
+          ? "Image must be 5 MB or smaller"
+          : (err.message || "Upload failed");
+        res.status(400).json({ error: message });
+        return;
+      }
+      next();
+    });
+  };
+}
+
+function adminTournamentSlug(req) {
+  return decodeURIComponent(String(req.params.slug || "").trim());
+}
 
 const app = express();
 
@@ -84,7 +104,29 @@ app.post("/api/webhooks/razorpay", express.raw({ type: "application/json" }), as
   }
 });
 
+app.get("/api/webhooks/whatsapp", (req, res) => {
+  const challenge = whatsapp.verifyWebhookSubscription(req.query);
+  if (challenge != null) {
+    res.status(200).type("text/plain").send(challenge);
+    return;
+  }
+  if (!whatsapp.webhookConfigured()) {
+    res.status(503).type("text/plain").send("Set WHATSAPP_WEBHOOK_VERIFY_TOKEN in server .env");
+    return;
+  }
+  res.status(403).type("text/plain").send("Forbidden");
+});
+
 app.use(express.json({ limit: "1mb" }));
+
+app.post("/api/webhooks/whatsapp", (req, res) => {
+  try {
+    whatsapp.handleWebhookPayload(req.body || {});
+    res.status(200).json({ ok: true });
+  } catch (err) {
+    res.status(200).json({ ok: true });
+  }
+});
 app.use(
   session({
     name: "crickipedia.sid",
@@ -206,7 +248,7 @@ function tournamentPaymentMode(tournament) {
 
 async function findRegistration(slug, phoneOrId) {
   const result = await db.query(
-    `SELECT r.registration_number, r.category, r.status, r.registered_at,
+    `SELECT r.registration_number, r.category, r.extra_fields, r.status, r.registered_at,
             t.slug, p.full_name, p.date_of_birth, p.flat_number, p.whatsapp_number, p.photo_url,
             p.cricheroes_url, p.instagram_url,
             pref.skill, pref.suggested_jersey_number, pref.jersey_size, pref.sleeve_type,
@@ -275,6 +317,24 @@ function buildUpiUri(payment, tournament, registrationNumber) {
   return `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${payee}&am=${amount}&cu=INR&tn=${note}`;
 }
 
+function buildTournamentPaymentConfig(tournament) {
+  const payment = settingsUtil.mergePaymentSettings(tournament);
+  const mode = tournamentPaymentMode(tournament);
+  const razorpayAvailable = razorpay.enabled();
+  const body = {
+    mode,
+    payment,
+    razorpayAvailable,
+    razorpayKeyId: mode === "razorpay" && razorpayAvailable ? razorpay.keyId() : null
+  };
+  if (mode === "manual_qr") {
+    body.qrImageUrl = payment.qrSource === "image" ? payment.qrImageUrl || "" : "";
+    body.upiUri = payment.qrSource === "upi" ? buildUpiUri(payment, tournament, "") : "";
+    body.paymentInstructions = payment.paymentInstructions || "";
+  }
+  return body;
+}
+
 app.get("/api/health", async (req, res) => {
   try {
     await db.query("SELECT 1");
@@ -284,7 +344,8 @@ app.get("/api/health", async (req, res) => {
       driver: db.getDriver(),
       photos: photoStorage.enabled() ? "supabase" : "local",
       payments: razorpay.enabled() ? "razorpay" : "demo",
-      whatsapp: whatsapp.enabled() ? "cloud_api" : "off"
+      whatsapp: whatsapp.enabled() ? "cloud_api" : "off",
+      whatsappWebhook: whatsapp.webhookConfigured() ? "configured" : "off"
     });
   } catch (err) {
     res.status(500).json({ ok: false, db: false, error: err.message });
@@ -305,21 +366,7 @@ mountTournamentRoute("get", "/payments/config", async (req, res) => {
       res.status(404).json({ error: "Tournament not found" });
       return;
     }
-    const payment = settingsUtil.mergePaymentSettings(loaded.tournament);
-    const mode = tournamentPaymentMode(loaded.tournament);
-    const razorpayAvailable = razorpay.enabled();
-    const body = {
-      mode,
-      payment,
-      razorpayAvailable,
-      razorpayKeyId: mode === "razorpay" && razorpayAvailable ? razorpay.keyId() : null
-    };
-    if (mode === "manual_qr") {
-      body.qrImageUrl = payment.qrSource === "image" ? payment.qrImageUrl || "" : "";
-      body.upiUri = payment.qrSource === "upi" ? buildUpiUri(payment, loaded.tournament, "") : "";
-      body.paymentInstructions = payment.paymentInstructions || "";
-    }
-    res.json(body);
+    res.json(buildTournamentPaymentConfig(loaded.tournament));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -405,6 +452,31 @@ mountTournamentRoute("get", "/payment-qr-image", async (req, res) => {
   }
 });
 
+mountTournamentRoute("get", "/jersey-size-chart-image", async (req, res) => {
+  try {
+    const loaded = await loadTournamentFromParams(req.params);
+    if (!loaded) {
+      res.status(404).end();
+      return;
+    }
+    const chartUrl = loaded.tournament.jerseySizeChartUrl || "";
+    if (!chartUrl) {
+      res.status(404).end();
+      return;
+    }
+    const file = await photoStorage.streamPaymentQr(chartUrl);
+    if (!file) {
+      res.status(404).end();
+      return;
+    }
+    res.setHeader("Content-Type", file.contentType);
+    res.setHeader("Cache-Control", "public, max-age=300");
+    res.send(file.buffer);
+  } catch (err) {
+    res.status(500).end();
+  }
+});
+
 mountTournamentRoute("get", "/payment-qr", async (req, res) => {
   try {
     const slug = await resolveRouteSlug(req.params);
@@ -458,11 +530,16 @@ mountTournamentRoute("get", "/config", async (req, res) => {
       res.status(404).json({ error: "Tournament not found" });
       return;
     }
+    const paymentConfig = buildTournamentPaymentConfig(loaded.tournament);
     if (loaded.tournament.status === "DRAFT" && req.query.preview !== "1") {
-      res.json({ tournament: loaded.tournament, state: "DRAFT" });
+      res.json({ tournament: loaded.tournament, state: "DRAFT", paymentConfig });
       return;
     }
-    res.json({ tournament: loaded.tournament, state: publicState(loaded.tournament) });
+    res.json({
+      tournament: loaded.tournament,
+      state: publicState(loaded.tournament),
+      paymentConfig
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -549,20 +626,20 @@ mountTournamentRoute("post", "/register", async (req, res) => {
       res.status(400).json({ error: "Select a playing skill" });
       return;
     }
+    const fieldErrors = settingsUtil.validateRegistrationFields(loaded.tournament, req.body);
+    if (fieldErrors.length) {
+      res.status(400).json({ error: fieldErrors[0] });
+      return;
+    }
     const flat = String(req.body.flat || "").trim();
-    const wantFlat = !loaded.tournament.fields || loaded.tournament.fields.flatNumber !== false;
-    if (wantFlat && !flat) {
-      res.status(400).json({ error: "Flat number is required" });
-      return;
-    }
     const category = String(req.body.category || "").trim();
-    const wantCategory = !loaded.tournament.fields || loaded.tournament.fields.category !== false;
-    if (wantCategory && !category) {
-      res.status(400).json({ error: "Select a registration category" });
-      return;
-    }
+    const wantCategory = settingsUtil.fieldModeForTournament(loaded.tournament, "category") !== "off";
+    const extraFields = settingsUtil.sanitizeCustomFieldValues(
+      loaded.tournament,
+      req.body.customFields
+    );
     const allowed = settingsUtil.categoryNames(loaded.tournament.categories);
-    if (wantCategory && allowed.length && allowed.indexOf(category) === -1) {
+    if (wantCategory && allowed.length && category && allowed.indexOf(category) === -1) {
       res.status(400).json({ error: "Invalid registration category" });
       return;
     }
@@ -617,9 +694,9 @@ mountTournamentRoute("post", "/register", async (req, res) => {
       );
 
       const registration = await client.query(
-        `INSERT INTO registrations (registration_number, tournament_id, player_id, category, status)
-         VALUES ($1, $2, $3, $4, 'PENDING_PAYMENT') RETURNING *`,
-        [registrationNumber, loaded.row.id, playerId, category || null]
+        `INSERT INTO registrations (registration_number, tournament_id, player_id, category, extra_fields, status)
+         VALUES ($1, $2, $3, $4, $5::jsonb, 'PENDING_PAYMENT') RETURNING *`,
+        [registrationNumber, loaded.row.id, playerId, category || null, JSON.stringify(extraFields)]
       );
       const payMode = tournamentPaymentMode(loaded.tournament);
       const gateway = payMode === "manual_qr" ? "MANUAL_QR" : payMode === "razorpay" ? "RAZORPAY" : "DEMO";
@@ -1006,19 +1083,20 @@ app.put("/api/admin/tournaments/:slug", requireAdmin, async (req, res) => {
   }
 });
 
-app.post("/api/admin/tournaments/:slug/payment-qr", requireAdmin, upload.single("qr"), async (req, res) => {
+app.post("/api/admin/tournaments/:slug/payment-qr", requireAdmin, withUpload("qr"), async (req, res) => {
   try {
     if (!req.file) {
       res.status(400).json({ error: "No QR image uploaded" });
       return;
     }
-    const loaded = await db.loadTournament(req.params.slug);
+    const loaded = await db.loadTournament(adminTournamentSlug(req));
     if (!loaded) {
       if (req.file.path) fs.unlink(req.file.path, () => {});
       res.status(404).json({ error: "Tournament not found" });
       return;
     }
-    const qrImageUrl = await photoStorage.saveTournamentPaymentQr(req.params.slug, req.file);
+    const slugKey = adminTournamentSlug(req);
+    const qrImageUrl = await photoStorage.saveTournamentPaymentQr(slugKey, req.file);
     const tournament = loaded.tournament;
     const settings = db.settingsFromClient({
       ...tournament,
@@ -1039,6 +1117,64 @@ app.post("/api/admin/tournaments/:slug/payment-qr", requireAdmin, upload.single(
   } catch (err) {
     if (req.file && req.file.path) fs.unlink(req.file.path, () => {});
     res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/admin/tournaments/:slug/jersey-size-chart", requireAdmin, withUpload("chart"), async (req, res) => {
+  try {
+    if (!req.file) {
+      res.status(400).json({ error: "No image uploaded" });
+      return;
+    }
+    const loaded = await db.loadTournament(adminTournamentSlug(req));
+    if (!loaded) {
+      if (req.file.path) fs.unlink(req.file.path, () => {});
+      res.status(404).json({ error: "Tournament not found" });
+      return;
+    }
+    const slugKey = adminTournamentSlug(req);
+    const jerseySizeChartUrl = await photoStorage.saveJerseySizeChart(slugKey, req.file);
+    const tournament = loaded.tournament;
+    const settings = db.settingsFromClient({
+      ...tournament,
+      jerseySizeChartUrl
+    });
+    const updated = await db.query(
+      `UPDATE tournaments SET settings = $2::jsonb, updated_at = NOW() WHERE id = $1 RETURNING *`,
+      [loaded.row.id, JSON.stringify(settings)]
+    );
+    res.json({
+      jerseySizeChartUrl,
+      tournament: db.toClient(updated.rows[0], db.sponsorsFromClient(tournament.sponsors))
+    });
+  } catch (err) {
+    if (req.file && req.file.path) fs.unlink(req.file.path, () => {});
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/admin/tournaments/:slug/sponsor-logo", requireAdmin, withUpload("logo"), async (req, res) => {
+  try {
+    if (!req.file) {
+      res.status(400).json({ error: "No logo uploaded — choose an image file" });
+      return;
+    }
+    const slugKey = adminTournamentSlug(req);
+    if (!slugKey) {
+      res.status(400).json({ error: "Tournament slug missing" });
+      return;
+    }
+    const loaded = await db.loadTournament(slugKey);
+    if (!loaded) {
+      if (req.file.path) fs.unlink(req.file.path, () => {});
+      res.status(404).json({ error: "Tournament not found — save the tournament first" });
+      return;
+    }
+    const logoUrl = await photoStorage.saveSponsorLogo(slugKey, req.file);
+    res.json({ logoUrl });
+  } catch (err) {
+    if (req.file && req.file.path) fs.unlink(req.file.path, () => {});
+    res.status(500).json({ error: err.message || "Could not save sponsor logo" });
   }
 });
 
@@ -1126,7 +1262,7 @@ app.get("/api/admin/tournaments/:slug/registrations", requireAdmin, async (req, 
       return;
     }
     const result = await db.query(
-      `SELECT r.registration_number, r.category, r.status, r.registered_at,
+      `SELECT r.registration_number, r.category, r.extra_fields, r.status, r.registered_at,
               t.slug, p.full_name, p.date_of_birth, p.flat_number, p.whatsapp_number, p.photo_url,
               p.cricheroes_url, p.instagram_url,
               pref.skill, pref.suggested_jersey_number, pref.jersey_size, pref.sleeve_type,
@@ -1218,7 +1354,7 @@ app.get("/api/admin/tournaments/:slug/registrations.csv", requireAdmin, async (r
       return;
     }
     const result = await db.query(
-      `SELECT r.registration_number, r.category, r.status, r.registered_at,
+      `SELECT r.registration_number, r.category, r.extra_fields, r.status, r.registered_at,
               t.slug, t.name AS tournament_name, p.full_name, p.date_of_birth, p.flat_number, p.whatsapp_number, p.photo_url,
               p.cricheroes_url, p.instagram_url,
               pref.skill, pref.suggested_jersey_number, pref.jersey_size, pref.sleeve_type,
@@ -1232,17 +1368,22 @@ app.get("/api/admin/tournaments/:slug/registrations.csv", requireAdmin, async (r
        ORDER BY r.registered_at DESC`,
       [req.params.slug]
     );
+    const customCols = settingsUtil.customFormFields(loaded.tournament);
     const header = [
       "Tournament", "Registration ID", "Name", "Flat", "Category", "DOB", "WhatsApp", "Skill", "Jersey",
       "Size", "Sleeve", "CricHeroes", "Instagram", "Photo", "Created At", "Payment Status"
-    ];
+    ].concat(customCols.map((col) => col.label));
     const lines = [header.map(csvEscape).join(",")].concat(
       result.rows.map((row) => {
         const rec = db.registrationToClient(row);
-        return [
+        const base = [
           row.tournament_name, rec.id, rec.name, rec.flat, rec.category, rec.dob, rec.phone, rec.skill, rec.jersey,
           rec.size, rec.sleeve, rec.cricheroes, rec.instagram, rec.photoUrl, rec.createdAt, rec.paymentStatus
-        ].map(csvEscape).join(",");
+        ];
+        customCols.forEach((col) => {
+          base.push((rec.customFields && rec.customFields[col.id]) || "");
+        });
+        return base.map(csvEscape).join(",");
       })
     );
     res.setHeader("Content-Type", "text/csv");
@@ -1256,6 +1397,18 @@ app.get("/api/admin/tournaments/:slug/registrations.csv", requireAdmin, async (r
 function csvEscape(value) {
   return `"${String(value == null ? "" : value).replaceAll('"', '""')}"`;
 }
+
+app.use((err, req, res, next) => {
+  if (res.headersSent) {
+    next(err);
+    return;
+  }
+  if (err instanceof multer.MulterError || /image|upload|file/i.test(String(err.message || ""))) {
+    res.status(400).json({ error: err.message || "Upload failed" });
+    return;
+  }
+  next(err);
+});
 
 app.use(express.static(siteRoot, { index: false }));
 

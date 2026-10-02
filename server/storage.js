@@ -92,18 +92,19 @@ async function streamPaymentQr(qrImageUrl) {
   return null;
 }
 
-async function saveTournamentPaymentQr(slug, file) {
+async function saveTournamentMedia(slug, file, fileBase) {
   const safeSlug = String(slug || "tournament").replace(/[^a-z0-9-]/gi, "").slice(0, 48) || "tournament";
   const ext = String((file.originalname || file.filename || ".jpg").split(".").pop() || "jpg")
     .toLowerCase()
     .replace(/[^a-z0-9]/g, "") || "jpg";
-  const pathName = `tournaments/${safeSlug}/payment-qr.${ext}`;
+  const base = String(fileBase || "asset").replace(/[^a-z0-9-]/gi, "").slice(0, 64) || "asset";
+  const pathName = `tournaments/${safeSlug}/${base}.${ext}`;
   const supabase = getClient();
 
   if (!supabase) {
     const dest = require("path").join(__dirname, "..", "uploads", "tournaments", safeSlug);
     require("fs").mkdirSync(dest, { recursive: true });
-    const filename = `payment-qr.${ext}`;
+    const filename = `${base}.${ext}`;
     require("fs").copyFileSync(file.path, require("path").join(dest, filename));
     return `/uploads/tournaments/${safeSlug}/${filename}`;
   }
@@ -116,6 +117,19 @@ async function saveTournamentPaymentQr(slug, file) {
   if (error) throw new Error(error.message);
   const { data } = supabase.storage.from(BUCKET).getPublicUrl(pathName);
   return data.publicUrl;
+}
+
+async function saveTournamentPaymentQr(slug, file) {
+  return saveTournamentMedia(slug, file, "payment-qr");
+}
+
+async function saveJerseySizeChart(slug, file) {
+  return saveTournamentMedia(slug, file, "jersey-size-chart");
+}
+
+async function saveSponsorLogo(slug, file) {
+  const stamp = Date.now();
+  return saveTournamentMedia(slug, file, `sponsor-${stamp}`);
 }
 
 async function saveReceipt(registrationId, file) {
@@ -165,6 +179,9 @@ module.exports = {
   init,
   savePlayerPhoto,
   saveTournamentPaymentQr,
+  saveTournamentMedia,
+  saveJerseySizeChart,
+  saveSponsorLogo,
   streamPaymentQr,
   saveReceipt,
   BUCKET

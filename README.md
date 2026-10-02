@@ -88,6 +88,7 @@ Per tournament (Admin → **Payment method**):
 1. Create Meta templates with one body variable `{{1}}` (full message text): e.g. `registration_reserved`, `registration_confirmed`, `registration_rejected`.
 2. Set `WHATSAPP_ACCESS_TOKEN` and `WHATSAPP_PHONE_NUMBER_ID` in `.env`.
 3. Customize templates and category group links in Admin → **WhatsApp notifications** and **Registration categories**.
+4. **Webhook (Meta dashboard):** Callback URL `https://crickipedia.srpl.website/api/webhooks/whatsapp`, Verify token = same value as `WHATSAPP_WEBHOOK_VERIFY_TOKEN` in `.env`, then **Verify and save**. Subscribe to fields you need (e.g. `messages`). Restart the server after changing `.env`.
 
 Messages fire on: new registration (reserved), Razorpay success (if enabled), admin approve (confirmed), admin decline (rejected).
 

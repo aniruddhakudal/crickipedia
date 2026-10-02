@@ -43,6 +43,17 @@ function isSupabaseUrl(url) {
   return /supabase\.(co|com)/i.test(url || "");
 }
 
+async function connectPglite() {
+  const { PGlite } = require("@electric-sql/pglite");
+  const dir = path.join(__dirname, "..", "data");
+  fs.mkdirSync(dir, { recursive: true });
+  pglite = new PGlite(path.join(dir, "crickipedia"));
+  if (pglite.waitReady) await pglite.waitReady;
+  driver = "pglite";
+  console.log("Using local PGlite database in /data");
+  return driver;
+}
+
 async function connect() {
   if (wantsPostgres()) {
     if (!process.env.DATABASE_URL) {
@@ -64,17 +75,18 @@ async function connect() {
     } catch (err) {
       try { await pool.end(); } catch (endErr) { /* ignore */ }
       pool = null;
+      const allowFallback = process.env.DATABASE_FALLBACK_PG_LITE !== "0";
+      if (allowFallback) {
+        console.warn(
+          "Postgres/Supabase unreachable (" + err.message + "). Falling back to local PGlite. " +
+          "For local-only dev, set DATABASE_DRIVER=pglite in .env. Set DATABASE_FALLBACK_PG_LITE=0 to disable fallback."
+        );
+        return connectPglite();
+      }
       throw new Error("Postgres/Supabase connection failed: " + err.message);
     }
   }
-  const { PGlite } = require("@electric-sql/pglite");
-  const dir = path.join(__dirname, "..", "data");
-  fs.mkdirSync(dir, { recursive: true });
-  pglite = new PGlite(path.join(dir, "crickipedia"));
-  if (pglite.waitReady) await pglite.waitReady;
-  driver = "pglite";
-  console.log("Using local PGlite database in /data");
-  return driver;
+  return connectPglite();
 }
 
 function defaultSettings() {
@@ -97,17 +109,7 @@ function defaultSettings() {
     whatsNext: "Your registration is the first step. Later phases add auctions, teams, live scoring and prizes.",
     supportWhatsapp: "",
     showPublicRoster: true,
-    fields: {
-      dob: true,
-      flatNumber: true,
-      category: true,
-      jerseyNumber: true,
-      jerseySize: true,
-      sleeve: true,
-      photo: true,
-      cricheroes: true,
-      instagram: true
-    },
+    fields: settingsUtil.defaultFieldsSettings(),
     skills: [
       { value: "Batter", label: "Batter", emoji: "🏏" },
       { value: "Bowler", label: "Bowler", emoji: "🎯" },
@@ -170,9 +172,13 @@ function toClient(row, sponsors) {
     whatsNext: settings.whatsNext || "",
     supportWhatsapp: settings.supportWhatsapp || "",
     showPublicRoster: settings.showPublicRoster !== false,
-    fields: settings.fields || defaultSettings().fields,
+    formFields: settingsUtil.normalizeFormFields(settings.formFields, settings.fields),
+    fields: settingsUtil.fieldsObjectFromFormFields(
+      settingsUtil.normalizeFormFields(settings.formFields, settings.fields)
+    ),
     skills: settings.skills || defaultSettings().skills,
     jerseySizes: settings.jerseySizes || defaultSettings().jerseySizes,
+    jerseySizeChartUrl: settings.jerseySizeChartUrl || "",
     categories: settingsUtil.normalizeCategories(
       settings.categories && settings.categories.length ? settings.categories : defaultSettings().categories
     ),
@@ -201,9 +207,13 @@ function settingsFromClient(body) {
     whatsNext: body.whatsNext || "",
     supportWhatsapp: body.supportWhatsapp || "",
     showPublicRoster: body.showPublicRoster !== false,
-    fields: body.fields || defaultSettings().fields,
+    formFields: settingsUtil.normalizeFormFields(body.formFields, body.fields),
+    fields: settingsUtil.fieldsObjectFromFormFields(
+      settingsUtil.normalizeFormFields(body.formFields, body.fields)
+    ),
     skills: body.skills && body.skills.length ? body.skills : defaultSettings().skills,
     jerseySizes: body.jerseySizes || [],
+    jerseySizeChartUrl: body.jerseySizeChartUrl || "",
     categories: settingsUtil.normalizeCategories(
       body.categories && body.categories.length ? body.categories : defaultSettings().categories
     ),
@@ -255,8 +265,19 @@ function registrationToClient(row) {
     verificationStatus: row.verification_status || "",
     receiptUrl: row.receipt_url || "",
     receiptUpiRef: row.receipt_upi_ref || "",
-    rejectReason: row.reject_reason || ""
+    rejectReason: row.reject_reason || "",
+    customFields: parseExtraFields(row.extra_fields)
   };
+}
+
+function parseExtraFields(value) {
+  if (!value) return {};
+  if (typeof value === "object") return value;
+  try {
+    return JSON.parse(value);
+  } catch (e) {
+    return {};
+  }
 }
 
 async function migrate() {
@@ -293,6 +314,9 @@ async function migrate() {
   }
   await query(
     "CREATE UNIQUE INDEX IF NOT EXISTS idx_tournaments_tournament_season ON tournaments(tournament_slug, season_slug)"
+  );
+  await query(
+    "ALTER TABLE registrations ADD COLUMN IF NOT EXISTS extra_fields JSONB NOT NULL DEFAULT '{}'::jsonb"
   );
 }
 

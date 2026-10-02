@@ -53,6 +53,7 @@ CREATE TABLE IF NOT EXISTS registrations (
   tournament_id BIGINT NOT NULL REFERENCES tournaments(id) ON DELETE CASCADE,
   player_id BIGINT NOT NULL REFERENCES players(id),
   category VARCHAR(80),
+  extra_fields JSONB NOT NULL DEFAULT '{}'::jsonb,
   status VARCHAR(30) NOT NULL DEFAULT 'PENDING_PAYMENT',
   registered_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE(tournament_id, player_id)

@@ -29,10 +29,22 @@ label{font-weight:700;font-size:13px;display:grid;gap:6px}
 .section{margin-top:22px;padding-top:8px;border-top:1px solid #edf2ef}
 .section h3{margin:0 0 14px}
 .checks{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.field-config{display:grid;gap:10px;max-width:520px}
+.field-config-row{display:grid;grid-template-columns:1fr 160px;gap:12px;align-items:center}
+.field-config-row span{font-weight:600;font-size:14px}
+.ffrow{display:grid;grid-template-columns:52px 1.2fr 1fr .9fr 1fr auto;gap:8px;align-items:end;margin-bottom:10px}
+.ffrow.ff-custom{grid-template-columns:52px 1.2fr .9fr .9fr 1fr auto}
+.ff-order{display:flex;flex-direction:column;gap:4px;padding-bottom:2px}
+.ff-order button{padding:4px 8px;min-width:36px;font-size:12px}
+.ffrow label{font-size:12px;font-weight:700;color:var(--muted);display:grid;gap:4px}
+.ffrow input,.ffrow select{font:inherit;padding:8px 10px;border-radius:10px;border:1px solid #d7e3dd}
+.ffrow .ff-name{font-weight:700;font-size:14px;color:var(--dark);padding:10px 0}
 .check{display:flex;align-items:center;gap:8px;font-weight:600;background:#f6faf8;padding:10px 12px;border-radius:10px}
 .check input{width:auto}
 .rowline{display:grid;grid-template-columns:70px 1fr 1fr auto;gap:8px;margin-bottom:8px;align-items:center}
 .srow{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;margin-bottom:8px}
+.srow.sponsor-row{grid-template-columns:minmax(0,1fr) minmax(0,1.2fr) auto auto minmax(0,1fr) auto;align-items:center}
+.srow.sponsor-row img[data-sp-preview]{justify-self:center}
 .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
 .toast{position:fixed;right:16px;bottom:16px;background:var(--dark);color:#fff;padding:12px 16px;border-radius:12px;display:none;z-index:5}
 table{border-collapse:collapse;width:100%;min-width:920px}
@@ -230,17 +242,14 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
 
     <div class="panel">
       <h3 style="margin-top:0">Form fields</h3>
-      <p class="muted">Name, WhatsApp and skill stay required so registration stays fast. Everything else is optional extras.</p>
-      <div class="checks">
-        <label class="check"><input id="fieldCategory" type="checkbox"> Registration category</label>
-        <label class="check"><input id="fieldFlat" type="checkbox"> Flat number</label>
-        <label class="check"><input id="fieldDob" type="checkbox"> Date of birth</label>
-        <label class="check"><input id="fieldJerseyNumber" type="checkbox"> Jersey number</label>
-        <label class="check"><input id="fieldJerseySize" type="checkbox"> Jersey size</label>
-        <label class="check"><input id="fieldSleeve" type="checkbox"> Sleeve</label>
-        <label class="check"><input id="fieldPhoto" type="checkbox"> Photo</label>
-        <label class="check"><input id="fieldCricheroes" type="checkbox"> CricHeroes</label>
-        <label class="check"><input id="fieldInstagram" type="checkbox"> Instagram</label>
+      <p class="muted">Name, WhatsApp and skill always stay required. Add or remove fields, set optional/required, and use ↑ ↓ to control order on the registration form.</p>
+      <div id="formFieldRows"></div>
+      <div class="actions" style="margin-top:8px;flex-wrap:wrap">
+        <select id="addBuiltinFieldPick" style="max-width:220px;padding:10px;border-radius:10px;border:1px solid #d7e3dd;font:inherit">
+          <option value="">Add standard field…</option>
+        </select>
+        <button class="btn ghost" type="button" id="addBuiltinFieldBtn">Add standard</button>
+        <button class="btn ghost" type="button" id="addCustomFieldBtn">Add custom question</button>
       </div>
       <div class="section">
         <h3>Public player list</h3>
@@ -262,6 +271,12 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
         <h3>Jersey options</h3>
         <label>Sizes (comma separated)<input id="jerseySizes"></label>
         <label style="margin-top:10px">Sleeves (comma separated)<input id="sleeves"></label>
+        <label style="margin-top:10px">Size chart image (shown next to jersey size on registration)
+          <input id="jerseyChartFile" type="file" accept="image/*">
+        </label>
+        <p class="muted" id="jerseyChartStatus" style="margin:6px 0 0"></p>
+        <img id="jerseyChartPreview" alt="" style="display:none;max-width:220px;margin-top:10px;border-radius:12px;border:1px solid #ddd">
+        <input type="hidden" id="jerseySizeChartUrl">
       </div>
     </div>
 
@@ -332,6 +347,7 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
 </div>
 <div class="toast" id="toast">Saved</div>
 </div>
+<input type="file" id="sponsorLogoFile" accept="image/*" class="hidden" aria-hidden="true">
 
 <script src="/app.js"></script>
 <script>
@@ -341,6 +357,7 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
   var current = null;
   var slug = "";
   var dirty = false;
+  var sponsorLogoPickIndex = null;
 
   function showApp() {
     document.getElementById("loginGate").style.display = "none";
@@ -367,7 +384,11 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
       document.getElementById("loginGate").style.display = "flex";
       document.getElementById("appRoot").classList.add("locked");
       if (err.status !== 401) {
-        document.getElementById("loginError").textContent = err.message || "Server is not running. Use npm start.";
+        var msg = err.message || "Server is not running. Use npm start.";
+        if (/ENOTFOUND|ECONNREFUSED|connection failed/i.test(msg)) {
+          msg += " — Cannot reach Supabase Postgres (DNS/network). For local work, set DATABASE_DRIVER=pglite in .env, restart npm start, and sign in again.";
+        }
+        document.getElementById("loginError").textContent = msg;
       }
     }
   }
@@ -404,6 +425,91 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
         '<input data-cat="' + index + '" data-k="group" value="' + C.escapeHtml(item.whatsappGroupUrl || "") + '" placeholder="WhatsApp group invite link">' +
         '<button class="btn ghost" type="button" data-remove-cat="' + index + '">Remove</button></div>';
     }).join("");
+  }
+
+  function readFormFields() {
+    var rows = document.querySelectorAll("#formFieldRows .ffrow");
+    var out = [];
+    rows.forEach(function (row) {
+      var source = row.getAttribute("data-source");
+      var modeEl = row.querySelector("[data-ff-mode]");
+      var mode = modeEl ? modeEl.value : "optional";
+      if (source === "builtin") {
+        out.push({
+          id: row.getAttribute("data-id"),
+          source: "builtin",
+          mode: mode === "required" ? "required" : "optional"
+        });
+        return;
+      }
+      var labelEl = row.querySelector("[data-ff-label]");
+      var typeEl = row.querySelector("[data-ff-type]");
+      var optionsEl = row.querySelector("[data-ff-options]");
+      out.push({
+        id: row.getAttribute("data-id"),
+        source: "custom",
+        label: labelEl ? labelEl.value.trim() : "Custom field",
+        type: typeEl ? typeEl.value : "text",
+        mode: mode === "required" ? "required" : "optional",
+        options: optionsEl ? optionsEl.value.split(",").map(function (p) { return p.trim(); }).filter(Boolean) : []
+      });
+    });
+    return out;
+  }
+
+  function refreshBuiltinFieldPicker(formFields) {
+    var pick = document.getElementById("addBuiltinFieldPick");
+    if (!pick) return;
+    var used = {};
+    (formFields || []).forEach(function (f) {
+      if (f.source === "builtin") used[f.id] = true;
+    });
+    var html = '<option value="">Add standard field…</option>';
+    Object.keys(C.BUILTIN_FIELD_LABELS).forEach(function (id) {
+      if (used[id]) return;
+      html += '<option value="' + C.escapeHtml(id) + '">' + C.escapeHtml(C.BUILTIN_FIELD_LABELS[id]) + "</option>";
+    });
+    pick.innerHTML = html;
+  }
+
+  function renderFormFieldRows(formFields) {
+    var list = C.normalizeFormFields(formFields, null);
+    if (!list.length) list = C.defaultFormFieldsArray();
+    refreshBuiltinFieldPicker(list);
+    function orderButtons(index, total) {
+      return '<div class="ff-order">' +
+        '<button class="btn ghost" type="button" data-ff-up="' + index + '"' + (index === 0 ? " disabled" : "") + ' title="Move up">↑</button>' +
+        '<button class="btn ghost" type="button" data-ff-down="' + index + '"' + (index >= total - 1 ? " disabled" : "") + ' title="Move down">↓</button>' +
+        "</div>";
+    }
+    document.getElementById("formFieldRows").innerHTML = list.map(function (field, index) {
+      if (field.source === "builtin") {
+        var name = C.BUILTIN_FIELD_LABELS[field.id] || field.id;
+        return '<div class="ffrow" data-source="builtin" data-id="' + C.escapeHtml(field.id) + '">' +
+          orderButtons(index, list.length) +
+          '<div class="ff-name">' + C.escapeHtml(name) + '<div class="muted" style="font-size:11px;font-weight:600">Standard field</div></div>' +
+          '<label>Required?<select data-ff-mode><option value="optional"' + (field.mode !== "required" ? " selected" : "") + '>Optional</option><option value="required"' + (field.mode === "required" ? " selected" : "") + ">Required</option></select></label>" +
+          '<span></span><span></span>' +
+          '<button class="btn ghost" type="button" data-remove-ff="' + index + '">Remove</button></div>';
+      }
+      var opts = (field.options || []).join(", ");
+      return '<div class="ffrow ff-custom" data-source="custom" data-id="' + C.escapeHtml(field.id) + '">' +
+        orderButtons(index, list.length) +
+        '<label>Question<input data-ff-label value="' + C.escapeHtml(field.label || "") + '" placeholder="e.g. Blood group"></label>' +
+        '<label>Type<select data-ff-type>' +
+        ["text", "number", "date", "url", "select"].map(function (t) {
+          return '<option value="' + t + '"' + (field.type === t ? " selected" : "") + ">" + t + "</option>";
+        }).join("") +
+        "</select></label>" +
+        '<label>Required?<select data-ff-mode><option value="optional"' + (field.mode !== "required" ? " selected" : "") + '>Optional</option><option value="required"' + (field.mode === "required" ? " selected" : "") + ">Required</option></select></label>" +
+        '<label>Choices (dropdown)<input data-ff-options value="' + C.escapeHtml(opts) + '" placeholder="A+, B+, O+"></label>' +
+        '<button class="btn ghost" type="button" data-remove-ff="' + index + '">Remove</button></div>';
+    }).join("");
+  }
+
+  function loadFormFields(tournament) {
+    var list = C.normalizeFormFields(tournament.formFields, tournament.fields);
+    renderFormFieldRows(list);
   }
 
   function readCategories() {
@@ -474,14 +580,49 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
     }).join("");
   }
 
+  function sponsorLogoPreviewUrl(logoUrl) {
+    if (!logoUrl) return "";
+    if (logoUrl.indexOf("/uploads/") === 0 || /^https?:\/\//i.test(logoUrl)) return logoUrl;
+    return logoUrl;
+  }
+
   function renderSponsors(sponsors) {
     document.getElementById("sponsorRows").innerHTML = (sponsors || []).map(function (item, index) {
-      return '<div class="srow">' +
+      var preview = sponsorLogoPreviewUrl(item.logoUrl || "");
+      var img = preview
+        ? '<img data-sp-preview="' + index + '" src="' + C.escapeHtml(preview) + '" alt="" style="max-height:36px;max-width:80px;object-fit:contain">'
+        : '<img data-sp-preview="' + index + '" alt="" style="display:none;max-height:36px;max-width:80px;object-fit:contain">';
+      return '<div class="srow sponsor-row">' +
         '<input data-sp="' + index + '" data-k="name" value="' + C.escapeHtml(item.name || "") + '" placeholder="Name">' +
         '<input data-sp="' + index + '" data-k="logoUrl" value="' + C.escapeHtml(item.logoUrl || "") + '" placeholder="Logo URL">' +
+        '<button class="btn ghost" type="button" data-sp-pick="' + index + '">Upload logo</button>' +
+        img +
         '<input data-sp="' + index + '" data-k="websiteUrl" value="' + C.escapeHtml(item.websiteUrl || "") + '" placeholder="Website">' +
         '<button class="btn ghost" type="button" data-remove-sp="' + index + '">Remove</button></div>';
     }).join("");
+  }
+
+  function refreshJerseyChartPreview() {
+    var url = document.getElementById("jerseySizeChartUrl").value.trim();
+    var img = document.getElementById("jerseyChartPreview");
+    if (!url && current && current.tournamentSlug && current.seasonSlug) {
+      if (current.jerseySizeChartUrl) {
+        img.src = C.api.jerseySizeChartImageUrl(current);
+        img.style.display = "block";
+        return;
+      }
+    }
+    if (!url) {
+      img.style.display = "none";
+      img.removeAttribute("src");
+      return;
+    }
+    if (current && current.tournamentSlug && current.seasonSlug && current.jerseySizeChartUrl) {
+      img.src = C.api.jerseySizeChartImageUrl(current);
+    } else {
+      img.src = url;
+    }
+    img.style.display = "block";
   }
 
   function readSkills() {
@@ -572,21 +713,12 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
       whatsNext: document.getElementById("whatsNext").value,
       supportWhatsapp: document.getElementById("supportWhatsapp").value.trim(),
       showPublicRoster: document.getElementById("showPublicRoster").checked,
-      fields: {
-        dob: document.getElementById("fieldDob").checked,
-        flatNumber: document.getElementById("fieldFlat").checked,
-        category: document.getElementById("fieldCategory").checked,
-        jerseyNumber: document.getElementById("fieldJerseyNumber").checked,
-        jerseySize: document.getElementById("fieldJerseySize").checked,
-        sleeve: document.getElementById("fieldSleeve").checked,
-        photo: document.getElementById("fieldPhoto").checked,
-        cricheroes: document.getElementById("fieldCricheroes").checked,
-        instagram: document.getElementById("fieldInstagram").checked
-      },
+      formFields: readFormFields(),
       skills: readSkills().length ? readSkills() : C.defaultTournament().skills,
       categories: readCategories().length ? readCategories() : C.defaultTournament().categories,
       jerseySizes: csvList(document.getElementById("jerseySizes").value),
       sleeves: csvList(document.getElementById("sleeves").value),
+      jerseySizeChartUrl: document.getElementById("jerseySizeChartUrl").value.trim(),
       sponsors: readSponsors(),
       payment: {
         mode: document.getElementById("paymentMode").value,
@@ -639,19 +771,13 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
     document.getElementById("noticeTitle").value = tournament.noticeTitle || "";
     document.getElementById("notice").value = tournament.notice || "";
     document.getElementById("whatsNext").value = tournament.whatsNext || "";
-    var fields = tournament.fields || {};
-    document.getElementById("fieldDob").checked = fields.dob !== false;
-    document.getElementById("fieldFlat").checked = fields.flatNumber !== false;
-    document.getElementById("fieldCategory").checked = fields.category !== false;
-    document.getElementById("fieldJerseyNumber").checked = fields.jerseyNumber !== false;
-    document.getElementById("fieldJerseySize").checked = fields.jerseySize !== false;
-    document.getElementById("fieldSleeve").checked = fields.sleeve !== false;
-    document.getElementById("fieldPhoto").checked = fields.photo !== false;
+    loadFormFields(tournament);
     document.getElementById("showPublicRoster").checked = tournament.showPublicRoster !== false;
-    document.getElementById("fieldCricheroes").checked = fields.cricheroes !== false;
-    document.getElementById("fieldInstagram").checked = fields.instagram !== false;
     document.getElementById("jerseySizes").value = (tournament.jerseySizes || []).join(", ");
     document.getElementById("sleeves").value = (tournament.sleeves || []).join(", ");
+    document.getElementById("jerseySizeChartUrl").value = tournament.jerseySizeChartUrl || "";
+    document.getElementById("jerseyChartStatus").textContent = "";
+    refreshJerseyChartPreview();
     var payment = tournament.payment || C.defaultTournament().payment;
     var wa = tournament.whatsapp || C.defaultTournament().whatsapp;
     document.getElementById("paymentMode").value = payment.mode === "manual_qr" ? "manual_qr" : "razorpay";
@@ -918,6 +1044,53 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
     dirty = true;
     previewFromForm();
   });
+  document.getElementById("customize").addEventListener("change", function () {
+    dirty = true;
+  });
+
+  document.getElementById("formFieldRows").addEventListener("click", function (event) {
+    var up = event.target.getAttribute("data-ff-up");
+    var down = event.target.getAttribute("data-ff-down");
+    if (up != null || down != null) {
+      var list = readFormFields();
+      var i = Number(up != null ? up : down);
+      var j = up != null ? i - 1 : i + 1;
+      if (j < 0 || j >= list.length) return;
+      var swap = list[i];
+      list[i] = list[j];
+      list[j] = swap;
+      renderFormFieldRows(list);
+      dirty = true;
+      return;
+    }
+    var index = event.target.getAttribute("data-remove-ff");
+    if (index == null) return;
+    var list = readFormFields();
+    list.splice(Number(index), 1);
+    renderFormFieldRows(list);
+    dirty = true;
+  });
+  document.getElementById("addBuiltinFieldBtn").addEventListener("click", function () {
+    var id = document.getElementById("addBuiltinFieldPick").value;
+    if (!id) return;
+    var list = readFormFields();
+    list.push({ id: id, source: "builtin", mode: "optional" });
+    renderFormFieldRows(list);
+    dirty = true;
+  });
+  document.getElementById("addCustomFieldBtn").addEventListener("click", function () {
+    var list = readFormFields();
+    list.push({
+      id: C.newCustomFieldId(),
+      source: "custom",
+      label: "Custom question",
+      type: "text",
+      mode: "optional",
+      options: []
+    });
+    renderFormFieldRows(list);
+    dirty = true;
+  });
 
   document.getElementById("addCategory").addEventListener("click", function () {
     var cats = readCategories();
@@ -979,13 +1152,74 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
     dirty = true;
   });
 
+  function activeTournamentSlug() {
+    return (current && current.slug) || slug || "";
+  }
+
   document.getElementById("sponsorRows").addEventListener("click", function (event) {
+    var pick = event.target.getAttribute("data-sp-pick");
+    if (pick != null) {
+      sponsorLogoPickIndex = pick;
+      var fileInput = document.getElementById("sponsorLogoFile");
+      fileInput.value = "";
+      fileInput.click();
+      return;
+    }
     var index = event.target.getAttribute("data-remove-sp");
     if (index == null) return;
     var sponsors = readSponsors();
     sponsors.splice(Number(index), 1);
     renderSponsors(sponsors);
     dirty = true;
+  });
+
+  document.getElementById("sponsorLogoFile").addEventListener("change", async function (event) {
+    var index = sponsorLogoPickIndex;
+    var file = event.target.files && event.target.files[0];
+    sponsorLogoPickIndex = null;
+    if (!file) return;
+    var activeSlug = activeTournamentSlug();
+    if (!activeSlug) {
+      alert("Select or save a tournament before uploading a logo.");
+      event.target.value = "";
+      return;
+    }
+    try {
+      toast("Uploading logo…");
+      var data = await C.api.uploadSponsorLogo(activeSlug, file);
+      if (index != null) {
+        var urlInput = document.querySelector('[data-sp="' + index + '"][data-k="logoUrl"]');
+        if (urlInput) urlInput.value = data.logoUrl || "";
+        var img = document.querySelector('[data-sp-preview="' + index + '"]');
+        if (img && data.logoUrl) {
+          img.src = sponsorLogoPreviewUrl(data.logoUrl);
+          img.style.display = "block";
+        }
+      }
+      dirty = true;
+      toast("Logo uploaded — click Save tournament to keep");
+    } catch (err) {
+      alert(err.message || "Logo upload failed");
+    }
+    event.target.value = "";
+  });
+
+  document.getElementById("jerseyChartFile").addEventListener("change", async function (event) {
+    var file = event.target.files[0];
+    if (!file || !slug) return;
+    var status = document.getElementById("jerseyChartStatus");
+    status.textContent = "Uploading…";
+    try {
+      var data = await C.api.uploadJerseySizeChart(slug, file);
+      document.getElementById("jerseySizeChartUrl").value = data.jerseySizeChartUrl || "";
+      if (data.tournament) load(data.tournament);
+      else refreshJerseyChartPreview();
+      status.textContent = "Size chart uploaded.";
+      dirty = true;
+    } catch (err) {
+      status.textContent = err.message || "Upload failed";
+    }
+    event.target.value = "";
   });
 
   document.getElementById("saveBtn").addEventListener("click", save);
@@ -1061,7 +1295,11 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
       await C.api.login(document.getElementById("loginUser").value, document.getElementById("loginPass").value);
       await boot();
     } catch (err) {
-      document.getElementById("loginError").textContent = err.message || "Sign in failed";
+      var msg = err.message || "Sign in failed";
+      if (/ENOTFOUND|ECONNREFUSED|connection failed/i.test(msg)) {
+        msg += " — Use DATABASE_DRIVER=pglite in .env for local admin, or fix DATABASE_URL from Supabase.";
+      }
+      document.getElementById("loginError").textContent = msg;
     }
   });
   document.getElementById("loginPass").addEventListener("keydown", function (event) {
