@@ -1,7 +1,15 @@
-# Deploy Crickipedia to production (e.g. crickipedia.srpl.website)
+# Deploy Crickipedia to production (e.g. crickipedia.in)
+
+**If the site does not load at all:** read [DNS-SETUP.md](DNS-SETUP.md) first — `crickipedia.in` must exist in DNS.
 
 Crickipedia is **one Node.js app** (`npm start`). It serves HTML **and** `/api/*`.  
 Uploading only `index.html` / `admin.html` to static hosting **will not** expose `/api/health` or webhooks.
+
+### Docker (recommended on a VPS)
+
+```bash
+docker compose -f docker-compose.prod.yml up -d --build
+```
 
 ## 1. On the server (VPS / VM)
 
@@ -33,7 +41,7 @@ Point your domain at the Node process. Example:
 ```nginx
 server {
     listen 443 ssl;
-    server_name crickipedia.srpl.website;
+    server_name crickipedia.in;
 
     # ssl_certificate ... (your cert)
 
@@ -53,14 +61,14 @@ Reload Nginx: `sudo nginx -t && sudo systemctl reload nginx`
 
 ## 3. DNS
 
-`crickipedia.srpl.website` → **A record** (or CNAME) to the machine running Node + Nginx.
+`crickipedia.in` → **A record** (or CNAME) to the machine running Node + Nginx.
 
 ## 4. Verify
 
 | URL | Expected |
 |-----|----------|
-| `https://crickipedia.srpl.website/api/ping` | `{"ok":true,"service":"crickipedia",...}` — **no database required** |
-| `https://crickipedia.srpl.website/api/health` | `ok: true` if Postgres/Supabase is reachable |
+| `https://crickipedia.in/api/ping` | `{"ok":true,"service":"crickipedia",...}` — **no database required** |
+| `https://crickipedia.in/api/health` | `ok: true` if Postgres/Supabase is reachable |
 | WhatsApp webhook GET (Meta verify) | Plain-text challenge number |
 
 On the server itself:

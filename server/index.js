@@ -74,7 +74,11 @@ app.get("/api/webhooks/whatsapp", (req, res) => {
       return;
     }
     if (!whatsapp.webhookConfigured()) {
-      res.status(503).type("text/plain").send("Set WHATSAPP_WEBHOOK_VERIFY_TOKEN in server .env");
+      res.status(503).type("text/plain").send(
+        "WHATSAPP_WEBHOOK_VERIFY_TOKEN is not set on this server. "
+        + "Add it in your host Environment (e.g. Render → Environment), redeploy, "
+        + "then use the same value in Meta Verify token."
+      );
       return;
     }
     res.status(403).type("text/plain").send("Forbidden");

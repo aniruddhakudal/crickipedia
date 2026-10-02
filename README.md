@@ -51,7 +51,7 @@ Default admin login: `admin` / `admin123` (change in `.env`).
 
 Do not use `python -m http.server` for Phase 2. The pages must be served by `npm start` so they can talk to `/api`.
 
-**Production:** see [deploy/DEPLOY.md](deploy/DEPLOY.md). If `https://your-domain/api/health` is unreachable, the Node app is usually not running or not proxied — try `/api/ping` first.
+**Production:** see [deploy/DEPLOY.md](deploy/DEPLOY.md). Site not loading? Start with [deploy/FIX-NOT-REACHABLE.md](deploy/FIX-NOT-REACHABLE.md) (DNS + Render/VPS). Quick cloud deploy: `render.yaml` on [Render](https://render.com).
 
 ## How it works
 
@@ -90,7 +90,7 @@ Per tournament (Admin → **Payment method**):
 1. Create Meta templates with one body variable `{{1}}` (full message text): e.g. `registration_reserved`, `registration_confirmed`, `registration_rejected`.
 2. Set `WHATSAPP_ACCESS_TOKEN` and `WHATSAPP_PHONE_NUMBER_ID` in `.env`.
 3. Customize templates and category group links in Admin → **WhatsApp notifications** and **Registration categories**.
-4. **Webhook (Meta dashboard):** Callback URL `https://crickipedia.srpl.website/api/webhooks/whatsapp`, Verify token = same value as `WHATSAPP_WEBHOOK_VERIFY_TOKEN` in `.env`, then **Verify and save**. Subscribe to fields you need (e.g. `messages`). Restart the server after changing `.env`.
+4. **Webhook (Meta dashboard):** Callback URL `https://crickipedia.in/api/webhooks/whatsapp`, Verify token = same value as `WHATSAPP_WEBHOOK_VERIFY_TOKEN` in `.env`, then **Verify and save**. Subscribe to fields you need (e.g. `messages`). Restart the server after changing `.env`.
 
 Messages fire on: new registration (reserved), Razorpay success (if enabled), admin approve (confirmed), admin decline (rejected).
 
