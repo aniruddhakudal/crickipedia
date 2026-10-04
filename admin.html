@@ -4,29 +4,30 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Crickipedia Admin</title>
+<script>(function(){try{var t=localStorage.getItem("crickipedia_ui_theme");document.documentElement.setAttribute("data-ui-theme",t==="dark"?"dark":"bright");}catch(e){}})();</script>
+<link rel="stylesheet" href="/cricket-theme.css">
 <style>
-:root{--green:#0b6b45;--green2:#0f8b5b;--gold:#f5b942;--dark:#08251c;--light:#f4f7f5;--muted:#5d6f68}
-*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:var(--light);color:#092019}
-.top{background:var(--dark);color:white;padding:18px 0}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+.top{background:var(--top-bar);color:var(--top-bar-text);padding:18px 0}
 .wrap{max-width:1180px;margin:0 auto;padding:0 16px}
 .top-row{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
 .top h1{margin:0 0 4px;font-size:26px}.top p{margin:0;opacity:.75}
 .switcher{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-select,input,textarea{width:100%;padding:11px 12px;border:1px solid #d5e0db;border-radius:10px;font:inherit;background:#fff}
+select,input,textarea{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font:inherit;background:var(--input-bg);color:var(--text)}
 select.slim{width:auto;min-width:220px}
 .btn{border:0;border-radius:10px;padding:10px 14px;font-weight:800;cursor:pointer;background:var(--green);color:#fff}
-.btn:hover{background:var(--green2)}.btn.ghost{background:#e7f0eb;color:#092019}.btn.danger{background:#b52e2e}
-.tabs{display:flex;gap:8px;margin:18px 0}
-.tab{background:#fff;color:#092019;border:1px solid #d7e3dd}
+.btn:hover{background:var(--green2)}.btn.ghost{background:var(--chip-bg);color:var(--text)}.btn.danger{background:#b52e2e}
+.tabs{display:flex;gap:8px;margin:18px 0;align-items:center;flex-wrap:wrap}
+.tab{background:var(--surface);color:var(--text);border:1px solid var(--line)}
 .tab.on{background:var(--green);color:#fff;border-color:var(--green)}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-.stat,.panel{background:#fff;padding:20px;border-radius:14px;box-shadow:0 5px 20px #0000000b}
+.stat,.panel{background:var(--surface);padding:20px;border-radius:14px;box-shadow:var(--shadow);border:1px solid var(--line)}
 .stat b{font-size:28px;display:block;margin-top:4px}
 .panel{margin-top:16px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
 label{font-weight:700;font-size:13px;display:grid;gap:6px}
-.section{margin-top:22px;padding-top:8px;border-top:1px solid #edf2ef}
+.section{margin-top:22px;padding-top:8px;border-top:1px solid var(--line)}
 .section h3{margin:0 0 14px}
 .checks{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .field-config{display:grid;gap:10px;max-width:520px}
@@ -39,7 +40,7 @@ label{font-weight:700;font-size:13px;display:grid;gap:6px}
 .ffrow label{font-size:12px;font-weight:700;color:var(--muted);display:grid;gap:4px}
 .ffrow input,.ffrow select{font:inherit;padding:8px 10px;border-radius:10px;border:1px solid #d7e3dd}
 .ffrow .ff-name{font-weight:700;font-size:14px;color:var(--dark);padding:10px 0}
-.check{display:flex;align-items:center;gap:8px;font-weight:600;background:#f6faf8;padding:10px 12px;border-radius:10px}
+.check{display:flex;align-items:center;gap:8px;font-weight:600;background:var(--chip-bg);padding:10px 12px;border-radius:10px}
 .check input{width:auto}
 .rowline{display:grid;grid-template-columns:70px 1fr 1fr auto;gap:8px;margin-bottom:8px;align-items:center}
 .srow{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;margin-bottom:8px}
@@ -48,27 +49,27 @@ label{font-weight:700;font-size:13px;display:grid;gap:6px}
 .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
 .toast{position:fixed;right:16px;bottom:16px;background:var(--dark);color:#fff;padding:12px 16px;border-radius:12px;display:none;z-index:5}
 table{border-collapse:collapse;width:100%;min-width:920px}
-th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14px}
+th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size:14px}
 .tag{padding:5px 9px;border-radius:20px;background:#eaf7f1;color:#087247;font-weight:700;font-size:12px}
 .tag.pending{background:#fff4d6;color:#8a5a00}
-.preview{border-radius:16px;padding:18px;color:#fff;background:linear-gradient(135deg,var(--dark),var(--green),var(--green2));margin-bottom:16px}
+.preview{border-radius:16px;padding:18px;color:var(--text-on-hero);background:var(--preview-gradient);margin-bottom:16px;position:relative;overflow:hidden}
 .preview h2{margin:8px 0 4px}.preview p{margin:0;opacity:.85}
 .hidden{display:none!important}
 .muted{color:var(--muted);font-size:13px}
 .admin-cat-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 12px}
-.admin-cat-tab{border:1px solid #d7e3dd;background:#fff;padding:8px 14px;border-radius:10px;font-weight:800;font-size:13px;cursor:pointer;font-family:inherit}
+.admin-cat-tab{border:1px solid var(--line);background:var(--surface);padding:8px 14px;border-radius:10px;font-weight:800;font-size:13px;cursor:pointer;font-family:inherit;color:var(--text)}
 .admin-cat-tab.on{background:var(--green);color:#fff;border-color:var(--green)}
 .admin-player-photo{width:40px;height:40px;border-radius:50%;object-fit:cover;background:#e8f0eb;display:block}
 .admin-player-photo-ph{width:40px;height:40px;border-radius:50%;background:#e8f0eb;color:var(--green);font-weight:800;font-size:12px;display:grid;place-items:center}
 .receipt-thumb{max-width:72px;max-height:72px;border-radius:8px;border:1px solid #e7eeea;vertical-align:middle;display:block;cursor:pointer}
 .receipt-link{border:0;background:none;padding:0;font:inherit;font-weight:700;cursor:pointer}
 .modal-bg{position:fixed;inset:0;background:#0006;display:none;align-items:center;justify-content:center;padding:16px;z-index:6}
-.modal{background:#fff;border-radius:16px;padding:22px;max-width:420px;width:100%}
+.modal{background:var(--surface);color:var(--text);border-radius:16px;padding:22px;max-width:420px;width:100%;border:1px solid var(--line)}
 .modal-receipt{max-width:min(560px,96vw)}
 .receipt-modal-body{margin-top:12px;text-align:center;background:#f5f8f6;border-radius:12px;padding:12px;max-height:min(70vh,640px);overflow:auto}
 .receipt-modal-body img{max-width:100%;max-height:min(65vh,600px);width:auto;height:auto;border-radius:8px;vertical-align:middle}
-#loginGate{position:fixed;inset:0;background:#08251c;color:#fff;z-index:9;display:flex;align-items:center;justify-content:center;padding:16px}
-#loginGate .box{background:#fff;color:#092019;border-radius:18px;padding:28px;max-width:380px;width:100%}
+#loginGate{position:fixed;inset:0;background:var(--hero-gradient);color:var(--text-on-hero);z-index:9;display:flex;align-items:center;justify-content:center;padding:16px}
+#loginGate .box{background:var(--surface);color:var(--text);border-radius:18px;padding:28px;max-width:380px;width:100%;border:1px solid var(--line);box-shadow:var(--shadow)}
 #loginGate h2{margin:0 0 8px}
 #appRoot.locked{display:none}
 @media(max-width:800px){
@@ -78,9 +79,14 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
 }
 </style>
 </head>
-<body>
+<body class="cricket-ui">
+<div class="cricket-wm-corner cricket-wm-corner--tl" aria-hidden="true">🧤</div>
+<div class="cricket-wm-corner cricket-wm-corner--br" aria-hidden="true">🎯</div>
 <div id="loginGate">
   <div class="box">
+    <div style="display:flex;justify-content:flex-end;margin:-8px 0 8px">
+      <button type="button" class="ui-theme-toggle ui-theme-toggle--surface" data-ui-theme-toggle aria-label="Toggle theme">🌙 Dark</button>
+    </div>
     <h2>Admin sign in</h2>
     <p class="muted">Only staff can customize tournaments or see players.</p>
     <label>Username<input id="loginUser" autocomplete="username"></label>
@@ -100,8 +106,9 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
     </div>
     <div class="switcher">
       <select class="slim" id="tourneySelect" aria-label="Active tournament"></select>
-      <button class="btn ghost" type="button" id="newBtn">New tournament</button>
+      <button class="btn ghost superadmin-only" type="button" id="newBtn">New tournament</button>
       <a class="btn" id="viewBtn" href="/" target="_blank" rel="noopener">View site</a>
+      <button type="button" class="ui-theme-toggle ui-theme-toggle--surface" data-ui-theme-toggle aria-label="Toggle theme">🌙 Dark</button>
       <button class="btn ghost" type="button" id="logoutBtn">Sign out</button>
     </div>
   </div>
@@ -109,8 +116,9 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
 
 <main class="wrap">
   <div class="tabs">
-    <button class="btn tab on" type="button" data-tab="customize">Customize</button>
-    <button class="btn tab" type="button" data-tab="players">Players</button>
+    <button class="btn tab on superadmin-only" type="button" data-tab="customize" id="tabCustomize">Customize</button>
+    <button class="btn tab" type="button" data-tab="players" id="tabPlayers">Players</button>
+    <span class="muted" id="roleBadge" style="margin-left:auto;font-size:13px;font-weight:700"></span>
   </div>
 
   <section id="customize">
@@ -146,13 +154,7 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
         <label>Logo image URL<input id="logoUrl" placeholder="https://..."></label>
         <label>Support WhatsApp<input id="supportWhatsapp" maxlength="15" placeholder="10-digit or 91…"></label>
       </div>
-      <div class="grid3" style="margin-top:14px">
-        <label>Primary color<input id="colorGreen" type="color"></label>
-        <label>Highlight color<input id="colorGreen2" type="color"></label>
-        <label>Gold / accent<input id="colorGold" type="color"></label>
-        <label>Dark<input id="colorDark" type="color"></label>
-        <label>Page background<input id="colorLight" type="color"></label>
-      </div>
+      <p class="muted" style="margin-top:14px">Registration pages use the shared Crickipedia cricket theme. Participants can switch bright or dark mode on the registration page; the same preference applies here in admin.</p>
     </div>
 
     <div class="panel">
@@ -286,7 +288,23 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
       <button class="btn ghost" type="button" id="addSponsor">Add sponsor</button>
     </div>
 
-    <div class="actions">
+    <div class="panel superadmin-only" id="tournamentAdminsPanel">
+      <h3 style="margin-top:0">Tournament admins</h3>
+      <p class="muted">Create logins that can open the <strong>Players</strong> tab only, for one tournament. Share the username and password with desk volunteers.</p>
+      <div class="grid3" style="margin-top:12px">
+        <label>Username<input id="newAdminUser" autocomplete="off" placeholder="e.g. cpl-desk"></label>
+        <label>Password<input id="newAdminPass" type="password" autocomplete="new-password" placeholder="Min 6 characters"></label>
+        <label>Tournament
+          <select id="newAdminTournament"></select>
+        </label>
+      </div>
+      <div class="actions" style="margin-top:10px">
+        <button class="btn" type="button" id="createTournamentAdminBtn">Create tournament admin</button>
+      </div>
+      <div id="tournamentAdminsList" style="margin-top:16px"></div>
+    </div>
+
+    <div class="actions superadmin-only">
       <button class="btn" type="button" id="saveBtn">Save tournament</button>
       <a class="btn ghost" id="previewBtn" href="index.html" target="_blank" rel="noopener">Preview as player</a>
       <button class="btn danger" type="button" id="deleteBtn">Delete tournament</button>
@@ -303,7 +321,7 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
     <div class="panel">
       <div class="actions" style="margin-top:0">
         <button class="btn" type="button" id="exportBtn">Export CSV</button>
-        <button class="btn danger" type="button" id="clearBtn">Clear this tournament's players</button>
+        <button class="btn danger superadmin-only" type="button" id="clearBtn">Clear this tournament's players</button>
       </div>
       <h2>Registered players</h2>
       <p class="muted">Browse by category. Open receipts and approve or decline payments when a receipt is submitted.</p>
@@ -353,11 +371,106 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
 <script>
 (async function () {
   var C = Crickipedia;
+  C.initUiThemeToggle();
   var list = [];
   var current = null;
   var slug = "";
   var dirty = false;
   var sponsorLogoPickIndex = null;
+  var meRole = "superadmin";
+  var allTournamentsForAdmins = [];
+
+  function isSuperadmin() {
+    return meRole === "superadmin";
+  }
+
+  function applyRoleUi() {
+    document.querySelectorAll(".superadmin-only").forEach(function (el) {
+      el.classList.toggle("hidden", !isSuperadmin());
+    });
+    var badge = document.getElementById("roleBadge");
+    if (isSuperadmin()) {
+      badge.textContent = "Superadmin";
+    } else {
+      badge.textContent = "Tournament admin";
+      document.getElementById("tabCustomize").classList.add("hidden");
+      document.getElementById("customize").classList.add("hidden");
+      document.getElementById("players").classList.remove("hidden");
+      document.getElementById("tabPlayers").classList.add("on");
+      document.getElementById("tabCustomize").classList.remove("on");
+    }
+    var sel = document.getElementById("tourneySelect");
+    if (!isSuperadmin() && list.length <= 1) {
+      sel.disabled = true;
+    } else {
+      sel.disabled = false;
+    }
+  }
+
+  function switchToTab(name) {
+    document.querySelectorAll(".tab").forEach(function (item) {
+      item.classList.toggle("on", item.dataset.tab === name);
+    });
+    document.getElementById("customize").classList.toggle("hidden", name !== "customize");
+    document.getElementById("players").classList.toggle("hidden", name !== "players");
+    if (name === "players") renderPlayers();
+  }
+
+  function fillAdminTournamentPick() {
+    var sel = document.getElementById("newAdminTournament");
+    if (!sel) return;
+    sel.innerHTML = allTournamentsForAdmins.map(function (t) {
+      return '<option value="' + C.escapeHtml(t.slug) + '">' + C.escapeHtml(t.name) + "</option>";
+    }).join("");
+  }
+
+  async function renderTournamentAdminsList() {
+    var box = document.getElementById("tournamentAdminsList");
+    if (!box || !isSuperadmin()) return;
+    try {
+      var users = await C.api.listTournamentAdmins();
+      if (!users.length) {
+        box.innerHTML = '<p class="muted">No tournament admins yet.</p>';
+        return;
+      }
+      box.innerHTML = users.map(function (u) {
+        var tour = (u.tournaments || []).map(function (t) { return C.escapeHtml(t.name); }).join(", ") || "—";
+        var status = u.active ? "Active" : "Disabled";
+        return '<div class="rowline" style="grid-template-columns:1fr 1fr auto auto">' +
+          "<strong>" + C.escapeHtml(u.username) + "</strong>" +
+          "<span class=\"muted\">" + tour + " · " + status + "</span>" +
+          '<button type="button" class="btn ghost" data-admin-reset="' + u.id + '">Reset password</button>' +
+          '<button type="button" class="btn ghost" data-admin-toggle="' + u.id + '" data-active="' + (u.active ? "0" : "1") + '">' +
+          (u.active ? "Disable" : "Enable") + "</button></div>";
+      }).join("");
+      box.querySelectorAll("[data-admin-reset]").forEach(function (btn) {
+        btn.addEventListener("click", async function () {
+          var pw = prompt("New password (min 6 characters):");
+          if (!pw) return;
+          try {
+            await C.api.updateTournamentAdmin(btn.getAttribute("data-admin-reset"), { password: pw });
+            toast("Password updated");
+          } catch (err) {
+            toast(err.message || "Update failed");
+          }
+        });
+      });
+      box.querySelectorAll("[data-admin-toggle]").forEach(function (btn) {
+        btn.addEventListener("click", async function () {
+          var active = btn.getAttribute("data-active") === "1";
+          try {
+            await C.api.updateTournamentAdmin(btn.getAttribute("data-admin-toggle"), { active: active });
+            await renderTournamentAdminsList();
+            toast(active ? "Admin enabled" : "Admin disabled");
+          } catch (err) {
+            toast(err.message || "Update failed");
+          }
+        });
+      });
+    } catch (err) {
+      box.innerHTML = '<p class="muted">' + C.escapeHtml(err.message || "Could not load admins") + "</p>";
+    }
+  }
 
   function showApp() {
     document.getElementById("loginGate").style.display = "none";
@@ -366,19 +479,33 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
 
   async function boot() {
     try {
-      await C.api.me();
+      var me = await C.api.me();
+      meRole = me.role || "superadmin";
       showApp();
+      applyRoleUi();
       C.api.health().then(function (health) {
         serverPaymentsMode = health.payments || null;
         refreshPaymentModeHint();
       }).catch(function () {});
       list = await C.api.listAdmin();
+      if (isSuperadmin()) {
+        allTournamentsForAdmins = list.slice();
+        fillAdminTournamentPick();
+        renderTournamentAdminsList();
+      }
       slug = C.getAdminSlug(list);
       current = list.find(function (item) { return item.slug === slug; }) || list[0] || null;
-      if (current) load(current);
-      else {
-        fillSelect();
+      fillSelect();
+      if (current) {
+        if (isSuperadmin()) load(current);
+        else {
+          slug = current.slug;
+          switchToTab("players");
+        }
+      } else if (isSuperadmin()) {
         toast("No tournaments yet — create your first one.");
+      } else {
+        toast("No tournament assigned to your account.");
       }
     } catch (err) {
       document.getElementById("loginGate").style.display = "flex";
@@ -666,18 +793,6 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
       document.getElementById("registrationStart").value + " to " +
       document.getElementById("registrationEnd").value + " • " +
       (document.getElementById("currency").value || "₹") + document.getElementById("fee").value;
-    var fake = {
-      colors: {
-        green: document.getElementById("colorGreen").value,
-        green2: document.getElementById("colorGreen2").value,
-        gold: document.getElementById("colorGold").value,
-        dark: document.getElementById("colorDark").value,
-        light: document.getElementById("colorLight").value
-      }
-    };
-    C.applyTheme(fake);
-    document.getElementById("preview").style.background =
-      "linear-gradient(135deg," + fake.colors.dark + "," + fake.colors.green + "," + fake.colors.green2 + ")";
   }
 
   function collect() {
@@ -695,13 +810,6 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
       heroSub: document.getElementById("heroSub").value,
       logoEmoji: document.getElementById("logoEmoji").value || "🏏",
       logoUrl: document.getElementById("logoUrl").value.trim(),
-      colors: {
-        green: document.getElementById("colorGreen").value,
-        green2: document.getElementById("colorGreen2").value,
-        gold: document.getElementById("colorGold").value,
-        dark: document.getElementById("colorDark").value,
-        light: document.getElementById("colorLight").value
-      },
       status: document.getElementById("status").value,
       registrationStart: document.getElementById("registrationStart").value,
       registrationEnd: document.getElementById("registrationEnd").value,
@@ -759,11 +867,6 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
     document.getElementById("logoEmoji").value = tournament.logoEmoji || "🏏";
     document.getElementById("logoUrl").value = tournament.logoUrl || "";
     document.getElementById("supportWhatsapp").value = tournament.supportWhatsapp || "";
-    document.getElementById("colorGreen").value = tournament.colors.green;
-    document.getElementById("colorGreen2").value = tournament.colors.green2;
-    document.getElementById("colorGold").value = tournament.colors.gold;
-    document.getElementById("colorDark").value = tournament.colors.dark;
-    document.getElementById("colorLight").value = tournament.colors.light;
     document.getElementById("registrationStart").value = tournament.registrationStart || "";
     document.getElementById("registrationEnd").value = tournament.registrationEnd || "";
     document.getElementById("fee").value = tournament.fee;
@@ -1032,12 +1135,31 @@ th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14p
 
   document.querySelectorAll(".tab").forEach(function (tab) {
     tab.addEventListener("click", function () {
-      document.querySelectorAll(".tab").forEach(function (item) { item.classList.remove("on"); });
-      tab.classList.add("on");
-      document.getElementById("customize").classList.toggle("hidden", tab.dataset.tab !== "customize");
-      document.getElementById("players").classList.toggle("hidden", tab.dataset.tab !== "players");
-      if (tab.dataset.tab === "players") renderPlayers();
+      if (tab.dataset.tab === "customize" && !isSuperadmin()) return;
+      switchToTab(tab.dataset.tab);
     });
+  });
+
+  document.getElementById("createTournamentAdminBtn").addEventListener("click", async function () {
+    var username = document.getElementById("newAdminUser").value.trim();
+    var password = document.getElementById("newAdminPass").value;
+    var tournamentSlug = document.getElementById("newAdminTournament").value;
+    if (!username || !password || !tournamentSlug) {
+      toast("Username, password, and tournament are required");
+      return;
+    }
+    this.disabled = true;
+    try {
+      await C.api.createTournamentAdmin({ username: username, password: password, tournamentSlug: tournamentSlug });
+      document.getElementById("newAdminUser").value = "";
+      document.getElementById("newAdminPass").value = "";
+      await renderTournamentAdminsList();
+      toast("Tournament admin created");
+    } catch (err) {
+      toast(err.message || "Could not create admin");
+    } finally {
+      this.disabled = false;
+    }
   });
 
   document.getElementById("customize").addEventListener("input", function () {

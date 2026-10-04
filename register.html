@@ -4,12 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Player Registration</title>
+<script>(function(){try{var t=localStorage.getItem("crickipedia_ui_theme");document.documentElement.setAttribute("data-ui-theme",t==="dark"?"dark":"bright");}catch(e){}})();</script>
+<link rel="stylesheet" href="/cricket-theme.css">
 <style>
-:root{--green:#0b6b45;--green2:#0f8b5b;--gold:#f5b942;--dark:#071b16;--light:#f3f7f5;--muted:#5f6f69;--white:#fff;--line:#e3ebe6;--shadow:0 16px 48px rgba(7,27,22,.07)}
 *{box-sizing:border-box}
-body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--light);color:var(--dark);line-height:1.5;-webkit-font-smoothing:antialiased}
-.hero{background:linear-gradient(145deg,var(--dark) 0%,var(--green) 52%,var(--green2) 100%);color:white;padding:28px 0 56px;position:relative;overflow:hidden}
-.hero:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 85% 20%,rgba(245,185,66,.18),transparent 45%)}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
+.hero-toolbar{display:flex;justify-content:flex-end;padding:12px 0 0;position:relative;z-index:2}
+.hero{color:var(--text-on-hero);padding:28px 0 56px;position:relative;overflow:hidden}
+.hero:before{content:"";position:absolute;inset:0;pointer-events:none}
 .hero:after{content:attr(data-emoji);position:absolute;right:4%;bottom:-40px;font-size:200px;opacity:.07;transform:rotate(-12deg);pointer-events:none}
 .wrap{max-width:1080px;margin:0 auto;padding:0 20px}
 .brand{display:flex;align-items:center;gap:16px;position:relative;z-index:1}
@@ -23,50 +25,53 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;b
 .badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:24px}
 .badge{background:rgba(255,255,255,.14);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.22);padding:8px 14px;border-radius:999px;font-size:.8rem;font-weight:600}
 .grid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,.75fr);gap:28px;margin-top:-32px;position:relative;z-index:2;padding-bottom:40px}
-.card{background:var(--white);border-radius:24px;padding:28px;box-shadow:var(--shadow);margin-bottom:24px;border:1px solid rgba(255,255,255,.8)}
+.card{background:var(--surface);border-radius:24px;padding:28px;box-shadow:var(--shadow);margin-bottom:24px;border:1px solid var(--line)}
 .card h3{margin:0;font-size:1.2rem;font-weight:800;letter-spacing:-.02em}
 .card-head{margin-bottom:22px}
 .card-head p{margin:6px 0 0;color:var(--muted);font-size:.9rem}
-.notice{background:linear-gradient(90deg,#fff9e8,#fffdf5);border:1px solid #f0e0a8;border-radius:14px;padding:16px 18px;margin-bottom:24px;font-size:.92rem;line-height:1.5}
-.notice strong{display:block;margin-bottom:4px;font-size:.95rem;color:#6b4f00}
+.notice{background:var(--notice-bg);border:1px solid var(--notice-border);border-radius:14px;padding:16px 18px;margin-bottom:24px;font-size:.92rem;line-height:1.5}
+.notice strong{display:block;margin-bottom:4px;font-size:.95rem}
 form{display:flex;flex-direction:column;gap:28px}
 .form-section{display:flex;flex-direction:column;gap:16px}
 .ordered-form-fields{display:flex;flex-direction:column;gap:16px}
 .form-section-title{font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--green);margin:0}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-label{font-weight:600;font-size:.88rem;display:grid;gap:8px;color:#1a2e26}
+label{font-weight:600;font-size:.88rem;display:grid;gap:8px;color:var(--text)}
 label .opt{font-weight:500;color:var(--muted);font-size:.8rem}
-input,select{width:100%;padding:14px 16px;border:1px solid var(--line);border-radius:14px;font-size:1rem;font-family:inherit;background:#fafcfb;outline:none;transition:border .15s,box-shadow .15s}
-input:focus,select:focus{border-color:var(--green2);background:#fff;box-shadow:0 0 0 4px rgba(15,139,91,.12)}
+input,select{width:100%;padding:14px 16px;border:1px solid var(--line);border-radius:14px;font-size:1rem;font-family:inherit;background:var(--input-bg);color:var(--text);outline:none;transition:border .15s,box-shadow .15s}
+input:focus,select:focus{border-color:var(--green2);background:var(--surface);box-shadow:0 0 0 4px var(--focus-ring)}
 .skills{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
 @media(min-width:520px){.skills{grid-template-columns:repeat(4,1fr)}}
 .skill input{display:none}
-.skill span{display:flex;align-items:center;justify-content:center;min-height:52px;text-align:center;padding:12px 8px;border:2px solid var(--line);border-radius:14px;font-weight:700;font-size:.82rem;cursor:pointer;background:#fafcfb;transition:all .15s}
-.skill input:checked+span{background:linear-gradient(180deg,#ecf9f2,#e0f5ea);border-color:var(--green2);color:var(--green);box-shadow:0 4px 12px rgba(11,107,69,.12)}
-.photo{border:2px dashed #c5d8ce;border-radius:16px;padding:20px;text-align:center;color:var(--muted);background:#fafcfb}
+.skill span{display:flex;align-items:center;justify-content:center;min-height:52px;text-align:center;padding:12px 8px;border:2px solid var(--line);border-radius:14px;font-weight:700;font-size:.82rem;cursor:pointer;transition:all .15s}
+.skill input:checked+span{box-shadow:0 4px 12px var(--focus-ring)}
+.photo{border:2px dashed var(--line);border-radius:16px;padding:20px;text-align:center;color:var(--muted)}
 .photo img{display:none;max-width:120px;max-height:120px;border-radius:16px;margin:12px auto 0}
 .profile-upload{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
-.profile-preview{width:88px;height:88px;border-radius:50%;border:2px dashed #c5d8ce;background:#fafcfb;display:grid;place-items:center;font-size:2rem;flex-shrink:0;overflow:hidden;color:var(--muted)}
+.profile-preview{width:88px;height:88px;border-radius:50%;border:2px dashed var(--line);display:grid;place-items:center;font-size:2rem;flex-shrink:0;overflow:hidden;color:var(--muted);padding:0;cursor:pointer;font-family:inherit;background:transparent}
+.profile-preview:focus-visible{outline:2px solid var(--green2);outline-offset:3px}
 .profile-preview img{width:100%;height:100%;object-fit:cover;display:block}
-.profile-upload-actions{display:flex;flex-direction:column;align-items:flex-start;gap:8px}
-.profile-upload-actions .pick-photo{display:inline-flex;align-items:center;justify-content:center;padding:10px 18px;border-radius:12px;font-weight:800;font-size:.88rem;background:#eef4f1;color:var(--dark);border:1px solid var(--line);cursor:pointer;font-family:inherit}
-.profile-upload-actions .pick-photo:hover{background:#e3ebe6}
+.profile-upload-actions{display:flex;flex-direction:column;align-items:flex-start;gap:8px;min-width:0;flex:1}
+.profile-upload-actions .pick-photo{display:inline-flex;align-items:center;justify-content:center;padding:10px 18px;border-radius:12px;font-weight:800;font-size:.88rem;cursor:pointer;font-family:inherit;border:0}
+.profile-photo-menu{display:flex;flex-wrap:wrap;gap:8px;width:100%}
+.profile-photo-menu.hidden{display:none!important}
+.profile-photo-menu .pick-photo.secondary{background:var(--input-bg);color:var(--text);border:1px solid var(--line);box-shadow:none}
 .profile-hint{margin:0;font-size:.82rem;color:var(--muted);max-width:28ch;line-height:1.4}
 .profile-upload input[type=file]{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
-.fee-strip{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 20px;border-radius:16px;background:linear-gradient(135deg,var(--dark),#0d3d2c);color:#fff}
+.fee-strip{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 20px;border-radius:16px;color:#fff}
 .fee-strip .label{font-size:.8rem;opacity:.75;margin-bottom:4px}
 .fee-strip .amount{font-size:1.75rem;font-weight:800;color:var(--gold);letter-spacing:-.02em}
 .fee-strip .tag{font-size:.75rem;font-weight:700;background:rgba(255,255,255,.12);padding:8px 12px;border-radius:999px;white-space:nowrap}
 .btn{border:0;border-radius:14px;padding:15px 20px;font-weight:800;font-size:.95rem;cursor:pointer;font-family:inherit;transition:transform .1s,filter .15s}
 .btn:active{transform:scale(.98)}
-.primary{background:linear-gradient(180deg,var(--green2),var(--green));color:white;width:100%;box-shadow:0 8px 20px rgba(11,107,69,.28)}
-.primary:hover{filter:brightness(1.05)}
-.ghost{background:#eef4f1;color:var(--dark);width:100%}
+.primary{width:100%}
+.primary:hover{filter:brightness(1.06)}
+.ghost{width:100%}
 .wa{background:#25d366;color:#fff;width:100%;text-decoration:none;display:flex;align-items:center;justify-content:center;min-height:48px}
 .wa:hover{filter:brightness(.96)}
 .wa.secondary{background:#128c7e}
 .sponsors{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.sponsor{border:1px solid var(--line);border-radius:14px;padding:16px;text-align:center;font-weight:700;font-size:.85rem;background:#fafcfb}
+.sponsor{border:1px solid var(--line);border-radius:14px;padding:16px;text-align:center;font-weight:700;font-size:.85rem}
 .sponsor img{max-height:36px;max-width:100%;display:block;margin:0 auto 8px}
 .jersey-size-row{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
 .jersey-size-select{flex:1;min-width:140px}
@@ -80,13 +85,13 @@ input:focus,select:focus{border-color:var(--green2);background:#fff;box-shadow:0
 .sponsor-carousel-track:hover{animation-play-state:paused}
 .sponsor-carousel-item{flex:0 0 auto;display:flex;align-items:center;justify-content:center;min-width:120px;max-width:160px;padding:8px 12px}
 .sponsor-carousel-item img{max-height:48px;max-width:140px;object-fit:contain;display:block}
-.sponsor-carousel-item span{font-weight:700;font-size:.85rem;color:var(--dark)}
+.sponsor-carousel-item span{font-weight:700;font-size:.85rem;color:var(--text)}
 @keyframes sponsor-scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
 .aside-card h3{font-size:1rem;margin-bottom:16px}
 .info-grid{display:grid;gap:12px}
-.info-chip{padding:14px 16px;border-radius:14px;background:#f6faf8;border:1px solid var(--line)}
+.info-chip{padding:14px 16px;border-radius:14px;border:1px solid var(--line)}
 .info-chip strong{display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:4px}
-.info-chip span{font-size:.95rem;font-weight:600;color:var(--dark)}
+.info-chip span{font-size:.95rem;font-weight:600}
 .muted{color:var(--muted);font-size:.88rem}
 .footer{text-align:center;padding:32px 20px 48px;color:var(--muted);font-size:.85rem}
 .success{display:none}
@@ -94,7 +99,7 @@ input:focus,select:focus{border-color:var(--green2);background:#fff;box-shadow:0
 .success .check{font-size:3.5rem;line-height:1;margin-bottom:8px}
 .success h2{margin:0 0 8px;font-size:1.5rem;font-weight:800;letter-spacing:-.02em}
 .success .lead{margin:0 0 20px;color:var(--muted);font-size:.95rem;line-height:1.5}
-.regid{font-size:1.35rem;font-weight:800;color:var(--green);background:linear-gradient(180deg,#eef9f4,#e4f5ec);padding:18px 20px;border-radius:16px;margin:0 0 16px;letter-spacing:.02em;border:1px solid #c8e8d8}
+.regid{font-size:1.35rem;font-weight:800;padding:18px 20px;border-radius:16px;margin:0 0 16px;letter-spacing:.02em;border:1px solid var(--regid-border)}
 .hidden{display:none!important}
 .hint{background:#eef9f4;border-radius:14px;padding:14px 16px;font-size:.88rem;line-height:1.45;border:1px solid #d4eddf}
 .hint a,.hint button.link{color:var(--green);font-weight:700;background:none;border:0;padding:0;cursor:pointer;font-size:inherit}
@@ -118,10 +123,10 @@ input:focus,select:focus{border-color:var(--green2);background:#fff;box-shadow:0
 .roster-modal{position:fixed;inset:0;z-index:1000;display:flex;align-items:flex-end;justify-content:center;padding:0}
 .roster-modal.hidden{display:none!important}
 .roster-backdrop{position:absolute;inset:0;background:rgba(7,27,22,.45)}
-.roster-panel{position:relative;width:100%;max-width:920px;max-height:min(88vh,720px);background:#fff;border-radius:20px 20px 0 0;box-shadow:0 -8px 40px rgba(7,27,22,.18);display:flex;flex-direction:column;overflow:hidden}
+.roster-panel{position:relative;width:100%;max-width:920px;max-height:min(88vh,720px);background:#fff;color:#0a2e24;border-radius:20px 20px 0 0;box-shadow:0 -8px 40px rgba(7,27,22,.18);display:flex;flex-direction:column;overflow:hidden;--text:#0a2e24;--muted:#4a6358;--green:#00875a;--green2:#00a86b;--dark:#071b16;--line:#d4e8de}
 @media(min-width:640px){.roster-modal{align-items:center;padding:20px}.roster-panel{border-radius:20px;max-height:85vh}}
 .roster-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 20px;border-bottom:1px solid var(--line)}
-.roster-head h3{margin:0;font-size:1.1rem;font-weight:800}
+.roster-head h3{margin:0;font-size:1.1rem;font-weight:800;color:#0a2e24}
 .roster-close{border:0;background:#eef4f1;width:36px;height:36px;border-radius:10px;font-size:1.25rem;cursor:pointer;line-height:1;color:var(--dark)}
 .roster-tabs{display:flex;gap:8px;padding:12px 16px 0;overflow-x:auto;border-bottom:1px solid var(--line);flex-shrink:0}
 .roster-tab{border:0;background:transparent;padding:10px 14px;font-weight:800;font-size:.85rem;color:var(--muted);cursor:pointer;border-radius:10px 10px 0 0;font-family:inherit;white-space:nowrap}
@@ -129,15 +134,19 @@ input:focus,select:focus{border-color:var(--green2);background:#fff;box-shadow:0
 .roster-body{padding:16px 16px 24px;overflow:auto;flex:1}
 .roster-table{width:100%;border-collapse:collapse;font-size:.88rem}
 .roster-table th{text-align:left;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:8px 10px;border-bottom:1px solid var(--line)}
-.roster-table td{padding:10px;border-bottom:1px solid #f0f4f2;vertical-align:middle}
+.roster-table td{padding:10px;border-bottom:1px solid #f0f4f2;vertical-align:middle;color:#0a2e24}
+.roster-table td strong{font-weight:800;color:#071b16}
 .roster-table tr:last-child td{border-bottom:0}
 .roster-photo{width:40px;height:40px;border-radius:50%;object-fit:cover;background:#e8f0eb;display:block}
 .roster-photo-placeholder{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#e0f5ea,#c5e8d4);color:var(--green);font-weight:800;font-size:.85rem;display:grid;place-items:center}
 .roster-status{display:inline-block;padding:4px 10px;border-radius:999px;font-size:.75rem;font-weight:800}
 .roster-status-confirmed{background:#e8f7f0;color:var(--green)}
 .roster-status-pending{background:#fff6e6;color:#9a6700}
-.roster-status-reserved{background:#eef4f1;color:var(--muted)}
+.roster-status-reserved{background:#e2ebe6;color:#3d5248}
 .roster-empty{text-align:center;padding:32px 16px;color:var(--muted)}
+.page-loading{text-align:center;padding:48px 24px;color:var(--muted)}
+.page-loading .spinner{width:40px;height:40px;margin:0 auto 16px;border:3px solid var(--line);border-top-color:var(--green2);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 @media(max-width:520px){
   .roster-table thead{display:none}
   .roster-table tr{display:grid;grid-template-columns:40px 1fr;gap:4px 12px;padding:12px 0;border-bottom:1px solid var(--line)}
@@ -154,8 +163,13 @@ input:focus,select:focus{border-color:var(--green2);background:#fff;box-shadow:0
 }
 </style>
 </head>
-<body>
+<body class="cricket-ui">
+<div class="cricket-wm-corner cricket-wm-corner--tl" aria-hidden="true">🧤</div>
+<div class="cricket-wm-corner cricket-wm-corner--br" aria-hidden="true">🎯</div>
 <header class="hero" id="hero">
+  <div class="wrap hero-toolbar">
+    <button type="button" class="ui-theme-toggle" data-ui-theme-toggle aria-label="Toggle theme">🌙 Dark</button>
+  </div>
   <div class="wrap">
     <div class="brand">
       <div class="logo" id="logo">🏏</div>
@@ -179,6 +193,12 @@ input:focus,select:focus{border-color:var(--green2);background:#fff;box-shadow:0
         <div class="big">🔌</div>
         <h2>Can't reach the server</h2>
         <p class="muted">Start Postgres and <code>npm start</code>, then refresh. Registration is saved in the database, not in this browser.</p>
+      </div>
+    </div>
+    <div class="card hidden" id="pageLoading">
+      <div class="page-loading">
+        <div class="spinner" aria-hidden="true"></div>
+        <p>Loading registration…</p>
       </div>
     </div>
     <div class="card hidden" id="gateCard">
@@ -265,11 +285,16 @@ input:focus,select:focus{border-color:var(--green2);background:#fff;box-shadow:0
           <button class="btn primary" type="button" id="payBtn">Pay now</button>
           <a class="btn wa" id="waShare" href="https://wa.me/" target="_blank" rel="noopener">Share on WhatsApp</a>
           <a class="btn wa secondary hidden" id="waDesk" href="https://wa.me/" target="_blank" rel="noopener">Message tournament desk</a>
-          <label class="photo hidden" id="successPhoto">
-            Update profile picture
-            <input id="photoLater" type="file" accept="image/*">
-            <img id="previewLater">
-          </label>
+          <div class="photo hidden" id="successPhoto">
+            <span style="font-weight:600;display:block;margin-bottom:10px">Update profile picture</span>
+            <div class="profile-photo-menu" id="successPhotoMenu">
+              <button type="button" class="pick-photo" id="photoLaterUploadBtn">Upload photo</button>
+              <button type="button" class="pick-photo secondary" id="photoLaterCameraBtn">Take picture</button>
+            </div>
+            <input id="photoLater" type="file" accept="image/jpeg,image/png,image/webp,image/*">
+            <input id="photoLaterCamera" type="file" accept="image/*" capture="user">
+            <img id="previewLater" alt="">
+          </div>
           <button class="btn ghost" type="button" id="anotherBtn">Register another player</button>
         </div>
         <p class="muted pay-note" id="payNote">Pay securely with UPI, cards, or netbanking.</p>
@@ -321,10 +346,12 @@ input:focus,select:focus{border-color:var(--green2);background:#fff;box-shadow:0
   <div class="tourney-links"><a href="/">← Crickipedia home</a><span id="otherTournaments"></span></div>
 </footer>
 
+<script type="application/json" id="crickipedia-bootstrap"></script>
 <script src="/app.js"></script>
 <script>
 (async function () {
   var C = Crickipedia;
+  C.initUiThemeToggle();
   var preview = C.queryParam("preview") === "1";
   var currentRecord = null;
   var photoFile = null;
@@ -332,10 +359,34 @@ input:focus,select:focus{border-color:var(--green2);background:#fff;box-shadow:0
   var suppressPayPanels = false;
   var all = [];
   var tournament = null;
+
+  function readBootstrap() {
+    var el = document.getElementById("crickipedia-bootstrap");
+    if (!el) return null;
+    var text = (el.textContent || "").trim();
+    if (!text) return null;
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  var bootstrap = readBootstrap();
+  if (bootstrap && bootstrap.preview) preview = true;
+
   var parsed = C.parsePublicUrl();
   var hasDirectRef = (parsed.tournament && parsed.season) || parsed.legacySlug;
+  var pageLoading = document.getElementById("pageLoading");
+  if (!bootstrap || !bootstrap.tournament) {
+    pageLoading.classList.remove("hidden");
+  }
+
   try {
-    if (hasDirectRef) {
+    if (bootstrap && bootstrap.tournament) {
+      tournament = bootstrap.tournament;
+      paymentCfg = bootstrap.paymentConfig || null;
+    } else if (hasDirectRef) {
       if (parsed.tournament && parsed.season) {
         var cfg = await C.api.config({ tournamentSlug: parsed.tournament, seasonSlug: parsed.season }, preview);
         tournament = cfg.tournament;
@@ -349,17 +400,23 @@ input:focus,select:focus{border-color:var(--green2);background:#fff;box-shadow:0
       all = await C.api.listPublic(preview);
       tournament = C.resolvePublicTournament(all);
       if (tournament) {
-        var cfgList = await C.api.config(tournament, preview);
-        tournament = cfgList.tournament;
-        paymentCfg = cfgList.paymentConfig || null;
+        paymentCfg = tournament.paymentConfig != null ? tournament.paymentConfig : null;
+        if (paymentCfg == null) {
+          var cfgList = await C.api.config(tournament, preview);
+          tournament = cfgList.tournament;
+          paymentCfg = cfgList.paymentConfig || null;
+        }
       }
     }
   } catch (err) {
+    pageLoading.classList.add("hidden");
     document.getElementById("formCard").classList.add("hidden");
     document.getElementById("apiDown").classList.remove("hidden");
     return;
   }
+  pageLoading.classList.add("hidden");
   if (!tournament) {
+    pageLoading.classList.add("hidden");
     document.getElementById("formCard").classList.add("hidden");
     document.getElementById("apiDown").classList.remove("hidden");
     document.querySelector("#apiDown h2").textContent = "No tournament found";
@@ -367,7 +424,6 @@ input:focus,select:focus{border-color:var(--green2);background:#fff;box-shadow:0
   }
   var state = C.publicState(tournament);
 
-  C.applyTheme(tournament);
   document.title = tournament.name + " — Register";
   document.getElementById("hero").setAttribute("data-emoji", tournament.logoEmoji || "🏏");
   if (tournament.logoUrl) {
@@ -552,10 +608,15 @@ input:focus,select:focus{border-color:var(--green2);background:#fff;box-shadow:0
     }
     if (field.id === "photo") {
       return '<div class="profile-field"><p class="form-section-title" style="margin:0 0 8px">Profile picture' + fieldSuffixFromMode(mode) + '</p><div class="profile-upload">' +
-        '<div class="profile-preview" id="profilePreview" aria-hidden="true">📷</div>' +
-        '<div class="profile-upload-actions"><label class="pick-photo" for="photo">Choose photo</label>' +
-        '<input id="photo" type="file" accept="image/*"' + (mode === "required" ? " required" : "") + '>' +
-        '<p class="profile-hint">JPG or PNG. You can also add one after you register.</p></div></div></div>';
+        '<button type="button" class="profile-preview" id="profilePreviewBtn" aria-label="Add profile picture" aria-expanded="false" aria-controls="profilePhotoMenu">📷</button>' +
+        '<div class="profile-upload-actions">' +
+        '<div class="profile-photo-menu hidden" id="profilePhotoMenu" role="menu">' +
+        '<button type="button" class="pick-photo" role="menuitem" id="photoUploadBtn">Upload photo</button>' +
+        '<button type="button" class="pick-photo secondary" role="menuitem" id="photoCameraBtn">Take picture</button>' +
+        "</div>" +
+        '<input id="photo" type="file" accept="image/jpeg,image/png,image/webp,image/*">' +
+        '<input id="photoCamera" type="file" accept="image/*" capture="user">' +
+        '<p class="profile-hint">Tap the circle, then upload from your device or take a photo with your camera.</p></div></div></div>';
     }
     if (field.id === "dob") {
       return buildSimpleField("Date of birth", mode, '<input id="dob" type="date">');
@@ -601,21 +662,72 @@ input:focus,select:focus{border-color:var(--green2);background:#fff;box-shadow:0
     return out;
   }
 
+  function applyProfilePhotoPreview(file) {
+    photoFile = file || null;
+    var profilePreviewBtn = document.getElementById("profilePreviewBtn");
+    var menu = document.getElementById("profilePhotoMenu");
+    if (!photoFile || !profilePreviewBtn) return;
+    profilePreviewBtn.innerHTML = "";
+    var img = document.createElement("img");
+    img.alt = "Profile preview";
+    img.src = URL.createObjectURL(photoFile);
+    profilePreviewBtn.appendChild(img);
+    profilePreviewBtn.setAttribute("aria-label", "Change profile picture");
+    if (menu) {
+      menu.classList.add("hidden");
+      profilePreviewBtn.setAttribute("aria-expanded", "false");
+    }
+  }
+
   function bindPhotoInput() {
     var photo = document.getElementById("photo");
-    var profilePreview = document.getElementById("profilePreview");
+    var photoCamera = document.getElementById("photoCamera");
+    var profilePreviewBtn = document.getElementById("profilePreviewBtn");
     if (!photo || photo.dataset.bound === "1") return;
     photo.dataset.bound = "1";
-    photo.addEventListener("change", function (event) {
-      photoFile = event.target.files[0] || null;
-      if (photoFile && profilePreview) {
-        profilePreview.innerHTML = "";
-        var img = document.createElement("img");
-        img.alt = "Profile preview";
-        img.src = URL.createObjectURL(photoFile);
-        profilePreview.appendChild(img);
-        profilePreview.setAttribute("aria-hidden", "false");
-      }
+
+    function setPhotoMenuOpen(open) {
+      var menu = document.getElementById("profilePhotoMenu");
+      if (!menu || !profilePreviewBtn) return;
+      menu.classList.toggle("hidden", !open);
+      profilePreviewBtn.setAttribute("aria-expanded", open ? "true" : "false");
+    }
+
+    function onPhotoFilePicked(event) {
+      var file = event.target.files[0] || null;
+      event.target.value = "";
+      if (file) applyProfilePhotoPreview(file);
+    }
+
+    photo.addEventListener("change", onPhotoFilePicked);
+    if (photoCamera) photoCamera.addEventListener("change", onPhotoFilePicked);
+
+    var uploadBtn = document.getElementById("photoUploadBtn");
+    var cameraBtn = document.getElementById("photoCameraBtn");
+    if (uploadBtn) {
+      uploadBtn.addEventListener("click", function (event) {
+        event.stopPropagation();
+        photo.click();
+      });
+    }
+    if (cameraBtn && photoCamera) {
+      cameraBtn.addEventListener("click", function (event) {
+        event.stopPropagation();
+        photoCamera.click();
+      });
+    }
+    if (profilePreviewBtn) {
+      profilePreviewBtn.addEventListener("click", function (event) {
+        event.stopPropagation();
+        var menu = document.getElementById("profilePhotoMenu");
+        if (menu) setPhotoMenuOpen(menu.classList.contains("hidden"));
+      });
+    }
+    document.addEventListener("click", function (event) {
+      var menu = document.getElementById("profilePhotoMenu");
+      if (!menu || menu.classList.contains("hidden")) return;
+      if (menu.contains(event.target) || (profilePreviewBtn && profilePreviewBtn.contains(event.target))) return;
+      setPhotoMenuOpen(false);
     });
   }
 
@@ -833,15 +945,21 @@ input:focus,select:focus{border-color:var(--green2);background:#fff;box-shadow:0
 
   var lookupTimer = null;
   var lastExisting = null;
+  var lastLookupPhone = "";
+  var lastLookupClear = false;
   function checkDuplicate() {
     var phone = val("phone");
     var hint = document.getElementById("dupHint");
     lastExisting = null;
+    lastLookupPhone = "";
+    lastLookupClear = false;
     if (phone.length !== 10) {
       hint.classList.add("hidden");
       return Promise.resolve(null);
     }
     return C.api.lookup(tournament, phone).then(function (existing) {
+      lastLookupPhone = phone;
+      lastLookupClear = !existing;
       lastExisting = existing;
       if (!existing) {
         hint.classList.add("hidden");
@@ -881,7 +999,11 @@ input:focus,select:focus{border-color:var(--green2);background:#fff;box-shadow:0
 
   document.getElementById("regForm").addEventListener("submit", async function (event) {
     event.preventDefault();
-    var existing = lastExisting || await checkDuplicate();
+    var phone = val("phone");
+    var existing = lastExisting;
+    if (!existing && !(lastLookupPhone === phone && lastLookupClear)) {
+      existing = await checkDuplicate();
+    }
     if (existing) {
       showExisting(existing, true);
       sendPhoto(existing, photoFile);
@@ -909,14 +1031,16 @@ input:focus,select:focus{border-color:var(--green2);background:#fff;box-shadow:0
       }
     }
     var submitBtn = document.getElementById("submitBtn");
+    var submitLabel = submitBtn.textContent;
     submitBtn.disabled = true;
+    submitBtn.textContent = "Registering…";
     try {
       var result = await C.api.register(tournament, {
         name: val("name"),
         dob: val("dob"),
         flat: val("flat"),
         category: val("category"),
-        phone: val("phone"),
+        phone: phone,
         skill: skill,
         jersey: val("jersey"),
         size: val("size"),
@@ -926,28 +1050,32 @@ input:focus,select:focus{border-color:var(--green2);background:#fff;box-shadow:0
         customFields: collectCustomFieldValues()
       }, preview);
       C.clearDraft(tournament);
-      showExisting(result.record, result.existing);
       document.getElementById("successEmoji").textContent = "✅";
       var record = result.record;
-      if (paymentCfg && paymentCfg.mode === "manual_qr" && (receiptFile || receiptUpi)) {
-        try {
-          record = await C.api.uploadReceipt(tournament, record.id, receiptFile, receiptUpi);
-        } catch (receiptErr) {
-          document.getElementById("dupHint").classList.remove("hidden");
-          document.getElementById("dupHint").textContent = receiptErr.message || "Registered, but receipt upload failed. Submit it on the next screen.";
-        }
-      }
       currentRecord = record;
+      showExisting(record, result.existing);
       updatePayUi(record);
       applySuccessMessage(record, result.existing);
+      submitBtn.disabled = false;
+      submitBtn.textContent = submitLabel;
+      if (paymentCfg && paymentCfg.mode === "manual_qr" && (receiptFile || receiptUpi)) {
+        C.api.uploadReceipt(tournament, record.id, receiptFile, receiptUpi).then(function (updated) {
+          currentRecord = updated;
+          updatePayUi(updated);
+          applySuccessMessage(updated, result.existing);
+        }).catch(function (receiptErr) {
+          document.getElementById("dupHint").classList.remove("hidden");
+          document.getElementById("dupHint").textContent = receiptErr.message || "Registered, but receipt upload failed. Submit it on the next screen.";
+        });
+      }
       sendPhoto(record, photoFile).then(function (updated) {
         currentRecord = updated;
       });
     } catch (err) {
       document.getElementById("dupHint").classList.remove("hidden");
       document.getElementById("dupHint").textContent = err.message || "Could not save. Try again.";
-    } finally {
       submitBtn.disabled = false;
+      submitBtn.textContent = submitLabel;
     }
   });
 
@@ -990,14 +1118,30 @@ input:focus,select:focus{border-color:var(--green2);background:#fff;box-shadow:0
   });
 
   var later = document.getElementById("photoLater");
+  var laterCamera = document.getElementById("photoLaterCamera");
   var laterPreview = document.getElementById("previewLater");
-  later.addEventListener("change", async function (event) {
-    var file = event.target.files[0];
+
+  async function applyPhotoLater(file) {
     if (!file || !currentRecord) return;
     laterPreview.src = URL.createObjectURL(file);
     laterPreview.style.display = "block";
     currentRecord = await sendPhoto(currentRecord, file);
-  });
+  }
+
+  function bindLaterPhotoInput(input) {
+    if (!input) return;
+    input.addEventListener("change", function (event) {
+      var file = event.target.files[0];
+      event.target.value = "";
+      applyPhotoLater(file);
+    });
+  }
+  bindLaterPhotoInput(later);
+  bindLaterPhotoInput(laterCamera);
+  var laterUploadBtn = document.getElementById("photoLaterUploadBtn");
+  var laterCameraBtn = document.getElementById("photoLaterCameraBtn");
+  if (laterUploadBtn && later) laterUploadBtn.addEventListener("click", function () { later.click(); });
+  if (laterCameraBtn && laterCamera) laterCameraBtn.addEventListener("click", function () { laterCamera.click(); });
 
   if (location.hash === "#existing" && val("phone").length === 10) checkDuplicate();
 

@@ -1,7 +1,8 @@
 (function (global) {
   var KEYS = {
     drafts: "crickipedia_drafts",
-    adminSlug: "crickipedia_admin_slug"
+    adminSlug: "crickipedia_admin_slug",
+    uiTheme: "crickipedia_ui_theme"
   };
 
   var SKILL_EMOJI = {
@@ -157,11 +158,11 @@
       logoEmoji: "🏏",
       logoUrl: "",
       colors: {
-        green: "#0b6b45",
-        green2: "#0f8b5b",
-        gold: "#f5b942",
-        dark: "#071b16",
-        light: "#f5f8f6"
+        green: "#00875a",
+        green2: "#00c17c",
+        gold: "#ffb020",
+        dark: "#0a2e24",
+        light: "#f4fbf7"
       },
       status: "OPEN",
       registrationStart: "2026-09-20",
@@ -408,14 +409,56 @@
     return "Coming soon";
   }
 
-  function applyTheme(tournament) {
-    if (!tournament || !tournament.colors) return;
-    var root = document.documentElement.style;
-    root.setProperty("--green", tournament.colors.green || "#0b6b45");
-    root.setProperty("--green2", tournament.colors.green2 || "#0f8b5b");
-    root.setProperty("--gold", tournament.colors.gold || "#f5b942");
-    root.setProperty("--dark", tournament.colors.dark || "#071b16");
-    root.setProperty("--light", tournament.colors.light || "#f5f8f6");
+  function getUiTheme() {
+    try {
+      return localStorage.getItem(KEYS.uiTheme) === "dark" ? "dark" : "bright";
+    } catch (e) {
+      return "bright";
+    }
+  }
+
+  function setUiTheme(mode) {
+    var next = mode === "dark" ? "dark" : "bright";
+    try {
+      localStorage.setItem(KEYS.uiTheme, next);
+    } catch (e) {
+      /* ignore */
+    }
+    document.documentElement.setAttribute("data-ui-theme", next);
+    syncThemeToggleButtons();
+  }
+
+  function applyCricketTheme() {
+    setUiTheme(getUiTheme());
+  }
+
+  function themeToggleLabel(mode) {
+    return mode === "dark" ? "☀️ Bright" : "🌙 Dark";
+  }
+
+  function syncThemeToggleButtons() {
+    var mode = getUiTheme();
+    document.querySelectorAll("[data-ui-theme-toggle]").forEach(function (btn) {
+      btn.textContent = themeToggleLabel(mode);
+      btn.setAttribute("aria-label", mode === "dark" ? "Switch to bright theme" : "Switch to dark theme");
+    });
+  }
+
+  function initUiThemeToggle() {
+    applyCricketTheme();
+    document.querySelectorAll("[data-ui-theme-toggle]").forEach(function (btn) {
+      if (btn.dataset.boundTheme === "1") return;
+      btn.dataset.boundTheme = "1";
+      btn.addEventListener("click", function () {
+        setUiTheme(getUiTheme() === "dark" ? "bright" : "dark");
+      });
+    });
+    syncThemeToggleButtons();
+  }
+
+  /** @deprecated Tournament colors are no longer customizable; use initUiThemeToggle */
+  function applyTheme() {
+    applyCricketTheme();
   }
 
   function draftKey(tournament) {
@@ -739,6 +782,17 @@
     },
     logout: function () { return request("/api/admin/logout", { method: "POST", body: {} }); },
     me: function () { return request("/api/admin/me"); },
+    listTournamentAdmins: function () {
+      return request("/api/admin/users").then(function (data) { return data.users || []; });
+    },
+    createTournamentAdmin: function (body) {
+      return request("/api/admin/users", { method: "POST", body: body }).then(function (data) {
+        return data.user;
+      });
+    },
+    updateTournamentAdmin: function (id, body) {
+      return request("/api/admin/users/" + encodeURIComponent(id), { method: "PATCH", body: body });
+    },
     listAdmin: function () {
       return request("/api/admin/tournaments").then(function (data) { return data.tournaments || []; });
     },
@@ -796,6 +850,10 @@
     formatDateRange: formatDateRange,
     stateLabel: stateLabel,
     applyTheme: applyTheme,
+    getUiTheme: getUiTheme,
+    setUiTheme: setUiTheme,
+    applyCricketTheme: applyCricketTheme,
+    initUiThemeToggle: initUiThemeToggle,
     getDraft: getDraft,
     saveDraft: saveDraft,
     clearDraft: clearDraft,

@@ -11,6 +11,7 @@
   "dependencies": {
     "@electric-sql/pglite": "^0.3.14",
     "@supabase/supabase-js": "^2.57.4",
+    "bcryptjs": "^2.4.3",
     "dotenv": "^16.6.1",
     "express": "^4.21.2",
     "express-session": "^1.18.1",

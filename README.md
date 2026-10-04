@@ -47,7 +47,9 @@ npm start
 - Player: http://localhost:3000/index.html?t=cpl-2026
 - Admin: http://localhost:3000/admin.html
 
-Default admin login: `admin` / `admin123` (change in `.env`).
+**Superadmin** (full admin): first account is created from `ADMIN_USERNAME` / `ADMIN_PASSWORD` in `.env` when the database has no admin users yet. Sign in at `/admin.html`.
+
+**Tournament admins** (Players tab only, one tournament): sign in as superadmin → **Customize** → **Tournament admins** → set username, password, and tournament → **Create tournament admin**. Share those credentials with desk staff.
 
 Do not use `python -m http.server` for Phase 2. The pages must be served by `npm start` so they can talk to `/api`.
 

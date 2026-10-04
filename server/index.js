@@ -11,6 +11,7 @@ const razorpay = require("./razorpay");
 const settingsUtil = require("./settings");
 const notifications = require("./notifications");
 const whatsapp = require("./whatsapp");
+const admins = require("./admins");
 
 const PORT = Number(process.env.PORT || 3000);
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || "admin";
@@ -156,23 +157,93 @@ app.use("/uploads", express.static(uploadDir));
 
 const siteRoot = path.join(__dirname, "..");
 const publicPathReserved = new Set([
-  "api", "uploads", "admin.html", "index.html", "register.html", "app.js", "favicon.ico"
+  "api", "uploads", "admin.html", "index.html", "register.html", "app.js", "cricket-theme.css", "favicon.ico"
 ]);
 
 function sendHomePage(req, res) {
   res.sendFile(path.join(siteRoot, "index.html"));
 }
 
-function sendRegisterPage(req, res) {
+const REGISTER_BOOTSTRAP_MARKER =
+  '<script type="application/json" id="crickipedia-bootstrap"></script>';
+let registerHtmlTemplate = null;
+
+function getRegisterHtmlTemplate() {
+  if (!registerHtmlTemplate) {
+    registerHtmlTemplate = fs.readFileSync(path.join(siteRoot, "register.html"), "utf8");
+  }
+  return registerHtmlTemplate;
+}
+
+function publicTournamentConfigResponse(loaded, preview) {
+  const paymentConfig = buildTournamentPaymentConfig(loaded.tournament);
+  if (loaded.tournament.status === "DRAFT" && !preview) {
+    return { tournament: loaded.tournament, state: "DRAFT", paymentConfig };
+  }
+  return {
+    tournament: loaded.tournament,
+    state: publicState(loaded.tournament),
+    paymentConfig
+  };
+}
+
+function sendRegisterPagePlain(req, res) {
   res.sendFile(path.join(siteRoot, "register.html"));
+}
+
+function sendRegisterPageWithBootstrap(res, configPayload, preview) {
+  const json = JSON.stringify(configPayload).replace(/</g, "\\u003c");
+  const html = getRegisterHtmlTemplate().replace(
+    REGISTER_BOOTSTRAP_MARKER,
+    '<script type="application/json" id="crickipedia-bootstrap">' + json + "</script>"
+  );
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  if (!preview) {
+    res.setHeader("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
+  }
+  res.send(html);
+}
+
+async function trySendRegisterWithBootstrap(req, res, sendPlain) {
+  const preview = req.query.preview === "1";
+  let loaded = null;
+  const queryTournament = req.query.tournament || req.query.t;
+  const querySeason = req.query.season || req.query.s;
+  if (queryTournament && querySeason) {
+    loaded = await db.loadTournamentByKeys(String(queryTournament), String(querySeason));
+  } else if (queryTournament && !querySeason) {
+    loaded = await db.loadTournament(String(queryTournament));
+  } else if (req.params.tournament && req.params.season) {
+    loaded = await db.loadTournamentByKeys(
+      String(req.params.tournament),
+      String(req.params.season)
+    );
+  }
+  if (!loaded) {
+    sendPlain();
+    return;
+  }
+  sendRegisterPageWithBootstrap(res, publicTournamentConfigResponse(loaded, preview), preview);
 }
 
 app.get("/", sendHomePage);
 
-app.get("/:tournament/:season", (req, res, next) => {
+app.get("/register.html", async (req, res) => {
+  try {
+    await trySendRegisterWithBootstrap(req, res, () => sendRegisterPagePlain(req, res));
+  } catch (err) {
+    sendRegisterPagePlain(req, res);
+  }
+});
+
+app.get("/:tournament/:season", async (req, res, next) => {
   const key = String(req.params.tournament || "").toLowerCase();
   if (key === "api" || publicPathReserved.has(key) || key.includes(".")) return next();
-  sendRegisterPage(req, res);
+  try {
+    await trySendRegisterWithBootstrap(req, res, () => sendRegisterPagePlain(req, res));
+  } catch (err) {
+    sendRegisterPagePlain(req, res);
+  }
 });
 
 function slugify(text) {
@@ -215,6 +286,57 @@ function requireAdmin(req, res, next) {
   res.status(401).json({ error: "Sign in required" });
 }
 
+function requireSuperadmin(req, res, next) {
+  if (!req.session || !req.session.admin) {
+    res.status(401).json({ error: "Sign in required" });
+    return;
+  }
+  if (!admins.isSuperadmin(req.session.admin)) {
+    res.status(403).json({ error: "Superadmin access required" });
+    return;
+  }
+  next();
+}
+
+async function requireTournamentAccess(req, res, next) {
+  if (!req.session || !req.session.admin) {
+    res.status(401).json({ error: "Sign in required" });
+    return;
+  }
+  const slug = adminTournamentSlug(req) || req.params.slug;
+  if (!slug) {
+    res.status(400).json({ error: "Tournament slug required" });
+    return;
+  }
+  const row = await db.loadTournamentRow(slug);
+  if (!row) {
+    res.status(404).json({ error: "Tournament not found" });
+    return;
+  }
+  if (!admins.canAccessTournamentId(req.session.admin, row.id)) {
+    res.status(403).json({ error: "No access to this tournament" });
+    return;
+  }
+  next();
+}
+
+async function adminSessionMe(sessionAdmin) {
+  const payload = {
+    username: sessionAdmin.username,
+    role: sessionAdmin.role,
+    tournamentIds: sessionAdmin.tournamentIds || []
+  };
+  if (sessionAdmin.role === admins.ROLE_TOURNAMENT) {
+    const slugs = [];
+    for (const id of sessionAdmin.tournamentIds || []) {
+      const row = await db.query("SELECT slug, name FROM tournaments WHERE id = $1", [id]);
+      if (row.rows[0]) slugs.push({ id, slug: row.rows[0].slug, name: row.rows[0].name });
+    }
+    payload.tournaments = slugs;
+  }
+  return payload;
+}
+
 function publicState(tournament) {
   if (!tournament) return "DRAFT";
   if (tournament.status === "DRAFT") return "DRAFT";
@@ -242,14 +364,11 @@ async function uniqueSlug(base) {
   }
 }
 
-async function nextRegId(tournament) {
+function nextRegId(tournament) {
   const prefix = tournament.idPrefix || prefixFromSlug(tournament.slug);
-  for (let i = 0; i < 8; i += 1) {
-    const id = `${prefix}-${String(Date.now()).slice(-6)}${i ? Math.random().toString(36).slice(2, 4).toUpperCase() : ""}`;
-    const found = await db.query("SELECT 1 FROM registrations WHERE registration_number = $1", [id]);
-    if (!found.rows.length) return id;
-  }
-  return `${prefix}-${Date.now()}`;
+  const suffix =
+    Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2, 6).toUpperCase();
+  return `${prefix}-${suffix}`;
 }
 
 function tournamentPaymentMode(tournament) {
@@ -526,8 +645,15 @@ app.get("/api/tournaments", async (req, res) => {
       const state = publicState(tournament);
       if (preview || state === "OPEN" || state === "UPCOMING" || state === "CLOSED") {
         if (!preview && tournament.status === "DRAFT") continue;
-        list.push(tournament);
+        list.push({
+          ...tournament,
+          state,
+          paymentConfig: buildTournamentPaymentConfig(tournament)
+        });
       }
+    }
+    if (!preview) {
+      res.setHeader("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
     }
     res.json({ tournaments: list });
   } catch (err) {
@@ -542,16 +668,11 @@ mountTournamentRoute("get", "/config", async (req, res) => {
       res.status(404).json({ error: "Tournament not found" });
       return;
     }
-    const paymentConfig = buildTournamentPaymentConfig(loaded.tournament);
-    if (loaded.tournament.status === "DRAFT" && req.query.preview !== "1") {
-      res.json({ tournament: loaded.tournament, state: "DRAFT", paymentConfig });
-      return;
+    const preview = req.query.preview === "1";
+    if (!preview) {
+      res.setHeader("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
     }
-    res.json({
-      tournament: loaded.tournament,
-      state: publicState(loaded.tournament),
-      paymentConfig
-    });
+    res.json(publicTournamentConfigResponse(loaded, preview));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -668,30 +789,39 @@ mountTournamentRoute("post", "/register", async (req, res) => {
     const sleeve = req.body.sleeve || null;
     const cricheroes = req.body.cricheroes || null;
     const instagram = req.body.instagram || null;
-    const registrationNumber = await nextRegId(loaded.tournament);
+    const registrationNumber = nextRegId(loaded.tournament);
+    const payMode = tournamentPaymentMode(loaded.tournament);
+    const verificationStatus = payMode === "manual_qr" ? "AWAITING_RECEIPT" : "";
 
-    await db.withTransaction(async (client) => {
-      let player = await client.query("SELECT * FROM players WHERE whatsapp_number = $1", [phone]);
+    const saved = await db.withTransaction(async (client) => {
+      let player = await client.query(
+        "SELECT id, photo_url FROM players WHERE whatsapp_number = $1",
+        [phone]
+      );
       let playerId;
+      let photoUrl = "";
       if (player.rows[0]) {
         playerId = player.rows[0].id;
-        await client.query(
+        const updated = await client.query(
           `UPDATE players
            SET full_name = $2, date_of_birth = COALESCE($3, date_of_birth),
                flat_number = COALESCE($4, flat_number),
                cricheroes_url = COALESCE($5, cricheroes_url),
                instagram_url = COALESCE($6, instagram_url),
                updated_at = NOW()
-           WHERE id = $1`,
+           WHERE id = $1
+           RETURNING photo_url`,
           [playerId, name, dob, flat || null, cricheroes, instagram]
         );
+        photoUrl = updated.rows[0].photo_url || "";
       } else {
         player = await client.query(
           `INSERT INTO players (full_name, date_of_birth, flat_number, whatsapp_number, cricheroes_url, instagram_url)
-           VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+           VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, photo_url`,
           [name, dob, flat || null, phone, cricheroes, instagram]
         );
         playerId = player.rows[0].id;
+        photoUrl = player.rows[0].photo_url || "";
       }
 
       await client.query(
@@ -707,10 +837,9 @@ mountTournamentRoute("post", "/register", async (req, res) => {
 
       const registration = await client.query(
         `INSERT INTO registrations (registration_number, tournament_id, player_id, category, extra_fields, status)
-         VALUES ($1, $2, $3, $4, $5::jsonb, 'PENDING_PAYMENT') RETURNING *`,
+         VALUES ($1, $2, $3, $4, $5::jsonb, 'PENDING_PAYMENT') RETURNING id, registered_at`,
         [registrationNumber, loaded.row.id, playerId, category || null, JSON.stringify(extraFields)]
       );
-      const payMode = tournamentPaymentMode(loaded.tournament);
       const gateway = payMode === "manual_qr" ? "MANUAL_QR" : payMode === "razorpay" ? "RAZORPAY" : "DEMO";
       await client.query(
         `INSERT INTO payments (registration_id, amount, payment_status, gateway, verification_status)
@@ -722,9 +851,31 @@ mountTournamentRoute("post", "/register", async (req, res) => {
           payMode === "manual_qr" ? "AWAITING_RECEIPT" : null
         ]
       );
+      return {
+        registeredAt: registration.rows[0].registered_at,
+        photoUrl
+      };
     });
 
-    const record = await findRegistration(slug, registrationNumber);
+    const record = db.buildRegistrationClient({
+      slug,
+      registrationNumber,
+      name,
+      phone,
+      dob,
+      flat,
+      skill,
+      category,
+      jersey,
+      size,
+      sleeve,
+      cricheroes,
+      instagram,
+      photoUrl: saved.photoUrl,
+      registeredAt: saved.registeredAt,
+      extraFields,
+      verificationStatus
+    });
     notifications.notifyReserved(loaded.tournament, record).catch((err) => {
       console.error("Reserved WhatsApp:", err.message);
     });
@@ -964,15 +1115,20 @@ mountTournamentRoute("post", "/registrations/:id/pay", async (req, res) => {
   }
 });
 
-app.post("/api/admin/login", (req, res) => {
-  const username = String(req.body.username || "");
-  const password = String(req.body.password || "");
-  if (username !== ADMIN_USERNAME || password !== ADMIN_PASSWORD) {
-    res.status(401).json({ error: "Wrong username or password" });
-    return;
+app.post("/api/admin/login", async (req, res) => {
+  try {
+    const username = String(req.body.username || "");
+    const password = String(req.body.password || "");
+    const session = await admins.authenticate(db.query, username, password);
+    if (!session) {
+      res.status(401).json({ error: "Wrong username or password" });
+      return;
+    }
+    req.session.admin = session;
+    res.json({ ok: true, ...(await adminSessionMe(session)) });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
-  req.session.admin = { username };
-  res.json({ ok: true, username });
 });
 
 app.post("/api/admin/logout", (req, res) => {
@@ -981,19 +1137,82 @@ app.post("/api/admin/logout", (req, res) => {
   });
 });
 
-app.get("/api/admin/me", requireAdmin, (req, res) => {
-  res.json({ username: req.session.admin.username });
-});
-
-app.get("/api/admin/tournaments", requireAdmin, async (req, res) => {
+app.get("/api/admin/me", requireAdmin, async (req, res) => {
   try {
-    res.json({ tournaments: await db.listTournamentsClient() });
+    res.json(await adminSessionMe(req.session.admin));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-app.post("/api/admin/tournaments", requireAdmin, async (req, res) => {
+app.get("/api/admin/users", requireSuperadmin, async (req, res) => {
+  try {
+    res.json({ users: await admins.listTournamentAdmins(db.query) });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/admin/users", requireSuperadmin, async (req, res) => {
+  try {
+    const user = await admins.createTournamentAdmin(db.query, {
+      username: req.body.username,
+      password: req.body.password,
+      tournamentSlug: req.body.tournamentSlug || req.body.slug
+    });
+    res.status(201).json({ user });
+  } catch (err) {
+    res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
+app.patch("/api/admin/users/:id", requireSuperadmin, async (req, res) => {
+  try {
+    const userId = Number(req.params.id);
+    if (!Number.isFinite(userId)) {
+      res.status(400).json({ error: "Invalid user id" });
+      return;
+    }
+    if (req.body.password) {
+      const row = await admins.resetTournamentAdminPassword(db.query, userId, req.body.password);
+      if (!row) {
+        res.status(404).json({ error: "Tournament admin not found" });
+        return;
+      }
+    }
+    if (req.body.active !== undefined) {
+      const row = await admins.setTournamentAdminActive(db.query, userId, req.body.active);
+      if (!row) {
+        res.status(404).json({ error: "Tournament admin not found" });
+        return;
+      }
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
+app.get("/api/admin/tournaments", requireAdmin, async (req, res) => {
+  try {
+    let tournaments = await db.listTournamentsClient();
+    const session = req.session.admin;
+    if (session && session.role === admins.ROLE_TOURNAMENT) {
+      const allowed = new Set((session.tournamentIds || []).map(Number));
+      const rows = await db.query(
+        "SELECT id, slug FROM tournaments WHERE id = ANY($1::bigint[])",
+        [[...allowed]]
+      );
+      const slugSet = new Set(rows.rows.map((r) => r.slug));
+      tournaments = tournaments.filter((t) => slugSet.has(t.slug));
+    }
+    res.json({ tournaments });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/admin/tournaments", requireSuperadmin, async (req, res) => {
   try {
     const name = String(req.body.name || "").trim();
     if (!name) {
@@ -1062,7 +1281,7 @@ app.post("/api/admin/tournaments", requireAdmin, async (req, res) => {
   }
 });
 
-app.put("/api/admin/tournaments/:slug", requireAdmin, async (req, res) => {
+app.put("/api/admin/tournaments/:slug", requireSuperadmin, async (req, res) => {
   try {
     const existing = await db.loadTournamentRow(req.params.slug);
     if (!existing) {
@@ -1095,7 +1314,7 @@ app.put("/api/admin/tournaments/:slug", requireAdmin, async (req, res) => {
   }
 });
 
-app.post("/api/admin/tournaments/:slug/payment-qr", requireAdmin, withUpload("qr"), async (req, res) => {
+app.post("/api/admin/tournaments/:slug/payment-qr", requireSuperadmin, withUpload("qr"), async (req, res) => {
   try {
     if (!req.file) {
       res.status(400).json({ error: "No QR image uploaded" });
@@ -1132,7 +1351,7 @@ app.post("/api/admin/tournaments/:slug/payment-qr", requireAdmin, withUpload("qr
   }
 });
 
-app.post("/api/admin/tournaments/:slug/jersey-size-chart", requireAdmin, withUpload("chart"), async (req, res) => {
+app.post("/api/admin/tournaments/:slug/jersey-size-chart", requireSuperadmin, withUpload("chart"), async (req, res) => {
   try {
     if (!req.file) {
       res.status(400).json({ error: "No image uploaded" });
@@ -1165,7 +1384,7 @@ app.post("/api/admin/tournaments/:slug/jersey-size-chart", requireAdmin, withUpl
   }
 });
 
-app.post("/api/admin/tournaments/:slug/sponsor-logo", requireAdmin, withUpload("logo"), async (req, res) => {
+app.post("/api/admin/tournaments/:slug/sponsor-logo", requireSuperadmin, withUpload("logo"), async (req, res) => {
   try {
     if (!req.file) {
       res.status(400).json({ error: "No logo uploaded — choose an image file" });
@@ -1190,7 +1409,7 @@ app.post("/api/admin/tournaments/:slug/sponsor-logo", requireAdmin, withUpload("
   }
 });
 
-app.delete("/api/admin/tournaments/:slug", requireAdmin, async (req, res) => {
+app.delete("/api/admin/tournaments/:slug", requireSuperadmin, async (req, res) => {
   try {
     const count = await db.query("SELECT count(*)::int AS n FROM tournaments");
     if (count.rows[0].n < 2) {
@@ -1226,7 +1445,7 @@ async function adminRegistrationAsset(slug, registrationNumber, field) {
   return "";
 }
 
-app.get("/api/admin/tournaments/:slug/registrations/:id/photo-image", requireAdmin, async (req, res) => {
+app.get("/api/admin/tournaments/:slug/registrations/:id/photo-image", requireAdmin, requireTournamentAccess, async (req, res) => {
   try {
     const photoUrl = await adminRegistrationAsset(req.params.slug, req.params.id, "photo");
     if (!photoUrl) {
@@ -1246,7 +1465,7 @@ app.get("/api/admin/tournaments/:slug/registrations/:id/photo-image", requireAdm
   }
 });
 
-app.get("/api/admin/tournaments/:slug/registrations/:id/receipt-image", requireAdmin, async (req, res) => {
+app.get("/api/admin/tournaments/:slug/registrations/:id/receipt-image", requireAdmin, requireTournamentAccess, async (req, res) => {
   try {
     const receiptUrl = await adminRegistrationAsset(req.params.slug, req.params.id, "receipt");
     if (!receiptUrl) {
@@ -1266,7 +1485,7 @@ app.get("/api/admin/tournaments/:slug/registrations/:id/receipt-image", requireA
   }
 });
 
-app.get("/api/admin/tournaments/:slug/registrations", requireAdmin, async (req, res) => {
+app.get("/api/admin/tournaments/:slug/registrations", requireAdmin, requireTournamentAccess, async (req, res) => {
   try {
     const loaded = await db.loadTournament(req.params.slug);
     if (!loaded) {
@@ -1294,7 +1513,7 @@ app.get("/api/admin/tournaments/:slug/registrations", requireAdmin, async (req, 
   }
 });
 
-app.post("/api/admin/tournaments/:slug/registrations/:id/approve", requireAdmin, async (req, res) => {
+app.post("/api/admin/tournaments/:slug/registrations/:id/approve", requireAdmin, requireTournamentAccess, async (req, res) => {
   try {
     const loaded = await db.loadTournament(req.params.slug);
     if (!loaded) {
@@ -1313,7 +1532,7 @@ app.post("/api/admin/tournaments/:slug/registrations/:id/approve", requireAdmin,
   }
 });
 
-app.post("/api/admin/tournaments/:slug/registrations/:id/reject", requireAdmin, async (req, res) => {
+app.post("/api/admin/tournaments/:slug/registrations/:id/reject", requireAdmin, requireTournamentAccess, async (req, res) => {
   try {
     const loaded = await db.loadTournament(req.params.slug);
     if (!loaded) {
@@ -1344,7 +1563,7 @@ app.post("/api/admin/tournaments/:slug/registrations/:id/reject", requireAdmin, 
   }
 });
 
-app.delete("/api/admin/tournaments/:slug/registrations", requireAdmin, async (req, res) => {
+app.delete("/api/admin/tournaments/:slug/registrations", requireSuperadmin, async (req, res) => {
   try {
     const loaded = await db.loadTournament(req.params.slug);
     if (!loaded) {
@@ -1358,7 +1577,7 @@ app.delete("/api/admin/tournaments/:slug/registrations", requireAdmin, async (re
   }
 });
 
-app.get("/api/admin/tournaments/:slug/registrations.csv", requireAdmin, async (req, res) => {
+app.get("/api/admin/tournaments/:slug/registrations.csv", requireAdmin, requireTournamentAccess, async (req, res) => {
   try {
     const loaded = await db.loadTournament(req.params.slug);
     if (!loaded) {
@@ -1433,6 +1652,7 @@ async function start() {
     await db.connect();
     await db.migrate();
     await db.seed();
+    await admins.seedSuperadminFromEnv(db.query, ADMIN_USERNAME, ADMIN_PASSWORD);
     await photoStorage.init();
   } catch (err) {
     console.error("Database/storage startup failed:", err.message);

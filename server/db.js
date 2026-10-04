@@ -96,11 +96,11 @@ function defaultSettings() {
     heroSub: "Complete your player registration and secure your place in the tournament.",
     logoEmoji: "🏏",
     colors: {
-      green: "#0b6b45",
-      green2: "#0f8b5b",
-      gold: "#f5b942",
-      dark: "#071b16",
-      light: "#f5f8f6"
+      green: "#00875a",
+      green2: "#00c17c",
+      gold: "#ffb020",
+      dark: "#0a2e24",
+      light: "#f4fbf7"
     },
     currency: "₹",
     idPrefix: "CPL2026",
@@ -199,7 +199,7 @@ function settingsFromClient(body) {
     heroTitle: body.heroTitle || "",
     heroSub: body.heroSub || "",
     logoEmoji: body.logoEmoji || "🏏",
-    colors: body.colors || defaultSettings().colors,
+    colors: defaultSettings().colors,
     currency: body.currency || "₹",
     idPrefix: body.idPrefix || "",
     noticeTitle: body.noticeTitle || "Important",
@@ -239,6 +239,38 @@ function rosterToClient(row) {
     photoRef: row.registration_number || "",
     registeredAt: row.registered_at,
     status: rosterStatusLabel(row)
+  };
+}
+
+function buildRegistrationClient(fields) {
+  const photoUrl = fields.photoUrl || "";
+  return {
+    id: fields.registrationNumber,
+    tournamentSlug: fields.slug,
+    name: fields.name,
+    dob: dateOnly(fields.dob),
+    flat: fields.flat || "",
+    phone: fields.phone,
+    skill: fields.skill || "",
+    category: fields.category || "",
+    jersey:
+      fields.jersey == null || fields.jersey === "" || !Number.isFinite(Number(fields.jersey))
+        ? ""
+        : String(fields.jersey),
+    size: fields.size || "",
+    sleeve: fields.sleeve || "",
+    cricheroes: fields.cricheroes || "",
+    instagram: fields.instagram || "",
+    photoName: photoUrl ? path.basename(photoUrl) : "",
+    photoUrl,
+    createdAt: fields.registeredAt || new Date().toISOString(),
+    paymentStatus: "PENDING",
+    registrationStatus: "PENDING_PAYMENT",
+    verificationStatus: fields.verificationStatus || "",
+    receiptUrl: "",
+    receiptUpiRef: "",
+    rejectReason: "",
+    customFields: parseExtraFields(fields.extraFields)
   };
 }
 
@@ -318,6 +350,8 @@ async function migrate() {
   await query(
     "ALTER TABLE registrations ADD COLUMN IF NOT EXISTS extra_fields JSONB NOT NULL DEFAULT '{}'::jsonb"
   );
+  const admins = require("./admins");
+  await admins.migrateAdminTables(query);
 }
 
 async function loadTournament(slug) {
@@ -521,6 +555,7 @@ module.exports = {
   defaultSettings,
   toClient,
   settingsFromClient,
+  buildRegistrationClient,
   registrationToClient,
   rosterToClient,
   loadTournament,

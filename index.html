@@ -5,18 +5,18 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Crickipedia — Cricket tournaments, made simple</title>
 <meta name="description" content="Crickipedia is your one-stop shop for cricket tournaments — player registration, auctions, stats, and live scores.">
+<script>(function(){try{var t=localStorage.getItem("crickipedia_ui_theme");document.documentElement.setAttribute("data-ui-theme",t==="dark"?"dark":"bright");}catch(e){}})();</script>
+<link rel="stylesheet" href="/cricket-theme.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;0,9..40,800&display=swap" rel="stylesheet">
 <style>
-:root{--green:#0b6b45;--green2:#0f8b5b;--gold:#f5b942;--dark:#071b16;--light:#f3f7f5;--muted:#5f6f69;--white:#fff;--line:#e3ebe6;--shadow:0 16px 48px rgba(7,27,22,.07)}
 *{box-sizing:border-box}
-body{margin:0;font-family:"DM Sans",system-ui,-apple-system,Segoe UI,sans-serif;background:var(--light);color:var(--dark);line-height:1.55;-webkit-font-smoothing:antialiased}
-a{color:var(--green);font-weight:700;text-decoration:none}
-a:hover{text-decoration:underline}
-.hero{background:linear-gradient(145deg,var(--dark) 0%,var(--green) 52%,var(--green2) 100%);color:#fff;padding:32px 0 72px;position:relative;overflow:hidden}
-.hero:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 88% 15%,rgba(245,185,66,.2),transparent 42%)}
-.hero:after{content:"🏏";position:absolute;right:5%;bottom:-48px;font-size:220px;opacity:.06;transform:rotate(-10deg);pointer-events:none}
+body{margin:0;font-family:"DM Sans",system-ui,-apple-system,Segoe UI,sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased}
+main a:not(.btn){color:var(--green);font-weight:700;text-decoration:none}
+main a:not(.btn):hover{text-decoration:underline}
+.hero{color:var(--text-on-hero);padding:32px 0 72px;position:relative;overflow:hidden}
+.hero:before{content:"";position:absolute;inset:0;pointer-events:none}
 .wrap{max-width:1040px;margin:0 auto;padding:0 20px}
 .topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;position:relative;z-index:1}
 .brand{display:flex;align-items:center;gap:14px}
@@ -32,21 +32,24 @@ a:hover{text-decoration:underline}
 .hero-cta{display:flex;flex-wrap:wrap;gap:12px}
 .btn{border:0;border-radius:14px;padding:14px 22px;font-weight:800;font-size:.95rem;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:transform .1s,filter .15s}
 .btn:active{transform:scale(.98)}
-.btn-primary{background:linear-gradient(180deg,var(--gold),#e5a82e);color:var(--dark);box-shadow:0 8px 24px rgba(0,0,0,.2)}
+.btn-primary{background:linear-gradient(180deg,var(--gold-bright,var(--gold)),var(--gold));color:var(--dark);box-shadow:0 8px 24px rgba(0,0,0,.2)}
 .btn-primary:hover{filter:brightness(1.05)}
+html[data-ui-theme="dark"] .btn-primary{color:#0a1628}
 .btn-ghost{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.3)}
 .btn-ghost:hover{background:rgba(255,255,255,.2)}
 main{padding:0 0 56px}
 .section-title{font-size:1.35rem;font-weight:800;margin:0 0 8px;letter-spacing:-.02em}
 .section-sub{color:var(--muted);margin:0 0 24px;font-size:.95rem;max-width:52ch}
 .features{margin-top:-52px;position:relative;z-index:2}
-.features-panel{background:var(--white);border-radius:28px;padding:28px 28px 32px;border:1px solid var(--line);box-shadow:var(--shadow)}
+.features-panel{background:var(--surface);border-radius:28px;padding:28px 28px 32px;border:1px solid var(--line);box-shadow:var(--shadow)}
 .features-intro{text-align:center;max-width:640px;margin:0 auto 28px;padding-bottom:24px;border-bottom:1px solid var(--line)}
 .features-eyebrow{margin:0 0 10px;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:var(--green)}
-.features-title{font-size:clamp(1.35rem,3.2vw,1.75rem);font-weight:800;margin:0 0 12px;letter-spacing:-.03em;line-height:1.2;color:var(--dark)}
+.features-title{font-size:clamp(1.35rem,3.2vw,1.75rem);font-weight:800;margin:0 0 12px;letter-spacing:-.03em;line-height:1.2;color:var(--text)}
+.section-title{color:var(--text)}
 .features-lead{margin:0 auto;font-size:1rem;color:var(--muted);line-height:1.55;max-width:48ch}
 .feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
-.feature{background:linear-gradient(180deg,#fafcfb 0%,var(--white) 100%);border-radius:20px;padding:22px;border:1px solid var(--line);box-shadow:0 4px 16px rgba(7,27,22,.04);transition:transform .15s,box-shadow .15s}
+.feature{background:var(--chip-bg);border-radius:20px;padding:22px;border:1px solid var(--line);box-shadow:0 4px 16px rgba(7,27,22,.04);transition:transform .15s,box-shadow .15s}
+.feature h3{color:var(--text)}
 .feature:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(7,27,22,.08)}
 .feature .icon{font-size:1.75rem;line-height:1;margin-bottom:10px}
 .feature h3{margin:0 0 6px;font-size:1.05rem;font-weight:800}
@@ -56,13 +59,13 @@ main{padding:0 0 56px}
 .pill-soon{background:#f0f2f1;color:var(--muted)}
 .tournaments{margin-top:48px}
 .tournament-grid{display:grid;gap:14px}
-.t-card{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;background:var(--white);border-radius:18px;padding:18px 20px;border:1px solid var(--line);box-shadow:0 4px 20px rgba(7,27,22,.04)}
-.t-card h4{margin:0 0 4px;font-size:1.05rem;font-weight:800}
+.t-card{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;background:var(--surface);border-radius:18px;padding:18px 20px;border:1px solid var(--line);box-shadow:0 4px 20px rgba(7,27,22,.04)}
+.t-card h4{margin:0 0 4px;font-size:1.05rem;font-weight:800;color:var(--text)}
 .t-meta{font-size:.85rem;color:var(--muted)}
-.t-card .btn-primary{padding:12px 18px;font-size:.88rem;text-decoration:none;color:var(--dark)}
+.t-card .btn-primary{padding:12px 18px;font-size:.88rem;text-decoration:none}
 .t-card .btn-primary:hover{text-decoration:none}
-.t-card .btn-muted{padding:12px 18px;font-size:.88rem;border-radius:14px;background:#eef0ee;color:var(--muted);font-weight:800;border:1px solid var(--line);cursor:default}
-.empty{text-align:center;padding:32px 20px;color:var(--muted);background:var(--white);border-radius:18px;border:1px dashed var(--line)}
+.t-card .btn-muted{padding:12px 18px;font-size:.88rem;border-radius:14px;background:var(--chip-bg);color:var(--muted);font-weight:800;border:1px solid var(--line);cursor:default}
+.empty{text-align:center;padding:32px 20px;color:var(--muted);background:var(--surface);border-radius:18px;border:1px dashed var(--line)}
 .footer{text-align:center;padding:40px 20px 48px;color:var(--muted);font-size:.85rem;border-top:1px solid var(--line);margin-top:40px}
 .hidden{display:none!important}
 @media(max-width:640px){
@@ -73,7 +76,9 @@ main{padding:0 0 56px}
 }
 </style>
 </head>
-<body>
+<body class="cricket-ui">
+<div class="cricket-wm-corner cricket-wm-corner--tl" aria-hidden="true">🧤</div>
+<div class="cricket-wm-corner cricket-wm-corner--br" aria-hidden="true">🎯</div>
 <header class="hero">
   <div class="wrap">
     <div class="topbar">
@@ -85,6 +90,7 @@ main{padding:0 0 56px}
         </div>
       </div>
       <nav class="nav" aria-label="Site">
+        <button type="button" class="ui-theme-toggle" data-ui-theme-toggle aria-label="Toggle theme">🌙 Dark</button>
         <a href="#tournaments">Tournaments</a>
         <a href="/admin.html">Organizer login</a>
       </nav>
@@ -156,11 +162,12 @@ main{padding:0 0 56px}
 <script>
 (function () {
   var C = Crickipedia;
+  C.initUiThemeToggle();
   var pathRef = C.parsePublicUrl();
   if (pathRef.tournament && pathRef.season) {
-    var qs = "?tournament=" + encodeURIComponent(pathRef.tournament) + "&season=" + encodeURIComponent(pathRef.season);
-    if (C.queryParam("preview") === "1") qs += "&preview=1";
-    location.replace("/register.html" + qs);
+    var dest = "/" + encodeURIComponent(pathRef.tournament) + "/" + encodeURIComponent(pathRef.season);
+    if (C.queryParam("preview") === "1") dest += "?preview=1";
+    location.replace(dest);
     return;
   }
   var listEl = document.getElementById("tournamentList");
@@ -180,7 +187,7 @@ main{padding:0 0 56px}
       var state = C.publicState(t);
       var badge;
       var action;
-      var href = C.escapeHtml(C.publicUrl(t));
+      var href = C.escapeHtml(C.publicPathUrl(t));
       if (state === "OPEN") {
         badge = "🟢 Registration open";
         action = '<a class="btn btn-primary" href="' + href + '">Register</a>';
