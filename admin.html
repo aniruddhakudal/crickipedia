@@ -1,0 +1,1317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Crickipedia Admin</title>
+<style>
+:root{--green:#0b6b45;--green2:#0f8b5b;--gold:#f5b942;--dark:#08251c;--light:#f4f7f5;--muted:#5d6f68}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:var(--light);color:#092019}
+.top{background:var(--dark);color:white;padding:18px 0}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+.top-row{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.top h1{margin:0 0 4px;font-size:26px}.top p{margin:0;opacity:.75}
+.switcher{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+select,input,textarea{width:100%;padding:11px 12px;border:1px solid #d5e0db;border-radius:10px;font:inherit;background:#fff}
+select.slim{width:auto;min-width:220px}
+.btn{border:0;border-radius:10px;padding:10px 14px;font-weight:800;cursor:pointer;background:var(--green);color:#fff}
+.btn:hover{background:var(--green2)}.btn.ghost{background:#e7f0eb;color:#092019}.btn.danger{background:#b52e2e}
+.tabs{display:flex;gap:8px;margin:18px 0}
+.tab{background:#fff;color:#092019;border:1px solid #d7e3dd}
+.tab.on{background:var(--green);color:#fff;border-color:var(--green)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.stat,.panel{background:#fff;padding:20px;border-radius:14px;box-shadow:0 5px 20px #0000000b}
+.stat b{font-size:28px;display:block;margin-top:4px}
+.panel{margin-top:16px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+label{font-weight:700;font-size:13px;display:grid;gap:6px}
+.section{margin-top:22px;padding-top:8px;border-top:1px solid #edf2ef}
+.section h3{margin:0 0 14px}
+.checks{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.field-config{display:grid;gap:10px;max-width:520px}
+.field-config-row{display:grid;grid-template-columns:1fr 160px;gap:12px;align-items:center}
+.field-config-row span{font-weight:600;font-size:14px}
+.ffrow{display:grid;grid-template-columns:52px 1.2fr 1fr .9fr 1fr auto;gap:8px;align-items:end;margin-bottom:10px}
+.ffrow.ff-custom{grid-template-columns:52px 1.2fr .9fr .9fr 1fr auto}
+.ff-order{display:flex;flex-direction:column;gap:4px;padding-bottom:2px}
+.ff-order button{padding:4px 8px;min-width:36px;font-size:12px}
+.ffrow label{font-size:12px;font-weight:700;color:var(--muted);display:grid;gap:4px}
+.ffrow input,.ffrow select{font:inherit;padding:8px 10px;border-radius:10px;border:1px solid #d7e3dd}
+.ffrow .ff-name{font-weight:700;font-size:14px;color:var(--dark);padding:10px 0}
+.check{display:flex;align-items:center;gap:8px;font-weight:600;background:#f6faf8;padding:10px 12px;border-radius:10px}
+.check input{width:auto}
+.rowline{display:grid;grid-template-columns:70px 1fr 1fr auto;gap:8px;margin-bottom:8px;align-items:center}
+.srow{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;margin-bottom:8px}
+.srow.sponsor-row{grid-template-columns:minmax(0,1fr) minmax(0,1.2fr) auto auto minmax(0,1fr) auto;align-items:center}
+.srow.sponsor-row img[data-sp-preview]{justify-self:center}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.toast{position:fixed;right:16px;bottom:16px;background:var(--dark);color:#fff;padding:12px 16px;border-radius:12px;display:none;z-index:5}
+table{border-collapse:collapse;width:100%;min-width:920px}
+th,td{padding:11px;border-bottom:1px solid #e7eeea;text-align:left;font-size:14px}
+.tag{padding:5px 9px;border-radius:20px;background:#eaf7f1;color:#087247;font-weight:700;font-size:12px}
+.tag.pending{background:#fff4d6;color:#8a5a00}
+.preview{border-radius:16px;padding:18px;color:#fff;background:linear-gradient(135deg,var(--dark),var(--green),var(--green2));margin-bottom:16px}
+.preview h2{margin:8px 0 4px}.preview p{margin:0;opacity:.85}
+.hidden{display:none!important}
+.muted{color:var(--muted);font-size:13px}
+.admin-cat-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 12px}
+.admin-cat-tab{border:1px solid #d7e3dd;background:#fff;padding:8px 14px;border-radius:10px;font-weight:800;font-size:13px;cursor:pointer;font-family:inherit}
+.admin-cat-tab.on{background:var(--green);color:#fff;border-color:var(--green)}
+.admin-player-photo{width:40px;height:40px;border-radius:50%;object-fit:cover;background:#e8f0eb;display:block}
+.admin-player-photo-ph{width:40px;height:40px;border-radius:50%;background:#e8f0eb;color:var(--green);font-weight:800;font-size:12px;display:grid;place-items:center}
+.receipt-thumb{max-width:72px;max-height:72px;border-radius:8px;border:1px solid #e7eeea;vertical-align:middle;display:block;cursor:pointer}
+.receipt-link{border:0;background:none;padding:0;font:inherit;font-weight:700;cursor:pointer}
+.modal-bg{position:fixed;inset:0;background:#0006;display:none;align-items:center;justify-content:center;padding:16px;z-index:6}
+.modal{background:#fff;border-radius:16px;padding:22px;max-width:420px;width:100%}
+.modal-receipt{max-width:min(560px,96vw)}
+.receipt-modal-body{margin-top:12px;text-align:center;background:#f5f8f6;border-radius:12px;padding:12px;max-height:min(70vh,640px);overflow:auto}
+.receipt-modal-body img{max-width:100%;max-height:min(65vh,600px);width:auto;height:auto;border-radius:8px;vertical-align:middle}
+#loginGate{position:fixed;inset:0;background:#08251c;color:#fff;z-index:9;display:flex;align-items:center;justify-content:center;padding:16px}
+#loginGate .box{background:#fff;color:#092019;border-radius:18px;padding:28px;max-width:380px;width:100%}
+#loginGate h2{margin:0 0 8px}
+#appRoot.locked{display:none}
+@media(max-width:800px){
+  .stats,.grid2,.grid3,.checks{grid-template-columns:1fr}
+  .rowline,.srow{grid-template-columns:1fr}
+  .top-row{align-items:flex-start}
+}
+</style>
+</head>
+<body>
+<div id="loginGate">
+  <div class="box">
+    <h2>Admin sign in</h2>
+    <p class="muted">Only staff can customize tournaments or see players.</p>
+    <label>Username<input id="loginUser" autocomplete="username"></label>
+    <label style="margin-top:10px">Password<input id="loginPass" type="password" autocomplete="current-password"></label>
+    <p class="muted" id="loginError"></p>
+    <div class="actions">
+      <button class="btn" type="button" id="loginBtn">Sign in</button>
+    </div>
+  </div>
+</div>
+<div id="appRoot" class="locked">
+<header class="top">
+  <div class="wrap top-row">
+    <div>
+      <h1>🏏 Crickipedia Admin</h1>
+      <p>Customize one tournament at a time. Players never see another event's data.</p>
+    </div>
+    <div class="switcher">
+      <select class="slim" id="tourneySelect" aria-label="Active tournament"></select>
+      <button class="btn ghost" type="button" id="newBtn">New tournament</button>
+      <a class="btn" id="viewBtn" href="/" target="_blank" rel="noopener">View site</a>
+      <button class="btn ghost" type="button" id="logoutBtn">Sign out</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="tabs">
+    <button class="btn tab on" type="button" data-tab="customize">Customize</button>
+    <button class="btn tab" type="button" data-tab="players">Players</button>
+  </div>
+
+  <section id="customize">
+    <div class="preview" id="preview">
+      <div class="muted" style="color:#fff9">Live preview</div>
+      <h2 id="previewName">Tournament</h2>
+      <p id="previewMeta"></p>
+    </div>
+
+    <div class="panel">
+      <h3 style="margin-top:0">Brand</h3>
+      <div class="grid2">
+        <label>Tournament name<input id="name"></label>
+        <label>Short name<input id="shortName" maxlength="12"></label>
+        <label>Tournament URL key<input id="tournamentSlug" maxlength="48" placeholder="e.g. srpl, cpl"></label>
+        <label>Season URL key<input id="seasonSlug" maxlength="48" placeholder="e.g. 2026"></label>
+        <label>Status
+          <select id="status">
+            <option value="DRAFT">Draft — coming soon</option>
+            <option value="OPEN">Open for registration</option>
+            <option value="CLOSED">Closed</option>
+          </select>
+        </label>
+        <label>Tagline<input id="tagline"></label>
+        <label>ID prefix<input id="idPrefix" maxlength="12"></label>
+      </div>
+      <div class="grid2" style="margin-top:14px">
+        <label>Hero title<textarea id="heroTitle" rows="3"></textarea></label>
+        <label>Hero subtitle<textarea id="heroSub" rows="3"></textarea></label>
+      </div>
+      <div class="grid3" style="margin-top:14px">
+        <label>Logo emoji<input id="logoEmoji" maxlength="4"></label>
+        <label>Logo image URL<input id="logoUrl" placeholder="https://..."></label>
+        <label>Support WhatsApp<input id="supportWhatsapp" maxlength="15" placeholder="10-digit or 91…"></label>
+      </div>
+      <div class="grid3" style="margin-top:14px">
+        <label>Primary color<input id="colorGreen" type="color"></label>
+        <label>Highlight color<input id="colorGreen2" type="color"></label>
+        <label>Gold / accent<input id="colorGold" type="color"></label>
+        <label>Dark<input id="colorDark" type="color"></label>
+        <label>Page background<input id="colorLight" type="color"></label>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3 style="margin-top:0">Registration window & fee</h3>
+      <div class="grid3">
+        <label>Opens<input id="registrationStart" type="date"></label>
+        <label>Ends<input id="registrationEnd" type="date"></label>
+        <label>Entry fee<input id="fee" type="number" min="0" step="1"></label>
+        <label>Currency symbol<input id="currency" maxlength="4"></label>
+      </div>
+      <div class="grid2" style="margin-top:14px">
+        <label>Notice title<input id="noticeTitle"></label>
+        <label>Notice text<textarea id="notice" rows="3"></textarea></label>
+      </div>
+      <label style="margin-top:14px">What's next<textarea id="whatsNext" rows="3"></textarea></label>
+    </div>
+
+    <div class="panel">
+      <h3 style="margin-top:0">Payment method</h3>
+      <p class="muted">Razorpay and QR + receipt are mutually exclusive for this tournament.</p>
+      <p class="muted hidden" id="paymentModeHint" style="color:#b45309"></p>
+      <div class="grid2">
+        <label>Mode
+          <select id="paymentMode">
+            <option value="razorpay">Razorpay (online checkout)</option>
+            <option value="manual_qr">QR code + receipt upload</option>
+          </select>
+        </label>
+        <label class="check" style="margin-top:28px"><input id="sendConfirmedOnRazorpay" type="checkbox"> Send WhatsApp confirmed message after Razorpay pay</label>
+      </div>
+      <div class="section" id="manualQrSection">
+        <h3>Manual QR payment</h3>
+        <div class="grid2">
+          <label>QR source
+            <select id="qrSource">
+              <option value="image">Upload or link QR image</option>
+              <option value="upi">Generate from UPI ID</option>
+            </select>
+          </label>
+          <label id="qrImageUrlWrap">QR image URL (optional if you upload)<input id="qrImageUrl" placeholder="https://..."></label>
+        </div>
+        <div id="qrImageUploadBlock" style="margin-top:10px">
+          <label>Upload payment QR image
+            <input id="qrFile" type="file" accept="image/*">
+          </label>
+          <p class="muted" id="qrUploadStatus" style="margin:6px 0 0"></p>
+          <img id="qrPreview" alt="" style="display:none;max-width:220px;margin-top:10px;border-radius:12px;border:1px solid #ddd">
+        </div>
+        <div class="grid2" style="margin-top:10px" id="upiFieldsBlock">
+          <label>UPI ID<input id="upiId" placeholder="name@upi"></label>
+          <label>UPI payee name<input id="upiPayeeName" placeholder="Tournament name"></label>
+        </div>
+        <label style="margin-top:10px">Payment instructions<textarea id="paymentInstructions" rows="3"></textarea></label>
+        <div class="grid2" style="margin-top:10px">
+          <label>Receipt image field
+            <select id="receiptImage">
+              <option value="required">Required</option>
+              <option value="optional">Optional</option>
+              <option value="hidden">Hidden</option>
+            </select>
+          </label>
+          <label>UPI transaction ID field
+            <select id="receiptUpiRef">
+              <option value="optional">Optional</option>
+              <option value="required">Required</option>
+              <option value="hidden">Hidden</option>
+            </select>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3 style="margin-top:0">WhatsApp notifications</h3>
+      <p class="muted">Requires Meta Cloud API env vars. Create templates with a single body variable {{1}} (full message text).</p>
+      <div class="grid3">
+        <label>Reserved template name<input id="templateReserved" placeholder="registration_reserved"></label>
+        <label>Confirmed template name<input id="templateConfirmed" placeholder="registration_confirmed"></label>
+        <label>Rejected template name<input id="templateRejected" placeholder="registration_rejected"></label>
+      </div>
+      <label style="margin-top:10px">Template language<input id="templateLanguage" maxlength="10" placeholder="en"></label>
+      <label style="margin-top:10px">Reserved message<textarea id="messageReserved" rows="5"></textarea></label>
+      <label style="margin-top:10px">Confirmed message<textarea id="messageConfirmed" rows="5"></textarea></label>
+      <label style="margin-top:10px">Rejected message<textarea id="messageRejected" rows="4"></textarea></label>
+      <p class="muted">Placeholders: {{tournamentName}}, {{name}}, {{category}}, {{fee}}, {{groupLink}}, {{paymentInstructions}}, {{rejectReason}}. Players are not shown a registration ID on the site.</p>
+    </div>
+
+    <div class="panel">
+      <h3 style="margin-top:0">Form fields</h3>
+      <p class="muted">Name, WhatsApp and skill always stay required. Add or remove fields, set optional/required, and use ↑ ↓ to control order on the registration form.</p>
+      <div id="formFieldRows"></div>
+      <div class="actions" style="margin-top:8px;flex-wrap:wrap">
+        <select id="addBuiltinFieldPick" style="max-width:220px;padding:10px;border-radius:10px;border:1px solid #d7e3dd;font:inherit">
+          <option value="">Add standard field…</option>
+        </select>
+        <button class="btn ghost" type="button" id="addBuiltinFieldBtn">Add standard</button>
+        <button class="btn ghost" type="button" id="addCustomFieldBtn">Add custom question</button>
+      </div>
+      <div class="section">
+        <h3>Public player list</h3>
+        <p class="muted">When enabled, the registration page shows a &quot;View registered players&quot; button with names and photos by category.</p>
+        <label class="check"><input id="showPublicRoster" type="checkbox"> Show &quot;View registered players&quot; on registration page</label>
+      </div>
+      <div class="section">
+        <h3>Registration categories</h3>
+        <p class="muted">These appear in the player dropdown. Add, rename, or remove any.</p>
+        <div id="categoryRows"></div>
+        <button class="btn ghost" type="button" id="addCategory">Add category</button>
+      </div>
+      <div class="section">
+        <h3>Skills</h3>
+        <div id="skillRows"></div>
+        <button class="btn ghost" type="button" id="addSkill">Add skill</button>
+      </div>
+      <div class="section">
+        <h3>Jersey options</h3>
+        <label>Sizes (comma separated)<input id="jerseySizes"></label>
+        <label style="margin-top:10px">Sleeves (comma separated)<input id="sleeves"></label>
+        <label style="margin-top:10px">Size chart image (shown next to jersey size on registration)
+          <input id="jerseyChartFile" type="file" accept="image/*">
+        </label>
+        <p class="muted" id="jerseyChartStatus" style="margin:6px 0 0"></p>
+        <img id="jerseyChartPreview" alt="" style="display:none;max-width:220px;margin-top:10px;border-radius:12px;border:1px solid #ddd">
+        <input type="hidden" id="jerseySizeChartUrl">
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3 style="margin-top:0">Sponsors</h3>
+      <div id="sponsorRows"></div>
+      <button class="btn ghost" type="button" id="addSponsor">Add sponsor</button>
+    </div>
+
+    <div class="actions">
+      <button class="btn" type="button" id="saveBtn">Save tournament</button>
+      <a class="btn ghost" id="previewBtn" href="index.html" target="_blank" rel="noopener">Preview as player</a>
+      <button class="btn danger" type="button" id="deleteBtn">Delete tournament</button>
+    </div>
+  </section>
+
+  <section id="players" class="hidden">
+    <div class="stats">
+      <div class="stat">Registrations<b id="total">0</b></div>
+      <div class="stat">Confirmed<b id="paid">0</b></div>
+      <div class="stat">Reserved / unpaid<b id="pending">0</b></div>
+      <div class="stat">Unique WhatsApp<b id="playersCount">0</b></div>
+    </div>
+    <div class="panel">
+      <div class="actions" style="margin-top:0">
+        <button class="btn" type="button" id="exportBtn">Export CSV</button>
+        <button class="btn danger" type="button" id="clearBtn">Clear this tournament's players</button>
+      </div>
+      <h2>Registered players</h2>
+      <p class="muted">Browse by category. Open receipts and approve or decline payments when a receipt is submitted.</p>
+      <div class="admin-cat-tabs" id="adminPlayerTabs" role="tablist"></div>
+      <div style="overflow:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th><th>Photo</th><th>Name</th><th>WhatsApp</th><th>Registered</th><th>Status</th><th>Receipt</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <h3 style="margin-top:0">New tournament</h3>
+    <p class="muted">Copies the current look and form, then you rename it. New event starts as Draft.</p>
+    <label>Name<input id="newName" placeholder="e.g. SRPL 2027"></label>
+    <div class="actions">
+      <button class="btn" type="button" id="createBtn">Create</button>
+      <button class="btn ghost" type="button" id="cancelCreate">Cancel</button>
+    </div>
+  </div>
+</div>
+<div class="modal-bg" id="receiptModal" role="dialog" aria-modal="true" aria-labelledby="receiptModalTitle">
+  <div class="modal modal-receipt">
+    <div class="actions" style="margin-top:0;align-items:center">
+      <h3 style="margin:0;flex:1" id="receiptModalTitle">Payment receipt</h3>
+      <button class="btn ghost" type="button" id="closeReceiptModal">Close</button>
+    </div>
+    <p class="muted" id="receiptModalMeta" style="margin:8px 0 0"></p>
+    <div class="receipt-modal-body">
+      <img id="receiptModalImg" alt="Payment receipt">
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast">Saved</div>
+</div>
+<input type="file" id="sponsorLogoFile" accept="image/*" class="hidden" aria-hidden="true">
+
+<script src="/app.js"></script>
+<script>
+(async function () {
+  var C = Crickipedia;
+  var list = [];
+  var current = null;
+  var slug = "";
+  var dirty = false;
+  var sponsorLogoPickIndex = null;
+
+  function showApp() {
+    document.getElementById("loginGate").style.display = "none";
+    document.getElementById("appRoot").classList.remove("locked");
+  }
+
+  async function boot() {
+    try {
+      await C.api.me();
+      showApp();
+      C.api.health().then(function (health) {
+        serverPaymentsMode = health.payments || null;
+        refreshPaymentModeHint();
+      }).catch(function () {});
+      list = await C.api.listAdmin();
+      slug = C.getAdminSlug(list);
+      current = list.find(function (item) { return item.slug === slug; }) || list[0] || null;
+      if (current) load(current);
+      else {
+        fillSelect();
+        toast("No tournaments yet — create your first one.");
+      }
+    } catch (err) {
+      document.getElementById("loginGate").style.display = "flex";
+      document.getElementById("appRoot").classList.add("locked");
+      if (err.status !== 401) {
+        var msg = err.message || "Server is not running. Use npm start.";
+        if (/ENOTFOUND|ECONNREFUSED|connection failed/i.test(msg)) {
+          msg += " — Cannot reach Supabase Postgres (DNS/network). For local work, set DATABASE_DRIVER=pglite in .env, restart npm start, and sign in again.";
+        }
+        document.getElementById("loginError").textContent = msg;
+      }
+    }
+  }
+
+  function toast(text) {
+    var el = document.getElementById("toast");
+    el.textContent = text;
+    el.style.display = "block";
+    setTimeout(function () { el.style.display = "none"; }, 1600);
+  }
+
+  function fillSelect() {
+    var sel = document.getElementById("tourneySelect");
+    if (!list.length) {
+      sel.innerHTML = '<option value="">No tournaments yet</option>';
+      return;
+    }
+    var activeSlug = current && current.slug ? current.slug : "";
+    sel.innerHTML = list.map(function (item) {
+      return '<option value="' + C.escapeHtml(item.slug) + '"' + (item.slug === activeSlug ? " selected" : "") + ">" +
+        C.escapeHtml(item.name) + " (" + C.escapeHtml(item.status) + ")</option>";
+    }).join("");
+  }
+
+  function csvList(value) {
+    return String(value || "").split(",").map(function (part) { return part.trim(); }).filter(Boolean);
+  }
+
+  function renderCategories(categories) {
+    var list = C.normalizeCategories(categories);
+    document.getElementById("categoryRows").innerHTML = list.map(function (item, index) {
+      return '<div class="srow">' +
+        '<input data-cat="' + index + '" data-k="name" value="' + C.escapeHtml(item.name) + '" placeholder="Category name">' +
+        '<input data-cat="' + index + '" data-k="group" value="' + C.escapeHtml(item.whatsappGroupUrl || "") + '" placeholder="WhatsApp group invite link">' +
+        '<button class="btn ghost" type="button" data-remove-cat="' + index + '">Remove</button></div>';
+    }).join("");
+  }
+
+  function readFormFields() {
+    var rows = document.querySelectorAll("#formFieldRows .ffrow");
+    var out = [];
+    rows.forEach(function (row) {
+      var source = row.getAttribute("data-source");
+      var modeEl = row.querySelector("[data-ff-mode]");
+      var mode = modeEl ? modeEl.value : "optional";
+      if (source === "builtin") {
+        out.push({
+          id: row.getAttribute("data-id"),
+          source: "builtin",
+          mode: mode === "required" ? "required" : "optional"
+        });
+        return;
+      }
+      var labelEl = row.querySelector("[data-ff-label]");
+      var typeEl = row.querySelector("[data-ff-type]");
+      var optionsEl = row.querySelector("[data-ff-options]");
+      out.push({
+        id: row.getAttribute("data-id"),
+        source: "custom",
+        label: labelEl ? labelEl.value.trim() : "Custom field",
+        type: typeEl ? typeEl.value : "text",
+        mode: mode === "required" ? "required" : "optional",
+        options: optionsEl ? optionsEl.value.split(",").map(function (p) { return p.trim(); }).filter(Boolean) : []
+      });
+    });
+    return out;
+  }
+
+  function refreshBuiltinFieldPicker(formFields) {
+    var pick = document.getElementById("addBuiltinFieldPick");
+    if (!pick) return;
+    var used = {};
+    (formFields || []).forEach(function (f) {
+      if (f.source === "builtin") used[f.id] = true;
+    });
+    var html = '<option value="">Add standard field…</option>';
+    Object.keys(C.BUILTIN_FIELD_LABELS).forEach(function (id) {
+      if (used[id]) return;
+      html += '<option value="' + C.escapeHtml(id) + '">' + C.escapeHtml(C.BUILTIN_FIELD_LABELS[id]) + "</option>";
+    });
+    pick.innerHTML = html;
+  }
+
+  function renderFormFieldRows(formFields) {
+    var list = C.normalizeFormFields(formFields, null);
+    if (!list.length) list = C.defaultFormFieldsArray();
+    refreshBuiltinFieldPicker(list);
+    function orderButtons(index, total) {
+      return '<div class="ff-order">' +
+        '<button class="btn ghost" type="button" data-ff-up="' + index + '"' + (index === 0 ? " disabled" : "") + ' title="Move up">↑</button>' +
+        '<button class="btn ghost" type="button" data-ff-down="' + index + '"' + (index >= total - 1 ? " disabled" : "") + ' title="Move down">↓</button>' +
+        "</div>";
+    }
+    document.getElementById("formFieldRows").innerHTML = list.map(function (field, index) {
+      if (field.source === "builtin") {
+        var name = C.BUILTIN_FIELD_LABELS[field.id] || field.id;
+        return '<div class="ffrow" data-source="builtin" data-id="' + C.escapeHtml(field.id) + '">' +
+          orderButtons(index, list.length) +
+          '<div class="ff-name">' + C.escapeHtml(name) + '<div class="muted" style="font-size:11px;font-weight:600">Standard field</div></div>' +
+          '<label>Required?<select data-ff-mode><option value="optional"' + (field.mode !== "required" ? " selected" : "") + '>Optional</option><option value="required"' + (field.mode === "required" ? " selected" : "") + ">Required</option></select></label>" +
+          '<span></span><span></span>' +
+          '<button class="btn ghost" type="button" data-remove-ff="' + index + '">Remove</button></div>';
+      }
+      var opts = (field.options || []).join(", ");
+      return '<div class="ffrow ff-custom" data-source="custom" data-id="' + C.escapeHtml(field.id) + '">' +
+        orderButtons(index, list.length) +
+        '<label>Question<input data-ff-label value="' + C.escapeHtml(field.label || "") + '" placeholder="e.g. Blood group"></label>' +
+        '<label>Type<select data-ff-type>' +
+        ["text", "number", "date", "url", "select"].map(function (t) {
+          return '<option value="' + t + '"' + (field.type === t ? " selected" : "") + ">" + t + "</option>";
+        }).join("") +
+        "</select></label>" +
+        '<label>Required?<select data-ff-mode><option value="optional"' + (field.mode !== "required" ? " selected" : "") + '>Optional</option><option value="required"' + (field.mode === "required" ? " selected" : "") + ">Required</option></select></label>" +
+        '<label>Choices (dropdown)<input data-ff-options value="' + C.escapeHtml(opts) + '" placeholder="A+, B+, O+"></label>' +
+        '<button class="btn ghost" type="button" data-remove-ff="' + index + '">Remove</button></div>';
+    }).join("");
+  }
+
+  function loadFormFields(tournament) {
+    var list = C.normalizeFormFields(tournament.formFields, tournament.fields);
+    renderFormFieldRows(list);
+  }
+
+  function readCategories() {
+    var count = document.querySelectorAll("[data-cat][data-k='name']").length;
+    var rows = [];
+    for (var i = 0; i < count; i += 1) {
+      var nameEl = document.querySelector('[data-cat="' + i + '"][data-k="name"]');
+      var groupEl = document.querySelector('[data-cat="' + i + '"][data-k="group"]');
+      if (!nameEl || !nameEl.value.trim()) continue;
+      rows.push({
+        name: nameEl.value.trim(),
+        whatsappGroupUrl: groupEl ? groupEl.value.trim() : ""
+      });
+    }
+    return rows;
+  }
+
+  var serverPaymentsMode = null;
+
+  function refreshPaymentModeHint() {
+    var hint = document.getElementById("paymentModeHint");
+    var razorpay = document.getElementById("paymentMode").value !== "manual_qr";
+    if (razorpay && serverPaymentsMode === "demo") {
+      hint.textContent = "Razorpay is selected, but the server has no RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET. Players will not get checkout until you add keys (e.g. on Render) and restart.";
+      hint.classList.remove("hidden");
+    } else {
+      hint.classList.add("hidden");
+      hint.textContent = "";
+    }
+  }
+
+  function togglePaymentSections() {
+    var manual = document.getElementById("paymentMode").value === "manual_qr";
+    document.getElementById("manualQrSection").style.display = manual ? "block" : "none";
+    toggleQrSourceFields();
+    refreshPaymentModeHint();
+  }
+
+  function toggleQrSourceFields() {
+    var upi = document.getElementById("qrSource").value === "upi";
+    document.getElementById("upiFieldsBlock").style.display = upi ? "grid" : "none";
+    document.getElementById("qrImageUploadBlock").style.display = upi ? "none" : "block";
+    document.getElementById("qrImageUrlWrap").style.display = upi ? "none" : "block";
+  }
+
+  function refreshQrPreview(url) {
+    var img = document.getElementById("qrPreview");
+    if (!url && !(current && current.tournamentSlug && current.seasonSlug)) {
+      img.style.display = "none";
+      img.removeAttribute("src");
+      return;
+    }
+    if (current && current.tournamentSlug && current.seasonSlug) {
+      img.src = C.api.paymentQrImageUrl(current);
+    } else {
+      img.src = url;
+    }
+    img.style.display = "block";
+  }
+
+  function renderSkills(skills) {
+    document.getElementById("skillRows").innerHTML = (skills || []).map(function (skill, index) {
+      return '<div class="rowline">' +
+        '<input data-skill="' + index + '" data-k="emoji" value="' + C.escapeHtml(skill.emoji || "") + '" placeholder="🏏">' +
+        '<input data-skill="' + index + '" data-k="label" value="' + C.escapeHtml(skill.label || "") + '" placeholder="Label">' +
+        '<input data-skill="' + index + '" data-k="value" value="' + C.escapeHtml(skill.value || "") + '" placeholder="Value">' +
+        '<button class="btn ghost" type="button" data-remove-skill="' + index + '">Remove</button></div>';
+    }).join("");
+  }
+
+  function sponsorLogoPreviewUrl(logoUrl) {
+    if (!logoUrl) return "";
+    if (logoUrl.indexOf("/uploads/") === 0 || /^https?:\/\//i.test(logoUrl)) return logoUrl;
+    return logoUrl;
+  }
+
+  function renderSponsors(sponsors) {
+    document.getElementById("sponsorRows").innerHTML = (sponsors || []).map(function (item, index) {
+      var preview = sponsorLogoPreviewUrl(item.logoUrl || "");
+      var img = preview
+        ? '<img data-sp-preview="' + index + '" src="' + C.escapeHtml(preview) + '" alt="" style="max-height:36px;max-width:80px;object-fit:contain">'
+        : '<img data-sp-preview="' + index + '" alt="" style="display:none;max-height:36px;max-width:80px;object-fit:contain">';
+      return '<div class="srow sponsor-row">' +
+        '<input data-sp="' + index + '" data-k="name" value="' + C.escapeHtml(item.name || "") + '" placeholder="Name">' +
+        '<input data-sp="' + index + '" data-k="logoUrl" value="' + C.escapeHtml(item.logoUrl || "") + '" placeholder="Logo URL">' +
+        '<button class="btn ghost" type="button" data-sp-pick="' + index + '">Upload logo</button>' +
+        img +
+        '<input data-sp="' + index + '" data-k="websiteUrl" value="' + C.escapeHtml(item.websiteUrl || "") + '" placeholder="Website">' +
+        '<button class="btn ghost" type="button" data-remove-sp="' + index + '">Remove</button></div>';
+    }).join("");
+  }
+
+  function refreshJerseyChartPreview() {
+    var url = document.getElementById("jerseySizeChartUrl").value.trim();
+    var img = document.getElementById("jerseyChartPreview");
+    if (!url && current && current.tournamentSlug && current.seasonSlug) {
+      if (current.jerseySizeChartUrl) {
+        img.src = C.api.jerseySizeChartImageUrl(current);
+        img.style.display = "block";
+        return;
+      }
+    }
+    if (!url) {
+      img.style.display = "none";
+      img.removeAttribute("src");
+      return;
+    }
+    if (current && current.tournamentSlug && current.seasonSlug && current.jerseySizeChartUrl) {
+      img.src = C.api.jerseySizeChartImageUrl(current);
+    } else {
+      img.src = url;
+    }
+    img.style.display = "block";
+  }
+
+  function readSkills() {
+    var count = document.querySelectorAll("[data-skill][data-k='label']").length;
+    var rows = [];
+    for (var i = 0; i < count; i += 1) {
+      var label = document.querySelector('[data-skill="' + i + '"][data-k="label"]');
+      var value = document.querySelector('[data-skill="' + i + '"][data-k="value"]');
+      var emoji = document.querySelector('[data-skill="' + i + '"][data-k="emoji"]');
+      if (!label) continue;
+      var text = label.value.trim();
+      if (!text) continue;
+      rows.push({
+        label: text,
+        value: (value && value.value.trim()) || text,
+        emoji: (emoji && emoji.value.trim()) || C.skillEmoji(text)
+      });
+    }
+    return rows;
+  }
+
+  function readSponsors() {
+    var count = document.querySelectorAll("[data-sp][data-k='name']").length;
+    var rows = [];
+    for (var i = 0; i < count; i += 1) {
+      var name = document.querySelector('[data-sp="' + i + '"][data-k="name"]');
+      if (!name || !name.value.trim()) continue;
+      rows.push({
+        name: name.value.trim(),
+        logoUrl: document.querySelector('[data-sp="' + i + '"][data-k="logoUrl"]').value.trim(),
+        websiteUrl: document.querySelector('[data-sp="' + i + '"][data-k="websiteUrl"]').value.trim()
+      });
+    }
+    return rows;
+  }
+
+  function previewFromForm() {
+    document.getElementById("previewName").textContent = document.getElementById("name").value || "Tournament";
+    document.getElementById("previewMeta").textContent =
+      document.getElementById("status").value + " • " +
+      document.getElementById("registrationStart").value + " to " +
+      document.getElementById("registrationEnd").value + " • " +
+      (document.getElementById("currency").value || "₹") + document.getElementById("fee").value;
+    var fake = {
+      colors: {
+        green: document.getElementById("colorGreen").value,
+        green2: document.getElementById("colorGreen2").value,
+        gold: document.getElementById("colorGold").value,
+        dark: document.getElementById("colorDark").value,
+        light: document.getElementById("colorLight").value
+      }
+    };
+    C.applyTheme(fake);
+    document.getElementById("preview").style.background =
+      "linear-gradient(135deg," + fake.colors.dark + "," + fake.colors.green + "," + fake.colors.green2 + ")";
+  }
+
+  function collect() {
+    var tournamentSlug = C.slugify(document.getElementById("tournamentSlug").value || document.getElementById("name").value);
+    var seasonSlug = C.slugify(document.getElementById("seasonSlug").value || "season");
+    var nextSlug = tournamentSlug + "-" + seasonSlug;
+    return {
+      slug: nextSlug,
+      tournamentSlug: tournamentSlug,
+      seasonSlug: seasonSlug,
+      name: document.getElementById("name").value.trim() || "Untitled tournament",
+      shortName: document.getElementById("shortName").value.trim() || "CUP",
+      tagline: document.getElementById("tagline").value.trim(),
+      heroTitle: document.getElementById("heroTitle").value,
+      heroSub: document.getElementById("heroSub").value,
+      logoEmoji: document.getElementById("logoEmoji").value || "🏏",
+      logoUrl: document.getElementById("logoUrl").value.trim(),
+      colors: {
+        green: document.getElementById("colorGreen").value,
+        green2: document.getElementById("colorGreen2").value,
+        gold: document.getElementById("colorGold").value,
+        dark: document.getElementById("colorDark").value,
+        light: document.getElementById("colorLight").value
+      },
+      status: document.getElementById("status").value,
+      registrationStart: document.getElementById("registrationStart").value,
+      registrationEnd: document.getElementById("registrationEnd").value,
+      fee: Number(document.getElementById("fee").value || 0),
+      currency: document.getElementById("currency").value || "₹",
+      idPrefix: document.getElementById("idPrefix").value.trim() || C.prefixFromSlug(nextSlug),
+      noticeTitle: document.getElementById("noticeTitle").value.trim(),
+      notice: document.getElementById("notice").value,
+      whatsNext: document.getElementById("whatsNext").value,
+      supportWhatsapp: document.getElementById("supportWhatsapp").value.trim(),
+      showPublicRoster: document.getElementById("showPublicRoster").checked,
+      formFields: readFormFields(),
+      skills: readSkills().length ? readSkills() : C.defaultTournament().skills,
+      categories: readCategories().length ? readCategories() : C.defaultTournament().categories,
+      jerseySizes: csvList(document.getElementById("jerseySizes").value),
+      sleeves: csvList(document.getElementById("sleeves").value),
+      jerseySizeChartUrl: document.getElementById("jerseySizeChartUrl").value.trim(),
+      sponsors: readSponsors(),
+      payment: {
+        mode: document.getElementById("paymentMode").value,
+        qrSource: document.getElementById("qrSource").value,
+        qrImageUrl: document.getElementById("qrImageUrl").value.trim(),
+        upiId: document.getElementById("upiId").value.trim(),
+        upiPayeeName: document.getElementById("upiPayeeName").value.trim(),
+        paymentInstructions: document.getElementById("paymentInstructions").value,
+        receiptImage: document.getElementById("receiptImage").value,
+        receiptUpiRef: document.getElementById("receiptUpiRef").value,
+        sendConfirmedOnRazorpay: document.getElementById("sendConfirmedOnRazorpay").checked
+      },
+      whatsapp: {
+        templateReserved: document.getElementById("templateReserved").value.trim(),
+        templateConfirmed: document.getElementById("templateConfirmed").value.trim(),
+        templateRejected: document.getElementById("templateRejected").value.trim(),
+        templateLanguage: document.getElementById("templateLanguage").value.trim() || "en",
+        messageReserved: document.getElementById("messageReserved").value,
+        messageConfirmed: document.getElementById("messageConfirmed").value,
+        messageRejected: document.getElementById("messageRejected").value
+      }
+    };
+  }
+
+  function load(tournament) {
+    current = tournament;
+    slug = tournament.slug;
+    C.setAdminSlug(slug);
+    document.getElementById("name").value = tournament.name || "";
+    document.getElementById("shortName").value = tournament.shortName || "";
+    document.getElementById("tournamentSlug").value = tournament.tournamentSlug || "";
+    document.getElementById("seasonSlug").value = tournament.seasonSlug || "";
+    document.getElementById("status").value = tournament.status || "DRAFT";
+    document.getElementById("tagline").value = tournament.tagline || "";
+    document.getElementById("idPrefix").value = tournament.idPrefix || "";
+    document.getElementById("heroTitle").value = tournament.heroTitle || "";
+    document.getElementById("heroSub").value = tournament.heroSub || "";
+    document.getElementById("logoEmoji").value = tournament.logoEmoji || "🏏";
+    document.getElementById("logoUrl").value = tournament.logoUrl || "";
+    document.getElementById("supportWhatsapp").value = tournament.supportWhatsapp || "";
+    document.getElementById("colorGreen").value = tournament.colors.green;
+    document.getElementById("colorGreen2").value = tournament.colors.green2;
+    document.getElementById("colorGold").value = tournament.colors.gold;
+    document.getElementById("colorDark").value = tournament.colors.dark;
+    document.getElementById("colorLight").value = tournament.colors.light;
+    document.getElementById("registrationStart").value = tournament.registrationStart || "";
+    document.getElementById("registrationEnd").value = tournament.registrationEnd || "";
+    document.getElementById("fee").value = tournament.fee;
+    document.getElementById("currency").value = tournament.currency || "₹";
+    document.getElementById("noticeTitle").value = tournament.noticeTitle || "";
+    document.getElementById("notice").value = tournament.notice || "";
+    document.getElementById("whatsNext").value = tournament.whatsNext || "";
+    loadFormFields(tournament);
+    document.getElementById("showPublicRoster").checked = tournament.showPublicRoster !== false;
+    document.getElementById("jerseySizes").value = (tournament.jerseySizes || []).join(", ");
+    document.getElementById("sleeves").value = (tournament.sleeves || []).join(", ");
+    document.getElementById("jerseySizeChartUrl").value = tournament.jerseySizeChartUrl || "";
+    document.getElementById("jerseyChartStatus").textContent = "";
+    refreshJerseyChartPreview();
+    var payment = tournament.payment || C.defaultTournament().payment;
+    var wa = tournament.whatsapp || C.defaultTournament().whatsapp;
+    document.getElementById("paymentMode").value = payment.mode === "manual_qr" ? "manual_qr" : "razorpay";
+    document.getElementById("sendConfirmedOnRazorpay").checked = payment.sendConfirmedOnRazorpay !== false;
+    document.getElementById("qrSource").value = payment.qrSource || "image";
+    document.getElementById("qrImageUrl").value = payment.qrImageUrl || "";
+    refreshQrPreview(payment.qrSource !== "upi" ? payment.qrImageUrl || "" : "");
+    document.getElementById("qrUploadStatus").textContent = "";
+    document.getElementById("upiId").value = payment.upiId || "";
+    document.getElementById("upiPayeeName").value = payment.upiPayeeName || "";
+    document.getElementById("paymentInstructions").value = payment.paymentInstructions || "";
+    document.getElementById("receiptImage").value = payment.receiptImage || "required";
+    document.getElementById("receiptUpiRef").value = payment.receiptUpiRef || "optional";
+    document.getElementById("templateReserved").value = wa.templateReserved || "registration_reserved";
+    document.getElementById("templateConfirmed").value = wa.templateConfirmed || "registration_confirmed";
+    document.getElementById("templateRejected").value = wa.templateRejected || "registration_rejected";
+    document.getElementById("templateLanguage").value = wa.templateLanguage || "en";
+    document.getElementById("messageReserved").value = wa.messageReserved || "";
+    document.getElementById("messageConfirmed").value = wa.messageConfirmed || "";
+    document.getElementById("messageRejected").value = wa.messageRejected || "";
+    togglePaymentSections();
+    renderCategories(tournament.categories && tournament.categories.length ? tournament.categories : C.defaultTournament().categories);
+    renderSkills(tournament.skills || []);
+    renderSponsors(tournament.sponsors || []);
+    document.getElementById("viewBtn").href = "/";
+    document.getElementById("previewBtn").href = C.publicUrl(tournament, { preview: true });
+    fillSelect();
+    previewFromForm();
+    renderPlayers();
+    dirty = false;
+  }
+
+  var adminPlayerRows = [];
+  var adminPlayerTab = "";
+
+  function adminPlayerStatus(row) {
+    if (row.paymentStatus === "PAID") return "Confirmed";
+    if (row.verificationStatus === "SUBMITTED") return "Pending verification";
+    if (row.verificationStatus === "REJECTED") return "Payment declined";
+    return "Reserved";
+  }
+
+  function adminPlayerInitials(name) {
+    var parts = String(name || "").trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return "?";
+    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+    return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+  }
+
+  function adminPlayerTabNames() {
+    var configured = C.normalizeCategories(current.categories || []).map(function (c) { return c.name; });
+    var fromRows = {};
+    adminPlayerRows.forEach(function (row) {
+      fromRows[row.category || "Uncategorized"] = true;
+    });
+    var tabs = configured.slice();
+    Object.keys(fromRows).forEach(function (cat) {
+      if (tabs.indexOf(cat) === -1) tabs.push(cat);
+    });
+    if (!tabs.length) tabs = Object.keys(fromRows);
+    return tabs;
+  }
+
+  function adminPlayersInTab(tab) {
+    return adminPlayerRows.filter(function (row) {
+      return (row.category || "Uncategorized") === tab;
+    });
+  }
+
+  function adminPhotoCell(row) {
+    if (row.photoUrl) {
+      var src = C.api.adminPlayerPhotoUrl(current.slug, row.id);
+      return '<img class="admin-player-photo" alt="" src="' + C.escapeHtml(src) + '">';
+    }
+    return '<div class="admin-player-photo-ph" aria-hidden="true">' + C.escapeHtml(adminPlayerInitials(row.name)) + "</div>";
+  }
+
+  function openAdminReceiptModal(src, name, upiRef) {
+    document.getElementById("receiptModalTitle").textContent = name ? "Receipt — " + name : "Payment receipt";
+    var meta = document.getElementById("receiptModalMeta");
+    meta.textContent = upiRef ? "UPI reference: " + upiRef : "";
+    meta.style.display = upiRef ? "block" : "none";
+    document.getElementById("receiptModalImg").src = src;
+    document.getElementById("receiptModal").style.display = "flex";
+  }
+
+  function closeAdminReceiptModal() {
+    document.getElementById("receiptModal").style.display = "none";
+    document.getElementById("receiptModalImg").removeAttribute("src");
+  }
+
+  function adminReceiptCell(row) {
+    var parts = [];
+    if (row.receiptUrl) {
+      var src = C.api.adminReceiptImageUrl(current.slug, row.id);
+      var label = C.escapeHtml(row.name || "Player");
+      var upi = row.receiptUpiRef ? C.escapeHtml(row.receiptUpiRef) : "";
+      parts.push(
+        '<button type="button" class="receipt-link" data-view-receipt="' + C.escapeHtml(src) + '" data-receipt-name="' + label + '"' +
+        (upi ? ' data-receipt-upi="' + upi + '"' : "") + ' title="View receipt">' +
+        '<img class="receipt-thumb" alt="View receipt" src="' + C.escapeHtml(src) + '"></button>'
+      );
+    }
+    if (row.receiptUpiRef) {
+      parts.push('<div class="muted" style="font-size:12px;margin-top:4px">UPI: ' + C.escapeHtml(row.receiptUpiRef) + "</div>");
+    }
+    return parts.length ? parts.join("") : '<span class="muted">—</span>';
+  }
+
+  function renderAdminPlayerTable() {
+    var tabs = adminPlayerTabNames();
+    if (!tabs.length) {
+      document.getElementById("adminPlayerTabs").innerHTML = "";
+      document.getElementById("rows").innerHTML = '<tr><td colspan="8" class="muted">No players in this tournament yet.</td></tr>';
+      return;
+    }
+    if (!adminPlayerTab || tabs.indexOf(adminPlayerTab) === -1) adminPlayerTab = tabs[0];
+    document.getElementById("adminPlayerTabs").innerHTML = tabs.map(function (tab) {
+      var count = adminPlayersInTab(tab).length;
+      var on = tab === adminPlayerTab ? " on" : "";
+      return '<button type="button" class="admin-cat-tab' + on + '" data-admin-cat="' + C.escapeHtml(tab) + '">' +
+        C.escapeHtml(tab) + " (" + count + ")</button>";
+    }).join("");
+    var players = adminPlayersInTab(adminPlayerTab);
+    document.getElementById("rows").innerHTML = players.length ? players.map(function (row, index) {
+      var paid = row.paymentStatus === "PAID";
+      var status = adminPlayerStatus(row);
+      var actions = "";
+      if (!paid && row.verificationStatus === "SUBMITTED") {
+        actions =
+          '<button class="btn" type="button" data-approve="' + C.escapeHtml(row.id) + '">Approve</button> ' +
+          '<button class="btn ghost" type="button" data-reject="' + C.escapeHtml(row.id) + '">Decline</button>';
+      } else if (!paid && row.verificationStatus === "REJECTED") {
+        actions = '<span class="muted">Awaiting resubmit</span>';
+      } else if (paid) {
+        actions = '<span class="muted">—</span>';
+      } else {
+        actions = '<span class="muted">No receipt yet</span>';
+      }
+      return "<tr>" +
+        "<td>" + (index + 1) + "</td>" +
+        "<td>" + adminPhotoCell(row) + "</td>" +
+        '<td><strong>' + C.escapeHtml(row.name) + '</strong><div class="muted" style="font-size:11px">' + C.escapeHtml(row.id) + "</div></td>" +
+        "<td>" + C.escapeHtml(row.phone) + "</td>" +
+        "<td>" + C.escapeHtml(C.formatDateTime(row.createdAt)) + "</td>" +
+        '<td><span class="tag' + (paid ? "" : " pending") + '">' + C.escapeHtml(status) + "</span></td>" +
+        "<td>" + adminReceiptCell(row) + "</td>" +
+        "<td>" + actions + "</td>" +
+        "</tr>";
+    }).join("") : '<tr><td colspan="8" class="muted">No players in this category yet.</td></tr>';
+  }
+
+  async function renderPlayers() {
+    if (!current || !current.slug) {
+      document.getElementById("adminPlayerTabs").innerHTML = "";
+      document.getElementById("rows").innerHTML = '<tr><td colspan="8" class="muted">Create a tournament to manage players.</td></tr>';
+      document.getElementById("total").textContent = "0";
+      document.getElementById("paid").textContent = "0";
+      document.getElementById("pending").textContent = "0";
+      document.getElementById("playersCount").textContent = "0";
+      return;
+    }
+    adminPlayerRows = [];
+    try {
+      adminPlayerRows = await C.api.registrations(current.slug);
+    } catch (err) {
+      toast(err.message || "Could not load players");
+    }
+    document.getElementById("total").textContent = adminPlayerRows.length;
+    document.getElementById("paid").textContent = adminPlayerRows.filter(function (row) { return row.paymentStatus === "PAID"; }).length;
+    document.getElementById("pending").textContent = adminPlayerRows.filter(function (row) { return row.paymentStatus !== "PAID"; }).length;
+    document.getElementById("playersCount").textContent = new Set(adminPlayerRows.map(function (row) { return row.phone; })).size;
+    renderAdminPlayerTable();
+  }
+
+  document.getElementById("adminPlayerTabs").addEventListener("click", function (event) {
+    var tab = event.target.getAttribute("data-admin-cat");
+    if (!tab) return;
+    adminPlayerTab = tab;
+    renderAdminPlayerTable();
+  });
+
+  document.getElementById("closeReceiptModal").addEventListener("click", closeAdminReceiptModal);
+  document.getElementById("receiptModal").addEventListener("click", function (event) {
+    if (event.target.id === "receiptModal") closeAdminReceiptModal();
+  });
+
+  document.getElementById("rows").addEventListener("click", async function (event) {
+    var receiptBtn = event.target.closest("[data-view-receipt]");
+    if (receiptBtn) {
+      openAdminReceiptModal(
+        receiptBtn.getAttribute("data-view-receipt"),
+        receiptBtn.getAttribute("data-receipt-name") || "",
+        receiptBtn.getAttribute("data-receipt-upi") || ""
+      );
+      return;
+    }
+    var approveId = event.target.getAttribute("data-approve");
+    var rejectId = event.target.getAttribute("data-reject");
+    if (approveId) {
+      try {
+        await C.api.approveRegistration(current.slug, approveId);
+        toast("Approved");
+        renderPlayers();
+      } catch (err) {
+        toast(err.message || "Approve failed");
+      }
+      return;
+    }
+    if (rejectId) {
+      var reason = prompt("Reason for declining receipt (shown to player):", "Receipt could not be verified");
+      if (reason === null) return;
+      try {
+        await C.api.rejectRegistration(current.slug, rejectId, reason);
+        toast("Declined — player can resubmit");
+        renderPlayers();
+      } catch (err) {
+        toast(err.message || "Decline failed");
+      }
+    }
+  });
+
+  function upsertTournamentInList(saved, previousSlug) {
+    list = list.filter(function (item) { return item.slug !== previousSlug; });
+    var index = list.findIndex(function (item) { return item.slug === saved.slug; });
+    if (index >= 0) list[index] = saved;
+    else list.push(saved);
+    list.sort(function (a, b) { return String(a.name || "").localeCompare(String(b.name || "")); });
+  }
+
+  async function save() {
+    if (!current || !current.slug) {
+      toast("Create a tournament first (New tournament).");
+      return;
+    }
+    var next = collect();
+    var previousSlug = current.slug;
+    var saveBtn = document.getElementById("saveBtn");
+    saveBtn.disabled = true;
+    try {
+      var saved = await C.api.saveTournament(previousSlug, next);
+      upsertTournamentInList(saved, previousSlug);
+      fillSelect();
+      load(saved);
+      toast("Saved " + saved.name);
+    } catch (err) {
+      toast(err.message || "Save failed");
+    } finally {
+      saveBtn.disabled = false;
+    }
+  }
+
+  document.querySelectorAll(".tab").forEach(function (tab) {
+    tab.addEventListener("click", function () {
+      document.querySelectorAll(".tab").forEach(function (item) { item.classList.remove("on"); });
+      tab.classList.add("on");
+      document.getElementById("customize").classList.toggle("hidden", tab.dataset.tab !== "customize");
+      document.getElementById("players").classList.toggle("hidden", tab.dataset.tab !== "players");
+      if (tab.dataset.tab === "players") renderPlayers();
+    });
+  });
+
+  document.getElementById("customize").addEventListener("input", function () {
+    dirty = true;
+    previewFromForm();
+  });
+  document.getElementById("customize").addEventListener("change", function () {
+    dirty = true;
+  });
+
+  document.getElementById("formFieldRows").addEventListener("click", function (event) {
+    var up = event.target.getAttribute("data-ff-up");
+    var down = event.target.getAttribute("data-ff-down");
+    if (up != null || down != null) {
+      var list = readFormFields();
+      var i = Number(up != null ? up : down);
+      var j = up != null ? i - 1 : i + 1;
+      if (j < 0 || j >= list.length) return;
+      var swap = list[i];
+      list[i] = list[j];
+      list[j] = swap;
+      renderFormFieldRows(list);
+      dirty = true;
+      return;
+    }
+    var index = event.target.getAttribute("data-remove-ff");
+    if (index == null) return;
+    var list = readFormFields();
+    list.splice(Number(index), 1);
+    renderFormFieldRows(list);
+    dirty = true;
+  });
+  document.getElementById("addBuiltinFieldBtn").addEventListener("click", function () {
+    var id = document.getElementById("addBuiltinFieldPick").value;
+    if (!id) return;
+    var list = readFormFields();
+    list.push({ id: id, source: "builtin", mode: "optional" });
+    renderFormFieldRows(list);
+    dirty = true;
+  });
+  document.getElementById("addCustomFieldBtn").addEventListener("click", function () {
+    var list = readFormFields();
+    list.push({
+      id: C.newCustomFieldId(),
+      source: "custom",
+      label: "Custom question",
+      type: "text",
+      mode: "optional",
+      options: []
+    });
+    renderFormFieldRows(list);
+    dirty = true;
+  });
+
+  document.getElementById("addCategory").addEventListener("click", function () {
+    var cats = readCategories();
+    cats.push({ name: "New category", whatsappGroupUrl: "" });
+    renderCategories(cats);
+    dirty = true;
+  });
+  document.getElementById("paymentMode").addEventListener("change", togglePaymentSections);
+  document.getElementById("qrSource").addEventListener("change", toggleQrSourceFields);
+  document.getElementById("qrFile").addEventListener("change", async function (event) {
+    var file = event.target.files[0];
+    if (!file || !slug) return;
+    var status = document.getElementById("qrUploadStatus");
+    status.textContent = "Uploading…";
+    try {
+      var data = await C.api.uploadPaymentQr(slug, file);
+      document.getElementById("qrImageUrl").value = data.qrImageUrl || "";
+      document.getElementById("qrSource").value = "image";
+      toggleQrSourceFields();
+      refreshQrPreview(data.qrImageUrl);
+      if (data.tournament) load(data.tournament);
+      status.textContent = "QR uploaded. Save tournament to keep other edits.";
+      dirty = true;
+    } catch (err) {
+      status.textContent = err.message || "Upload failed";
+    }
+    event.target.value = "";
+  });
+
+  document.getElementById("categoryRows").addEventListener("click", function (event) {
+    var index = event.target.getAttribute("data-remove-cat");
+    if (index == null) return;
+    var cats = readCategories();
+    cats.splice(Number(index), 1);
+    renderCategories(cats);
+    dirty = true;
+  });
+
+  document.getElementById("addSkill").addEventListener("click", function () {
+    var skills = readSkills();
+    skills.push({ emoji: "🏏", label: "", value: "" });
+    renderSkills(skills);
+    dirty = true;
+  });
+
+  document.getElementById("skillRows").addEventListener("click", function (event) {
+    var index = event.target.getAttribute("data-remove-skill");
+    if (index == null) return;
+    var skills = readSkills();
+    skills.splice(Number(index), 1);
+    renderSkills(skills);
+    dirty = true;
+  });
+
+  document.getElementById("addSponsor").addEventListener("click", function () {
+    var sponsors = readSponsors();
+    sponsors.push({ name: "", logoUrl: "", websiteUrl: "" });
+    renderSponsors(sponsors);
+    dirty = true;
+  });
+
+  function activeTournamentSlug() {
+    return (current && current.slug) || slug || "";
+  }
+
+  document.getElementById("sponsorRows").addEventListener("click", function (event) {
+    var pick = event.target.getAttribute("data-sp-pick");
+    if (pick != null) {
+      sponsorLogoPickIndex = pick;
+      var fileInput = document.getElementById("sponsorLogoFile");
+      fileInput.value = "";
+      fileInput.click();
+      return;
+    }
+    var index = event.target.getAttribute("data-remove-sp");
+    if (index == null) return;
+    var sponsors = readSponsors();
+    sponsors.splice(Number(index), 1);
+    renderSponsors(sponsors);
+    dirty = true;
+  });
+
+  document.getElementById("sponsorLogoFile").addEventListener("change", async function (event) {
+    var index = sponsorLogoPickIndex;
+    var file = event.target.files && event.target.files[0];
+    sponsorLogoPickIndex = null;
+    if (!file) return;
+    var activeSlug = activeTournamentSlug();
+    if (!activeSlug) {
+      alert("Select or save a tournament before uploading a logo.");
+      event.target.value = "";
+      return;
+    }
+    try {
+      toast("Uploading logo…");
+      var data = await C.api.uploadSponsorLogo(activeSlug, file);
+      if (index != null) {
+        var urlInput = document.querySelector('[data-sp="' + index + '"][data-k="logoUrl"]');
+        if (urlInput) urlInput.value = data.logoUrl || "";
+        var img = document.querySelector('[data-sp-preview="' + index + '"]');
+        if (img && data.logoUrl) {
+          img.src = sponsorLogoPreviewUrl(data.logoUrl);
+          img.style.display = "block";
+        }
+      }
+      dirty = true;
+      toast("Logo uploaded — click Save tournament to keep");
+    } catch (err) {
+      alert(err.message || "Logo upload failed");
+    }
+    event.target.value = "";
+  });
+
+  document.getElementById("jerseyChartFile").addEventListener("change", async function (event) {
+    var file = event.target.files[0];
+    if (!file || !slug) return;
+    var status = document.getElementById("jerseyChartStatus");
+    status.textContent = "Uploading…";
+    try {
+      var data = await C.api.uploadJerseySizeChart(slug, file);
+      document.getElementById("jerseySizeChartUrl").value = data.jerseySizeChartUrl || "";
+      if (data.tournament) load(data.tournament);
+      else refreshJerseyChartPreview();
+      status.textContent = "Size chart uploaded.";
+      dirty = true;
+    } catch (err) {
+      status.textContent = err.message || "Upload failed";
+    }
+    event.target.value = "";
+  });
+
+  document.getElementById("saveBtn").addEventListener("click", save);
+
+  document.getElementById("tourneySelect").addEventListener("change", function () {
+    if (dirty && !confirm("Switch tournament? Unsaved edits will be lost.")) {
+      if (current && current.slug) this.value = current.slug;
+      return;
+    }
+    var next = list.find(function (item) { return item.slug === document.getElementById("tourneySelect").value; });
+    if (next) load(next);
+  });
+
+  document.getElementById("newBtn").addEventListener("click", function () {
+    document.getElementById("newName").value = "";
+    document.getElementById("modal").style.display = "flex";
+    document.getElementById("newName").focus();
+  });
+  document.getElementById("cancelCreate").addEventListener("click", function () {
+    document.getElementById("modal").style.display = "none";
+  });
+  document.getElementById("createBtn").addEventListener("click", async function () {
+    var name = document.getElementById("newName").value.trim();
+    if (!name) return;
+    if (dirty && current && current.slug) await save();
+    try {
+      var payload = { name: name };
+      if (current && current.slug) payload.copyFrom = current.slug;
+      var created = await C.api.createTournament(payload);
+      list = await C.api.listAdmin();
+      document.getElementById("modal").style.display = "none";
+      load(created);
+      toast("Created " + created.name + " as Draft");
+    } catch (err) {
+      toast(err.message || "Create failed");
+    }
+  });
+
+  document.getElementById("deleteBtn").addEventListener("click", async function () {
+    if (!current || !current.slug) return;
+    if (list.length < 2) {
+      toast("Keep at least one tournament");
+      return;
+    }
+    if (!confirm("Delete " + current.name + " and its players?")) return;
+    try {
+      await C.api.deleteTournament(current.slug);
+      list = await C.api.listAdmin();
+      load(list[0]);
+      toast("Deleted");
+    } catch (err) {
+      toast(err.message || "Delete failed");
+    }
+  });
+
+  document.getElementById("exportBtn").addEventListener("click", function () {
+    C.api.exportCsv(current.slug).catch(function (err) { toast(err.message || "Export failed"); });
+  });
+  document.getElementById("clearBtn").addEventListener("click", async function () {
+    if (!confirm("Clear players for " + current.name + " only?")) return;
+    try {
+      await C.api.clearRegistrations(current.slug);
+      await renderPlayers();
+      toast("Players cleared for this tournament");
+    } catch (err) {
+      toast(err.message || "Clear failed");
+    }
+  });
+
+  document.getElementById("loginBtn").addEventListener("click", async function () {
+    document.getElementById("loginError").textContent = "";
+    try {
+      await C.api.login(document.getElementById("loginUser").value, document.getElementById("loginPass").value);
+      await boot();
+    } catch (err) {
+      var msg = err.message || "Sign in failed";
+      if (/ENOTFOUND|ECONNREFUSED|connection failed/i.test(msg)) {
+        msg += " — Use DATABASE_DRIVER=pglite in .env for local admin, or fix DATABASE_URL from Supabase.";
+      }
+      document.getElementById("loginError").textContent = msg;
+    }
+  });
+  document.getElementById("loginPass").addEventListener("keydown", function (event) {
+    if (event.key === "Enter") document.getElementById("loginBtn").click();
+  });
+  document.getElementById("logoutBtn").addEventListener("click", async function () {
+    await C.api.logout();
+    location.reload();
+  });
+
+  boot();
+})();
+</script>
+</body>
+</html>

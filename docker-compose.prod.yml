@@ -1,0 +1,14 @@
+# Production: Node app only (database = Supabase in .env)
+services:
+  crickipedia:
+    build: .
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    volumes:
+      - crickipedia_uploads:/app/uploads
+    restart: unless-stopped
+
+volumes:
+  crickipedia_uploads:

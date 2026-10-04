@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Crickipedia — Cricket tournaments, made simple</title>
+<meta name="description" content="Crickipedia is your one-stop shop for cricket tournaments — player registration, auctions, stats, and live scores.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;0,9..40,800&display=swap" rel="stylesheet">
+<style>
+:root{--green:#0b6b45;--green2:#0f8b5b;--gold:#f5b942;--dark:#071b16;--light:#f3f7f5;--muted:#5f6f69;--white:#fff;--line:#e3ebe6;--shadow:0 16px 48px rgba(7,27,22,.07)}
+*{box-sizing:border-box}
+body{margin:0;font-family:"DM Sans",system-ui,-apple-system,Segoe UI,sans-serif;background:var(--light);color:var(--dark);line-height:1.55;-webkit-font-smoothing:antialiased}
+a{color:var(--green);font-weight:700;text-decoration:none}
+a:hover{text-decoration:underline}
+.hero{background:linear-gradient(145deg,var(--dark) 0%,var(--green) 52%,var(--green2) 100%);color:#fff;padding:32px 0 72px;position:relative;overflow:hidden}
+.hero:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 88% 15%,rgba(245,185,66,.2),transparent 42%)}
+.hero:after{content:"🏏";position:absolute;right:5%;bottom:-48px;font-size:220px;opacity:.06;transform:rotate(-10deg);pointer-events:none}
+.wrap{max-width:1040px;margin:0 auto;padding:0 20px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;position:relative;z-index:1}
+.brand{display:flex;align-items:center;gap:14px}
+.logo{width:56px;height:56px;border-radius:16px;background:#fff;color:var(--green);display:grid;place-items:center;font-size:28px;font-weight:800;box-shadow:0 8px 24px rgba(0,0,0,.15)}
+.brand h1{margin:0;font-size:1.25rem;font-weight:800;letter-spacing:-.02em}
+.brand p{margin:2px 0 0;opacity:.85;font-size:.88rem}
+.nav{display:flex;gap:10px;flex-wrap:wrap}
+.nav a{color:#fff;text-decoration:none;font-weight:700;font-size:.88rem;padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08)}
+.nav a:hover{background:rgba(255,255,255,.16);text-decoration:none}
+.hero-copy{position:relative;z-index:1;max-width:680px;margin-top:48px}
+.hero h2{font-size:clamp(2rem,5vw,2.75rem);font-weight:800;line-height:1.1;margin:0 0 16px;letter-spacing:-.03em}
+.hero .lead{font-size:1.1rem;opacity:.92;margin:0 0 28px;max-width:540px}
+.hero-cta{display:flex;flex-wrap:wrap;gap:12px}
+.btn{border:0;border-radius:14px;padding:14px 22px;font-weight:800;font-size:.95rem;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:transform .1s,filter .15s}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:linear-gradient(180deg,var(--gold),#e5a82e);color:var(--dark);box-shadow:0 8px 24px rgba(0,0,0,.2)}
+.btn-primary:hover{filter:brightness(1.05)}
+.btn-ghost{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.3)}
+.btn-ghost:hover{background:rgba(255,255,255,.2)}
+main{padding:0 0 56px}
+.section-title{font-size:1.35rem;font-weight:800;margin:0 0 8px;letter-spacing:-.02em}
+.section-sub{color:var(--muted);margin:0 0 24px;font-size:.95rem;max-width:52ch}
+.features{margin-top:-52px;position:relative;z-index:2}
+.features-panel{background:var(--white);border-radius:28px;padding:28px 28px 32px;border:1px solid var(--line);box-shadow:var(--shadow)}
+.features-intro{text-align:center;max-width:640px;margin:0 auto 28px;padding-bottom:24px;border-bottom:1px solid var(--line)}
+.features-eyebrow{margin:0 0 10px;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:var(--green)}
+.features-title{font-size:clamp(1.35rem,3.2vw,1.75rem);font-weight:800;margin:0 0 12px;letter-spacing:-.03em;line-height:1.2;color:var(--dark)}
+.features-lead{margin:0 auto;font-size:1rem;color:var(--muted);line-height:1.55;max-width:48ch}
+.feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+.feature{background:linear-gradient(180deg,#fafcfb 0%,var(--white) 100%);border-radius:20px;padding:22px;border:1px solid var(--line);box-shadow:0 4px 16px rgba(7,27,22,.04);transition:transform .15s,box-shadow .15s}
+.feature:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(7,27,22,.08)}
+.feature .icon{font-size:1.75rem;line-height:1;margin-bottom:10px}
+.feature h3{margin:0 0 6px;font-size:1.05rem;font-weight:800}
+.feature p{margin:0;font-size:.88rem;color:var(--muted);line-height:1.45}
+.pill{display:inline-block;font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;padding:4px 10px;border-radius:999px;margin-bottom:10px}
+.pill-live{background:#e8f7f0;color:var(--green)}
+.pill-soon{background:#f0f2f1;color:var(--muted)}
+.tournaments{margin-top:48px}
+.tournament-grid{display:grid;gap:14px}
+.t-card{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;background:var(--white);border-radius:18px;padding:18px 20px;border:1px solid var(--line);box-shadow:0 4px 20px rgba(7,27,22,.04)}
+.t-card h4{margin:0 0 4px;font-size:1.05rem;font-weight:800}
+.t-meta{font-size:.85rem;color:var(--muted)}
+.t-card .btn-primary{padding:12px 18px;font-size:.88rem;text-decoration:none;color:var(--dark)}
+.t-card .btn-primary:hover{text-decoration:none}
+.t-card .btn-muted{padding:12px 18px;font-size:.88rem;border-radius:14px;background:#eef0ee;color:var(--muted);font-weight:800;border:1px solid var(--line);cursor:default}
+.empty{text-align:center;padding:32px 20px;color:var(--muted);background:var(--white);border-radius:18px;border:1px dashed var(--line)}
+.footer{text-align:center;padding:40px 20px 48px;color:var(--muted);font-size:.85rem;border-top:1px solid var(--line);margin-top:40px}
+.hidden{display:none!important}
+@media(max-width:640px){
+  .topbar{align-items:flex-start;flex-direction:column}
+  .t-card{align-items:flex-start}
+  .features-panel{padding:22px 18px 26px;border-radius:22px}
+  .features-intro{padding-bottom:20px;margin-bottom:22px}
+}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo" aria-hidden="true">🏏</div>
+        <div>
+          <h1>Crickipedia</h1>
+          <p>Cricket tournaments, end to end</p>
+        </div>
+      </div>
+      <nav class="nav" aria-label="Site">
+        <a href="#tournaments">Tournaments</a>
+        <a href="/admin.html">Organizer login</a>
+      </nav>
+    </div>
+    <div class="hero-copy">
+      <h2>Your one-stop shop for cricket tournaments</h2>
+      <p class="lead">Run seasons, register players, collect fees, and grow into auctions, stats, and live scoring — all from one place built for community cricket.</p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="#tournaments">Find a tournament</a>
+        <a class="btn btn-ghost" href="/admin.html">Run a tournament</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="features" aria-labelledby="features-heading">
+    <div class="features-panel">
+      <header class="features-intro">
+        <p class="features-eyebrow">Platform</p>
+        <h2 class="features-title" id="features-heading">Everything you need on the pitch and off it</h2>
+        <p class="features-lead">Start with registration today. More modules roll out as your league grows.</p>
+      </header>
+      <div class="feature-grid">
+      <article class="feature">
+        <span class="pill pill-live">Available now</span>
+        <div class="icon" aria-hidden="true">📝</div>
+        <h3>Tournaments &amp; registration</h3>
+        <p>Create seasons, open player signup, WhatsApp updates, Razorpay or QR payments, and organizer dashboards.</p>
+      </article>
+      <article class="feature">
+        <span class="pill pill-soon">Coming soon</span>
+        <div class="icon" aria-hidden="true">🔨</div>
+        <h3>Player auction</h3>
+        <p>Team captains, budgets, and live bidding — integrated with your registered player pool.</p>
+      </article>
+      <article class="feature">
+        <span class="pill pill-soon">Coming soon</span>
+        <div class="icon" aria-hidden="true">📊</div>
+        <h3>Stats</h3>
+        <p>Career and season stats, leaderboards, and profiles linked to every match you play on Crickipedia.</p>
+      </article>
+      <article class="feature">
+        <span class="pill pill-soon">Coming soon</span>
+        <div class="icon" aria-hidden="true">🏆</div>
+        <h3>Live scores</h3>
+        <p>Ball-by-ball scoring, shareable scorecards, and fixtures your community can follow in real time.</p>
+      </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="tournaments" id="tournaments" aria-labelledby="tournaments-heading">
+    <h2 class="section-title" id="tournaments-heading">Register for a season</h2>
+    <p class="section-sub">Pick your tournament below. Each season has its own registration link.</p>
+    <div class="tournament-grid" id="tournamentList">
+      <p class="muted">Loading tournaments…</p>
+    </div>
+    <div class="empty hidden" id="tournamentEmpty">No public seasons yet. In admin, set the tournament status to <strong>Open for registration</strong> (Draft seasons stay hidden here). Check registration dates are correct.</div>
+    <div class="empty hidden" id="tournamentError">Could not load tournaments. Make sure the server is running and refresh.</div>
+  </section>
+</main>
+
+<footer class="footer">
+  <p>© 2026 Crickipedia · Built for SRPL and community cricket leagues</p>
+</footer>
+
+<script src="/app.js"></script>
+<script>
+(function () {
+  var C = Crickipedia;
+  var pathRef = C.parsePublicUrl();
+  if (pathRef.tournament && pathRef.season) {
+    var qs = "?tournament=" + encodeURIComponent(pathRef.tournament) + "&season=" + encodeURIComponent(pathRef.season);
+    if (C.queryParam("preview") === "1") qs += "&preview=1";
+    location.replace("/register.html" + qs);
+    return;
+  }
+  var listEl = document.getElementById("tournamentList");
+  var emptyEl = document.getElementById("tournamentEmpty");
+  var errorEl = document.getElementById("tournamentError");
+
+  C.api.listPublic(false).then(function (items) {
+    var seasons = (items || []).slice().sort(function (a, b) {
+      return String(a.name || "").localeCompare(String(b.name || ""));
+    });
+    if (!seasons.length) {
+      listEl.classList.add("hidden");
+      emptyEl.classList.remove("hidden");
+      return;
+    }
+    listEl.innerHTML = seasons.map(function (t) {
+      var state = C.publicState(t);
+      var badge;
+      var action;
+      var href = C.escapeHtml(C.publicUrl(t));
+      if (state === "OPEN") {
+        badge = "🟢 Registration open";
+        action = '<a class="btn btn-primary" href="' + href + '">Register</a>';
+      } else if (state === "UPCOMING") {
+        badge = "🟡 Opens soon";
+        action = '<a class="btn btn-primary" href="' + href + '">View</a>';
+      } else if (state === "CLOSED") {
+        badge = "🔴 Registration closed";
+        action = '<span class="btn-muted">Closed</span>';
+      } else {
+        badge = "Draft";
+        action = '<span class="btn-muted">Not public</span>';
+      }
+      var keys = t.tournamentSlug && t.seasonSlug
+        ? " · " + C.escapeHtml(t.tournamentSlug) + "/" + C.escapeHtml(t.seasonSlug)
+        : "";
+      return '<article class="t-card">' +
+        '<div><h4>' + C.escapeHtml(t.name) + '</h4>' +
+        '<p class="t-meta">' + C.escapeHtml(badge) + keys + ' · ' + C.escapeHtml(C.formatDateRange(t)) +
+        ' · Fee ' + C.escapeHtml(C.formatMoney(t)) + '</p></div>' + action + '</article>';
+    }).join("");
+  }).catch(function () {
+    listEl.classList.add("hidden");
+    errorEl.classList.remove("hidden");
+  });
+})();
+</script>
+</body>
+</html>
