@@ -354,6 +354,7 @@ input:focus,select:focus{border-color:var(--green2);background:var(--surface);bo
   C.initUiThemeToggle();
   var preview = C.queryParam("preview") === "1";
   var currentRecord = null;
+  var skipSuccessPaymentQr = false;
   var photoFile = null;
   var paymentCfg = null;
   var suppressPayPanels = false;
@@ -914,12 +915,16 @@ input:focus,select:focus{border-color:var(--green2);background:var(--surface);bo
     }
     suppressPayPanels = !isReturning;
     document.getElementById("successTitle").textContent = isReturning ? "Welcome back" : "Registration complete";
-    document.getElementById("successText").textContent = manual
-      ? "Your spot will be confirmed once the admin verifies your payment."
-      : "Your spot will be confirmed once payment is complete.";
+    if (manual && !isReturning && skipSuccessPaymentQr) {
+      document.getElementById("successText").textContent =
+        "You’re registered. Upload your payment receipt below if required; otherwise you’re all set until the organizer confirms payment.";
+    } else {
+      document.getElementById("successText").textContent = manual
+        ? "Your spot will be confirmed once the admin verifies your payment."
+        : "Your spot will be confirmed once payment is complete.";
+    }
     pill.parentElement.classList.add("hidden");
     if (suppressPayPanels) {
-      document.getElementById("manualPayBox").classList.add("hidden");
       document.getElementById("formPaymentSection").classList.add("hidden");
       document.getElementById("waShare").classList.add("hidden");
       document.getElementById("successPhoto").classList.add("hidden");
@@ -933,12 +938,13 @@ input:focus,select:focus{border-color:var(--green2);background:var(--surface);bo
   }
 
   function showExisting(record, isReturning) {
+    if (isReturning) skipSuccessPaymentQr = false;
     currentRecord = record;
     document.getElementById("formCard").classList.add("hidden");
     document.getElementById("gateCard").classList.add("hidden");
     document.getElementById("success").style.display = "block";
-    updatePayUi(record);
     applySuccessMessage(record, isReturning !== false);
+    updatePayUi(record);
     if (suppressPayPanels) {
       document.getElementById("waShare").classList.add("hidden");
       document.getElementById("successPhoto").classList.add("hidden");
@@ -986,20 +992,43 @@ input:focus,select:focus{border-color:var(--green2);background:var(--surface);bo
 
   function loadManualPayUi(record) {
     var box = document.getElementById("manualPayBox");
-    if (suppressPayPanels || !paymentCfg || paymentCfg.mode !== "manual_qr" || record.paymentStatus === "PAID") {
+    var qrWrap = document.getElementById("qrWrap");
+    var titleEl = box.querySelector("h3");
+    if (!paymentCfg || paymentCfg.mode !== "manual_qr" || record.paymentStatus === "PAID") {
       box.classList.add("hidden");
       return;
     }
-    box.classList.remove("hidden");
+    if (suppressPayPanels && !skipSuccessPaymentQr) {
+      box.classList.add("hidden");
+      return;
+    }
     var payment = paymentCfg.payment || {};
-    document.getElementById("manualPayInstructions").textContent =
-      payment.paymentInstructions || paymentCfg.paymentInstructions || "Pay the entry fee, then upload your receipt.";
-    var categoryName = record.category || undefined;
-    fillPaymentQrWrap(document.getElementById("qrWrap"), categoryName);
     var imgField = payment.receiptImage !== "hidden";
     var upiField = payment.receiptUpiRef !== "hidden";
     var alreadySubmitted = record.verificationStatus === "SUBMITTED";
     var showReceiptFields = (imgField || upiField) && !alreadySubmitted;
+    var hideQr = skipSuccessPaymentQr;
+
+    if (hideQr && !showReceiptFields && record.verificationStatus !== "REJECTED") {
+      box.classList.add("hidden");
+      return;
+    }
+
+    box.classList.remove("hidden");
+    if (hideQr) {
+      qrWrap.innerHTML = "";
+      qrWrap.classList.add("hidden");
+      if (titleEl) titleEl.textContent = "Payment receipt";
+      document.getElementById("manualPayInstructions").textContent = showReceiptFields
+        ? "Upload your payment receipt below to finish verification."
+        : "Receipt submitted — waiting for organizer approval.";
+    } else {
+      qrWrap.classList.remove("hidden");
+      if (titleEl) titleEl.textContent = "Pay entry fee";
+      document.getElementById("manualPayInstructions").textContent =
+        payment.paymentInstructions || paymentCfg.paymentInstructions || "Pay the entry fee, then upload your receipt.";
+      fillPaymentQrWrap(qrWrap, record.category || undefined);
+    }
     document.getElementById("receiptImageLabel").classList.toggle("hidden", !imgField || !showReceiptFields);
     document.getElementById("receiptUpiLabel").classList.toggle("hidden", !upiField || !showReceiptFields);
     document.getElementById("submitReceiptBtn").classList.toggle("hidden", !showReceiptFields);
@@ -1145,9 +1174,10 @@ input:focus,select:focus{border-color:var(--green2);background:var(--surface);bo
       document.getElementById("successEmoji").textContent = "✅";
       var record = result.record;
       currentRecord = record;
+      skipSuccessPaymentQr = !result.existing;
       showExisting(record, result.existing);
+      applySuccessMessage(record, !!result.existing);
       updatePayUi(record);
-      applySuccessMessage(record, result.existing);
       submitBtn.disabled = false;
       submitBtn.textContent = submitLabel;
       if (paymentCfg && paymentCfg.mode === "manual_qr" && (receiptFile || receiptUpi)) {
