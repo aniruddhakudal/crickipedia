@@ -507,7 +507,8 @@
       } else if (item && item.name) {
         out.push({
           name: String(item.name).trim(),
-          whatsappGroupUrl: String(item.whatsappGroupUrl || "").trim()
+          whatsappGroupUrl: String(item.whatsappGroupUrl || "").trim(),
+          qrImageUrl: String(item.qrImageUrl || "").trim()
         });
       }
     }
@@ -516,6 +517,47 @@
 
   function categoryNames(categories) {
     return normalizeCategories(categories).map(function (item) { return item.name; });
+  }
+
+  function groupLinkForCategory(categories, categoryName) {
+    var name = String(categoryName || "").trim();
+    if (!name) return "";
+    var key = name.toLowerCase();
+    var list = normalizeCategories(categories);
+    for (var i = 0; i < list.length; i += 1) {
+      if (String(list[i].name || "").trim().toLowerCase() === key) {
+        return String(list[i].whatsappGroupUrl || "").trim();
+      }
+    }
+    return "";
+  }
+
+  function resolvePaymentQrImageUrl(tournament, categoryName) {
+    if (!tournament) return "";
+    var payment = (tournament.payment) || {};
+    var name = String(categoryName || "").trim();
+    if (name) {
+      var key = name.toLowerCase();
+      var cats = normalizeCategories(tournament.categories);
+      for (var i = 0; i < cats.length; i += 1) {
+        if (String(cats[i].name || "").trim().toLowerCase() === key && cats[i].qrImageUrl) {
+          return String(cats[i].qrImageUrl).trim();
+        }
+      }
+    }
+    return String(payment.qrImageUrl || "").trim();
+  }
+
+  function paymentQrImageSrc(tournament, categoryName) {
+    var direct = resolvePaymentQrImageUrl(tournament, categoryName);
+    if (direct && /^https?:\/\//i.test(direct)) return direct;
+    var keys = tournamentKeys(tournament);
+    var base = keys.tournament && keys.season
+      ? "/api/t/" + encodeURIComponent(keys.tournament) + "/" + encodeURIComponent(keys.season)
+      : "/api/t/" + encodeURIComponent(keys.slug);
+    base += "/payment-qr-image";
+    if (categoryName) base += "?category=" + encodeURIComponent(categoryName);
+    return base;
   }
 
   function publicUrl(tournament, options) {
@@ -626,17 +668,29 @@
     paymentQr: function (ref, id) {
       return request(apiTournamentPath(ref) + "/registrations/" + encodeURIComponent(id) + "/payment-qr");
     },
-    paymentQrPreview: function (ref) {
-      return request(apiTournamentPath(ref) + "/payment-qr");
+    paymentQrPreview: function (ref, categoryName) {
+      var q = categoryName ? "?category=" + encodeURIComponent(categoryName) : "";
+      return request(apiTournamentPath(ref) + "/payment-qr" + q);
     },
-    paymentQrImageUrl: function (ref) {
-      return apiTournamentPath(ref) + "/payment-qr-image";
+    paymentQrImageUrl: function (ref, categoryName) {
+      var base = apiTournamentPath(ref) + "/payment-qr-image";
+      if (categoryName) return base + "?category=" + encodeURIComponent(categoryName);
+      return base;
     },
     jerseySizeChartImageUrl: function (ref) {
       return apiTournamentPath(ref) + "/jersey-size-chart-image";
     },
     playerPhotoImageUrl: function (ref, registrationNumber) {
       return apiTournamentPath(ref) + "/registrations/" + encodeURIComponent(registrationNumber) + "/photo-image";
+    },
+    uploadCategoryPaymentQr: function (slug, categoryIndex, file) {
+      var form = new FormData();
+      form.append("qr", file);
+      form.append("categoryIndex", String(categoryIndex));
+      return request("/api/admin/tournaments/" + encodeURIComponent(slug) + "/category-payment-qr", {
+        method: "POST",
+        body: form
+      });
     },
     uploadPaymentQr: function (slug, file) {
       var form = new FormData();
@@ -714,6 +768,11 @@
         method: "POST",
         body: {}
       }).then(function (data) { return data.record; });
+    },
+    deleteRegistration: function (slug, id) {
+      return request("/api/admin/tournaments/" + encodeURIComponent(slug) + "/registrations/" + encodeURIComponent(id), {
+        method: "DELETE"
+      });
     },
     rejectRegistration: function (slug, id, reason) {
       return request("/api/admin/tournaments/" + encodeURIComponent(slug) + "/registrations/" + encodeURIComponent(id) + "/reject", {
@@ -871,6 +930,9 @@
     BUILTIN_FIELD_LABELS: BUILTIN_FIELD_LABELS,
     normalizeCategories: normalizeCategories,
     categoryNames: categoryNames,
+    groupLinkForCategory: groupLinkForCategory,
+    resolvePaymentQrImageUrl: resolvePaymentQrImageUrl,
+    paymentQrImageSrc: paymentQrImageSrc,
     publicUrl: publicUrl,
     publicPathUrl: publicPathUrl,
     waDigits: waDigits,

@@ -123,6 +123,15 @@ async function saveTournamentPaymentQr(slug, file) {
   return saveTournamentMedia(slug, file, "payment-qr");
 }
 
+async function saveCategoryPaymentQr(slug, categoryKey, file) {
+  const key = String(categoryKey || "category")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 48) || "category";
+  return saveTournamentMedia(slug, file, `payment-qr-${key}`);
+}
+
 async function saveJerseySizeChart(slug, file) {
   return saveTournamentMedia(slug, file, "jersey-size-chart");
 }
@@ -179,6 +188,7 @@ module.exports = {
   init,
   savePlayerPhoto,
   saveTournamentPaymentQr,
+  saveCategoryPaymentQr,
   saveTournamentMedia,
   saveJerseySizeChart,
   saveSponsorLogo,

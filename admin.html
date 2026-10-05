@@ -44,6 +44,12 @@ label{font-weight:700;font-size:13px;display:grid;gap:6px}
 .check input{width:auto}
 .rowline{display:grid;grid-template-columns:70px 1fr 1fr auto;gap:8px;margin-bottom:8px;align-items:center}
 .srow{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;margin-bottom:8px}
+.cat-block{margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid #e8f0ec}
+.cat-block:last-child{border-bottom:0;margin-bottom:0;padding-bottom:0}
+.cat-qr-row{display:grid;grid-template-columns:minmax(0,1.4fr) auto auto;gap:8px;align-items:center;margin-top:8px;padding:10px 12px;background:#f4faf7;border-radius:12px;border:1px solid #d7e8de}
+.cat-qr-row.hidden{display:none!important}
+.cat-qr-row img[data-cat-qr-preview]{max-height:52px;max-width:52px;border-radius:8px;border:1px solid #ddd;object-fit:contain;justify-self:center}
+.cat-qr-row .muted{font-size:11px;margin:0;grid-column:1/-1}
 .srow.sponsor-row{grid-template-columns:minmax(0,1fr) minmax(0,1.2fr) auto auto minmax(0,1fr) auto;align-items:center}
 .srow.sponsor-row img[data-sp-preview]{justify-self:center}
 .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
@@ -187,6 +193,7 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
       </div>
       <div class="section" id="manualQrSection">
         <h3>Manual QR payment</h3>
+        <p class="muted">Default QR for all categories. Under <strong>Registration categories</strong> you can upload a different QR per category (overrides this default).</p>
         <div class="grid2">
           <label>QR source
             <select id="qrSource">
@@ -260,7 +267,7 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
       </div>
       <div class="section">
         <h3>Registration categories</h3>
-        <p class="muted">These appear in the player dropdown. Add, rename, or remove any.</p>
+        <p class="muted">These appear in the player dropdown. Add, rename, or remove any. With QR + receipt payment, set a separate payment QR per category below each row.</p>
         <div id="categoryRows"></div>
         <button class="btn ghost" type="button" id="addCategory">Add category</button>
       </div>
@@ -270,14 +277,19 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
         <button class="btn ghost" type="button" id="addSkill">Add skill</button>
       </div>
       <div class="section">
-        <h3>Jersey options</h3>
-        <label>Sizes (comma separated)<input id="jerseySizes"></label>
-        <label style="margin-top:10px">Sleeves (comma separated)<input id="sleeves"></label>
-        <label style="margin-top:10px">Size chart image (shown next to jersey size on registration)
-          <input id="jerseyChartFile" type="file" accept="image/*">
-        </label>
-        <p class="muted" id="jerseyChartStatus" style="margin:6px 0 0"></p>
-        <img id="jerseyChartPreview" alt="" style="display:none;max-width:220px;margin-top:10px;border-radius:12px;border:1px solid #ddd">
+        <h3>T-shirt &amp; jersey options</h3>
+        <label>T-shirt sizes (comma separated)<input id="jerseySizes" placeholder="S, M, L, XL, XXL"></label>
+        <div class="cat-qr-row" style="margin-top:12px;grid-template-columns:1fr auto">
+          <div>
+            <strong style="font-size:.9rem">Sample T-shirt size photo</strong>
+            <p class="muted" style="margin:4px 0 0;font-size:12px">Shown on the registration form next to the size dropdown so players can pick the right fit.</p>
+          </div>
+          <button class="btn ghost" type="button" id="jerseyChartUploadBtn">Upload photo</button>
+          <input id="jerseyChartFile" type="file" accept="image/*" class="hidden">
+          <p class="muted" id="jerseyChartStatus" style="margin:0"></p>
+          <img id="jerseyChartPreview" alt="Sample T-shirt size" style="display:none;max-width:220px;margin-top:4px;border-radius:12px;border:1px solid #ddd;grid-column:1/-1;justify-self:start">
+        </div>
+        <label style="margin-top:14px">Sleeves (comma separated)<input id="sleeves"></label>
         <input type="hidden" id="jerseySizeChartUrl">
       </div>
     </div>
@@ -544,14 +556,48 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
     return String(value || "").split(",").map(function (part) { return part.trim(); }).filter(Boolean);
   }
 
+  function isManualQrPayment() {
+    return document.getElementById("paymentMode").value === "manual_qr";
+  }
+
+  function refreshCategoryQrPreview(index, categoryName, qrImageUrl) {
+    var img = document.querySelector('[data-cat-qr-preview="' + index + '"]');
+    if (!img) return;
+    if (!qrImageUrl && !(current && current.tournamentSlug && categoryName)) {
+      img.style.display = "none";
+      img.removeAttribute("src");
+      return;
+    }
+    img.src = C.api.paymentQrImageUrl(current, categoryName || undefined);
+    img.style.display = "block";
+  }
+
   function renderCategories(categories) {
     var list = C.normalizeCategories(categories);
+    var showQr = isManualQrPayment();
     document.getElementById("categoryRows").innerHTML = list.map(function (item, index) {
-      return '<div class="srow">' +
+      var qrRow = showQr
+        ? '<div class="cat-qr-row">' +
+          '<input data-cat="' + index + '" data-k="qrImageUrl" value="' + C.escapeHtml(item.qrImageUrl || "") + '" placeholder="Category QR image URL (optional)">' +
+          '<button class="btn ghost" type="button" data-cat-qr-upload="' + index + '">Upload QR</button>' +
+          '<img data-cat-qr-preview="' + index + '" alt="" style="display:none">' +
+          '<input type="file" accept="image/*" class="hidden" data-cat-qr-file="' + index + '">' +
+          '<p class="muted">Players in <strong>' + C.escapeHtml(item.name) + "</strong> see this QR instead of the default when set.</p></div>"
+        : "";
+      return '<div class="cat-block">' +
+        '<div class="srow">' +
         '<input data-cat="' + index + '" data-k="name" value="' + C.escapeHtml(item.name) + '" placeholder="Category name">' +
         '<input data-cat="' + index + '" data-k="group" value="' + C.escapeHtml(item.whatsappGroupUrl || "") + '" placeholder="WhatsApp group invite link">' +
-        '<button class="btn ghost" type="button" data-remove-cat="' + index + '">Remove</button></div>';
+        '<span></span>' +
+        '<button class="btn ghost" type="button" data-remove-cat="' + index + '">Remove</button></div>' +
+        qrRow +
+        "</div>";
     }).join("");
+    if (showQr) {
+      list.forEach(function (item, index) {
+        if (item.qrImageUrl) refreshCategoryQrPreview(index, item.name, item.qrImageUrl);
+      });
+    }
   }
 
   function readFormFields() {
@@ -646,9 +692,11 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
       var nameEl = document.querySelector('[data-cat="' + i + '"][data-k="name"]');
       var groupEl = document.querySelector('[data-cat="' + i + '"][data-k="group"]');
       if (!nameEl || !nameEl.value.trim()) continue;
+      var qrEl = document.querySelector('[data-cat="' + i + '"][data-k="qrImageUrl"]');
       rows.push({
         name: nameEl.value.trim(),
-        whatsappGroupUrl: groupEl ? groupEl.value.trim() : ""
+        whatsappGroupUrl: groupEl ? groupEl.value.trim() : "",
+        qrImageUrl: qrEl ? qrEl.value.trim() : ""
       });
     }
     return rows;
@@ -673,6 +721,7 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
     document.getElementById("manualQrSection").style.display = manual ? "block" : "none";
     toggleQrSourceFields();
     refreshPaymentModeHint();
+    renderCategories(readCategories());
   }
 
   function toggleQrSourceFields() {
@@ -1020,6 +1069,9 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
       } else {
         actions = '<span class="muted">No receipt yet</span>';
       }
+      if (isSuperadmin()) {
+        actions += ' <button class="btn danger ghost" type="button" data-delete-reg="' + C.escapeHtml(row.id) + '">Delete</button>';
+      }
       return "<tr>" +
         "<td>" + (index + 1) + "</td>" +
         "<td>" + adminPhotoCell(row) + "</td>" +
@@ -1076,6 +1128,20 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
         receiptBtn.getAttribute("data-receipt-name") || "",
         receiptBtn.getAttribute("data-receipt-upi") || ""
       );
+      return;
+    }
+    var deleteId = event.target.getAttribute("data-delete-reg");
+    if (deleteId) {
+      var regRow = adminPlayerRows.find(function (r) { return r.id === deleteId; });
+      var label = regRow ? regRow.name + " (" + deleteId + ")" : deleteId;
+      if (!confirm("Remove registration for " + label + " from this tournament? This cannot be undone.")) return;
+      try {
+        await C.api.deleteRegistration(current.slug, deleteId);
+        toast("Registration deleted");
+        renderPlayers();
+      } catch (err) {
+        toast(err.message || "Delete failed");
+      }
       return;
     }
     var approveId = event.target.getAttribute("data-approve");
@@ -1216,7 +1282,7 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
 
   document.getElementById("addCategory").addEventListener("click", function () {
     var cats = readCategories();
-    cats.push({ name: "New category", whatsappGroupUrl: "" });
+    cats.push({ name: "New category", whatsappGroupUrl: "", qrImageUrl: "" });
     renderCategories(cats);
     dirty = true;
   });
@@ -1243,12 +1309,37 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
   });
 
   document.getElementById("categoryRows").addEventListener("click", function (event) {
+    var uploadIndex = event.target.getAttribute("data-cat-qr-upload");
+    if (uploadIndex != null) {
+      var fileInput = document.querySelector('[data-cat-qr-file="' + uploadIndex + '"]');
+      if (fileInput) fileInput.click();
+      return;
+    }
     var index = event.target.getAttribute("data-remove-cat");
     if (index == null) return;
     var cats = readCategories();
     cats.splice(Number(index), 1);
     renderCategories(cats);
     dirty = true;
+  });
+  document.getElementById("categoryRows").addEventListener("change", async function (event) {
+    var fileInput = event.target;
+    if (!fileInput.matches("[data-cat-qr-file]")) return;
+    var index = fileInput.getAttribute("data-cat-qr-file");
+    var file = fileInput.files[0];
+    fileInput.value = "";
+    if (!file || !slug || index == null) return;
+    try {
+      var data = await C.api.uploadCategoryPaymentQr(slug, Number(index), file);
+      var urlInput = document.querySelector('[data-cat="' + index + '"][data-k="qrImageUrl"]');
+      if (urlInput) urlInput.value = data.qrImageUrl || "";
+      refreshCategoryQrPreview(Number(index), data.categoryName, data.qrImageUrl);
+      if (data.tournament) load(data.tournament);
+      toast("Category QR uploaded");
+      dirty = true;
+    } catch (err) {
+      toast(err.message || "Upload failed");
+    }
   });
 
   document.getElementById("addSkill").addEventListener("click", function () {
@@ -1326,6 +1417,9 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
     event.target.value = "";
   });
 
+  document.getElementById("jerseyChartUploadBtn").addEventListener("click", function () {
+    document.getElementById("jerseyChartFile").click();
+  });
   document.getElementById("jerseyChartFile").addEventListener("change", async function (event) {
     var file = event.target.files[0];
     if (!file || !slug) return;
@@ -1336,7 +1430,7 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
       document.getElementById("jerseySizeChartUrl").value = data.jerseySizeChartUrl || "";
       if (data.tournament) load(data.tournament);
       else refreshJerseyChartPreview();
-      status.textContent = "Size chart uploaded.";
+      status.textContent = "Sample T-shirt photo uploaded. Save tournament to keep other edits.";
       dirty = true;
     } catch (err) {
       status.textContent = err.message || "Upload failed";

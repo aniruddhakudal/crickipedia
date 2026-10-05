@@ -69,7 +69,8 @@ function normalizeCategories(raw) {
     if (item && typeof item === "object" && String(item.name || "").trim()) {
       out.push({
         name: String(item.name).trim(),
-        whatsappGroupUrl: String(item.whatsappGroupUrl || "").trim()
+        whatsappGroupUrl: String(item.whatsappGroupUrl || "").trim(),
+        qrImageUrl: String(item.qrImageUrl || "").trim()
       });
     }
   }
@@ -90,6 +91,20 @@ function categoryNames(categories) {
 function groupLinkForCategory(categories, categoryName) {
   const match = normalizeCategories(categories).find((item) => item.name === categoryName);
   return match ? match.whatsappGroupUrl || "" : "";
+}
+
+function resolvePaymentQrImageUrl(tournament, categoryName) {
+  const payment = mergePaymentSettings(tournament);
+  const name = String(categoryName || "").trim();
+  if (name) {
+    const key = name.toLowerCase();
+    const match = normalizeCategories(tournament.categories).find(
+      (item) => String(item.name || "").trim().toLowerCase() === key
+    );
+    if (match && match.qrImageUrl) return match.qrImageUrl;
+  }
+  if (payment.qrSource === "image") return payment.qrImageUrl || "";
+  return payment.qrImageUrl || "";
 }
 
 function mergePaymentSettings(settings) {
@@ -366,6 +381,7 @@ module.exports = {
   normalizeCategories,
   categoryNames,
   groupLinkForCategory,
+  resolvePaymentQrImageUrl,
   mergePaymentSettings,
   mergeWhatsappSettings,
   buildMessageContext,

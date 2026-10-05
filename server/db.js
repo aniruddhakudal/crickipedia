@@ -62,10 +62,13 @@ async function connect() {
     const url = process.env.DATABASE_URL;
     pool = new Pool({
       connectionString: url,
+      max: Number(process.env.DATABASE_POOL_MAX || 10),
+      idleTimeoutMillis: 30000,
       connectionTimeoutMillis: isSupabaseUrl(url) ? 20000 : 3000,
       ssl: isSupabaseUrl(url) || process.env.DATABASE_SSL === "1"
         ? { rejectUnauthorized: false }
-        : undefined
+        : undefined,
+      keepAlive: true
     });
     try {
       await pool.query("SELECT 1");
@@ -377,11 +380,27 @@ async function loadTournamentByKeys(tournamentSlug, seasonSlug) {
   return { row: result.rows[0], tournament: toClient(result.rows[0], sponsors.rows) };
 }
 
-async function loadTournamentFromParams(params) {
+function tournamentFromRow(row, sponsors) {
+  return { row, tournament: toClient(row, sponsors || []) };
+}
+
+async function loadTournamentFromParams(params, options) {
+  const includeSponsors = !options || options.sponsors !== false;
   if (params.season !== undefined && params.tournament !== undefined) {
-    return loadTournamentByKeys(params.tournament, params.season);
+    if (includeSponsors) return loadTournamentByKeys(params.tournament, params.season);
+    const result = await query(
+      "SELECT * FROM tournaments WHERE tournament_slug = $1 AND season_slug = $2",
+      [params.tournament, params.season]
+    );
+    if (!result.rows[0]) return null;
+    return tournamentFromRow(result.rows[0], []);
   }
-  if (params.slug) return loadTournament(params.slug);
+  if (params.slug) {
+    if (includeSponsors) return loadTournament(params.slug);
+    const result = await query("SELECT * FROM tournaments WHERE slug = $1", [params.slug]);
+    if (!result.rows[0]) return null;
+    return tournamentFromRow(result.rows[0], []);
+  }
   return null;
 }
 

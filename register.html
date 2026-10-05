@@ -73,10 +73,8 @@ input:focus,select:focus{border-color:var(--green2);background:var(--surface);bo
 .sponsors{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .sponsor{border:1px solid var(--line);border-radius:14px;padding:16px;text-align:center;font-weight:700;font-size:.85rem}
 .sponsor img{max-height:36px;max-width:100%;display:block;margin:0 auto 8px}
-.jersey-size-row{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
-.jersey-size-select{flex:1;min-width:140px}
-.jersey-size-chart{flex:0 0 auto;max-width:min(100%,200px)}
-.jersey-size-chart img{width:100%;max-height:160px;object-fit:contain;border-radius:12px;border:1px solid var(--line);cursor:zoom-in}
+.jersey-size-sample{margin-top:12px;text-align:center}
+.jersey-size-sample img{display:block;width:100%;max-width:min(100%,340px);max-height:280px;margin:0 auto;object-fit:contain;border-radius:12px;border:1px solid var(--line);cursor:zoom-in}
 .sponsor-footer{margin:0 auto 28px;max-width:1080px;padding:0 20px}
 .sponsor-footer.hidden{display:none!important}
 .sponsor-footer-title{text-align:center;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:0 0 14px}
@@ -282,6 +280,8 @@ input:focus,select:focus{border-color:var(--green2);background:var(--surface);bo
           <p class="muted" id="receiptStatus" style="margin-top:10px"></p>
         </div>
         <div class="actions">
+          <p class="hint hidden" id="categoryGroupHint" style="text-align:center;margin:0 0 4px"></p>
+          <a class="btn wa hidden" id="waCategoryGroup" href="#" target="_blank" rel="noopener">Join WhatsApp group</a>
           <button class="btn primary" type="button" id="payBtn">Pay now</button>
           <a class="btn wa" id="waShare" href="https://wa.me/" target="_blank" rel="noopener">Share on WhatsApp</a>
           <a class="btn wa secondary hidden" id="waDesk" href="https://wa.me/" target="_blank" rel="noopener">Message tournament desk</a>
@@ -472,6 +472,88 @@ input:focus,select:focus{border-color:var(--green2);background:var(--surface);bo
     if (currentRecord) updatePayUi(currentRecord);
   }
 
+  function paymentQrCategoryName() {
+    var cat = val("category");
+    return cat ? cat : undefined;
+  }
+
+  function defaultPaymentQrStored() {
+    var payment = (paymentCfg && paymentCfg.payment) || tournament.payment || {};
+    return !!(payment.qrImageUrl || (paymentCfg && paymentCfg.qrImageUrl) || tournament.payment && tournament.payment.qrImageUrl);
+  }
+
+  function anyCategoryPaymentQr() {
+    return C.normalizeCategories(tournament.categories).some(function (c) {
+      return !!(c.qrImageUrl && String(c.qrImageUrl).trim());
+    });
+  }
+
+  function canShowPaymentQr(categoryName) {
+    if (C.resolvePaymentQrImageUrl(tournament, categoryName)) return true;
+    if (defaultPaymentQrStored()) return true;
+    if (categoryName) {
+      var key = String(categoryName).trim().toLowerCase();
+      var match = C.normalizeCategories(tournament.categories).find(function (c) {
+        return String(c.name || "").trim().toLowerCase() === key;
+      });
+      return !!(match && match.qrImageUrl);
+    }
+    return anyCategoryPaymentQr();
+  }
+
+  function fillPaymentQrWrap(qrWrap, categoryName) {
+    if (!qrWrap || !paymentCfg || paymentCfg.mode !== "manual_qr") return;
+    var payment = paymentCfg.payment || {};
+    qrWrap.innerHTML = "";
+
+    function appendStaticQr() {
+      var img = document.createElement("img");
+      img.alt = "Payment QR";
+      img.style.cssText = "max-width:280px;border-radius:12px;width:100%";
+      img.src = C.paymentQrImageSrc(tournament, categoryName);
+      img.onerror = function () {
+        img.remove();
+        if (!qrWrap.querySelector(".qr-load-fail")) {
+          var fail = document.createElement("p");
+          fail.className = "muted qr-load-fail";
+          fail.style.fontSize = ".88rem";
+          fail.style.margin = "0";
+          fail.textContent = categoryName
+            ? "Could not load the QR for this category. Contact the organizer or try another category."
+            : "Select your category to show the payment QR, or ask the organizer to upload a default QR.";
+          qrWrap.appendChild(fail);
+        }
+      };
+      qrWrap.appendChild(img);
+    }
+
+    if (payment.qrSource === "upi" && payment.upiId) {
+      C.api.paymentQrPreview(tournament, categoryName).then(function (data) {
+        if (data.qrDataUrl) {
+          qrWrap.innerHTML = '<img alt="UPI QR" src="' + data.qrDataUrl + '" style="max-width:280px;border-radius:12px;width:100%">';
+        } else {
+          appendStaticQr();
+        }
+      }).catch(function () {
+        appendStaticQr();
+      });
+      return;
+    }
+
+    if (!canShowPaymentQr(categoryName)) {
+      qrWrap.innerHTML = '<p class="muted" style="margin:0;font-size:.88rem">Select your category to show the payment QR.</p>';
+      return;
+    }
+    if (!categoryName && anyCategoryPaymentQr() && !defaultPaymentQrStored()) {
+      qrWrap.innerHTML = '<p class="muted" style="margin:0 0 10px;font-size:.88rem">Select your category to show the correct payment QR.</p>';
+    }
+    appendStaticQr();
+  }
+
+  function refreshFormPaymentQr() {
+    fillPaymentQrWrap(document.getElementById("formQrWrap"), paymentQrCategoryName());
+  }
+
   function setupFormPaymentUi() {
     var sec = document.getElementById("formPaymentSection");
     if (!paymentCfg || paymentCfg.mode !== "manual_qr") {
@@ -483,19 +565,7 @@ input:focus,select:focus{border-color:var(--green2);background:var(--surface);bo
     var payment = paymentCfg.payment || {};
     document.getElementById("formPaymentInstructions").textContent =
       payment.paymentInstructions || paymentCfg.paymentInstructions || "Pay the entry fee using the QR code, then upload your payment receipt below.";
-    var qrWrap = document.getElementById("formQrWrap");
-    qrWrap.innerHTML = "";
-    if (payment.qrSource === "image" && (paymentCfg.qrImageUrl || payment.qrImageUrl)) {
-      qrWrap.innerHTML = '<img alt="Payment QR" src="' + C.escapeHtml(C.api.paymentQrImageUrl(tournament)) + '" style="max-width:280px;border-radius:12px">';
-    } else if (payment.qrSource === "upi" && payment.upiId) {
-      C.api.paymentQrPreview(tournament).then(function (data) {
-        if (data.qrDataUrl) {
-          qrWrap.innerHTML = '<img alt="UPI QR" src="' + data.qrDataUrl + '" style="max-width:280px;border-radius:12px">';
-        } else if (paymentCfg.qrImageUrl || payment.qrImageUrl) {
-          qrWrap.innerHTML = '<img alt="Payment QR" src="' + C.escapeHtml(C.api.paymentQrImageUrl(tournament)) + '" style="max-width:280px;border-radius:12px">';
-        }
-      }).catch(function () {});
-    }
+    refreshFormPaymentQr();
     var imgField = payment.receiptImage !== "hidden";
     var upiField = payment.receiptUpiRef !== "hidden";
     var imgLabel = document.getElementById("formReceiptImageLabel");
@@ -626,16 +696,16 @@ input:focus,select:focus{border-color:var(--green2);background:var(--surface);bo
     }
     if (field.id === "jerseySize") {
       var chartSrc = tournament.jerseySizeChartUrl ? C.api.jerseySizeChartImageUrl(tournament) : "";
-      var sizeInner = '<div class="jersey-size-row"><div class="jersey-size-select"><select id="size"' + reqAttr + '><option value="">Select size</option>' +
+      var sizeInner = '<select id="size"' + reqAttr + '><option value="">Select size</option>' +
         (tournament.jerseySizes || []).map(function (size) {
           return "<option>" + C.escapeHtml(size) + "</option>";
-        }).join("") + "</select></div>";
+        }).join("") + "</select>";
       if (chartSrc) {
-        sizeInner += '<a class="jersey-size-chart" href="' + C.escapeHtml(chartSrc) + '" target="_blank" rel="noopener" title="Open size chart">' +
-          '<img src="' + C.escapeHtml(chartSrc) + '" alt="Jersey size chart"></a>';
+        sizeInner += '<div class="jersey-size-sample"><p class="profile-hint" style="margin:0 0 8px">Sample T-shirt sizes</p>' +
+          '<a href="' + C.escapeHtml(chartSrc) + '" target="_blank" rel="noopener" title="Open full size">' +
+          '<img src="' + C.escapeHtml(chartSrc) + '" alt="Sample T-shirt size guide"></a></div>';
       }
-      sizeInner += "</div>";
-      return "<label>Jersey size" + fieldSuffixFromMode(mode) + sizeInner + "</label>";
+      return "<label>T-shirt size" + fieldSuffixFromMode(mode) + sizeInner + "</label>";
     }
     if (field.id === "sleeve") {
       return buildSimpleField("Sleeve", mode, '<select id="sleeve"><option value="">Select</option>' +
@@ -743,6 +813,16 @@ input:focus,select:focus{border-color:var(--green2);background:var(--surface);bo
     });
     document.getElementById("orderedFormFields").innerHTML = parts.join("");
     bindPhotoInput();
+    bindCategoryQrRefresh();
+  }
+
+  function bindCategoryQrRefresh() {
+    var cat = document.getElementById("category");
+    if (!cat || cat.dataset.qrBound === "1") return;
+    cat.dataset.qrBound = "1";
+    cat.addEventListener("change", function () {
+      refreshFormPaymentQr();
+    });
   }
   renderOrderedFormFields();
 
@@ -869,7 +949,30 @@ input:focus,select:focus{border-color:var(--green2);background:var(--surface);bo
     updateWaLinks(record);
   }
 
+  function updateCategoryGroupLink(record) {
+    var btn = document.getElementById("waCategoryGroup");
+    var hint = document.getElementById("categoryGroupHint");
+    if (!btn) return;
+    var url = C.groupLinkForCategory(tournament.categories, record && record.category);
+    var valid = url && /^https?:\/\//i.test(url);
+    if (valid) {
+      var cat = (record && record.category) ? record.category : "your category";
+      btn.href = url;
+      btn.textContent = "Join " + cat + " WhatsApp group";
+      btn.classList.remove("hidden");
+      if (hint) {
+        hint.textContent = "Tap below to join the WhatsApp group for " + cat + ".";
+        hint.classList.remove("hidden");
+      }
+    } else {
+      btn.classList.add("hidden");
+      btn.removeAttribute("href");
+      if (hint) hint.classList.add("hidden");
+    }
+  }
+
   function updateWaLinks(record) {
+    updateCategoryGroupLink(record);
     var text = C.registrationWaText(tournament, record);
     document.getElementById("waShare").href = C.waMeUrl("", text);
     var desk = document.getElementById("waDesk");
@@ -891,19 +994,8 @@ input:focus,select:focus{border-color:var(--green2);background:var(--surface);bo
     var payment = paymentCfg.payment || {};
     document.getElementById("manualPayInstructions").textContent =
       payment.paymentInstructions || paymentCfg.paymentInstructions || "Pay the entry fee, then upload your receipt.";
-    var qrWrap = document.getElementById("qrWrap");
-    qrWrap.innerHTML = "";
-    if (payment.qrSource === "image" && payment.qrImageUrl) {
-      qrWrap.innerHTML = '<img alt="Payment QR" src="' + C.escapeHtml(C.api.paymentQrImageUrl(tournament)) + '" style="max-width:280px;border-radius:12px">';
-    } else if (payment.qrSource === "upi" && payment.upiId) {
-      C.api.paymentQr(tournament, record.id).then(function (data) {
-        if (data.qrDataUrl) {
-          qrWrap.innerHTML = '<img alt="UPI QR" src="' + data.qrDataUrl + '" style="max-width:280px;border-radius:12px">';
-        } else if (payment.qrImageUrl) {
-          qrWrap.innerHTML = '<img alt="Payment QR" src="' + C.escapeHtml(C.api.paymentQrImageUrl(tournament)) + '" style="max-width:280px;border-radius:12px">';
-        }
-      }).catch(function () {});
-    }
+    var categoryName = record.category || undefined;
+    fillPaymentQrWrap(document.getElementById("qrWrap"), categoryName);
     var imgField = payment.receiptImage !== "hidden";
     var upiField = payment.receiptUpiRef !== "hidden";
     var alreadySubmitted = record.verificationStatus === "SUBMITTED";

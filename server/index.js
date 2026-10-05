@@ -459,7 +459,7 @@ function buildTournamentPaymentConfig(tournament) {
     razorpayKeyId: mode === "razorpay" && razorpayAvailable ? razorpay.keyId() : null
   };
   if (mode === "manual_qr") {
-    body.qrImageUrl = payment.qrSource === "image" ? payment.qrImageUrl || "" : "";
+    body.qrImageUrl = payment.qrImageUrl || "";
     body.upiUri = payment.qrSource === "upi" ? buildUpiUri(payment, tournament, "") : "";
     body.paymentInstructions = payment.paymentInstructions || "";
   }
@@ -503,17 +503,23 @@ mountTournamentRoute("get", "/payments/config", async (req, res) => {
   }
 });
 
-async function paymentQrPayload(slug, registrationId) {
+async function paymentQrPayload(slug, registrationId, categoryOverride) {
   const loaded = await db.loadTournament(slug);
   if (!loaded) return null;
   const payment = settingsUtil.mergePaymentSettings(loaded.tournament);
+  let categoryName = String(categoryOverride || "").trim();
+  if (!categoryName && registrationId) {
+    const record = await findRegistration(slug, registrationId);
+    categoryName = record && record.category ? String(record.category).trim() : "";
+  }
+  const qrImageUrl = settingsUtil.resolvePaymentQrImageUrl(loaded.tournament, categoryName);
   const upiUri = buildUpiUri(payment, loaded.tournament, registrationId || "");
   if (!upiUri) {
-    return { upiUri: "", qrDataUrl: "", qrImageUrl: payment.qrImageUrl || "" };
+    return { upiUri: "", qrDataUrl: "", qrImageUrl };
   }
   const QRCode = require("qrcode");
   const qrDataUrl = await QRCode.toDataURL(upiUri, { margin: 1, width: 280 });
-  return { upiUri, qrDataUrl, qrImageUrl: payment.qrImageUrl || "" };
+  return { upiUri, qrDataUrl, qrImageUrl };
 }
 
 mountTournamentRoute("get", "/registrations/:id/photo-image", async (req, res) => {
@@ -564,10 +570,14 @@ mountTournamentRoute("get", "/payment-qr-image", async (req, res) => {
       res.status(404).end();
       return;
     }
-    const payment = settingsUtil.mergePaymentSettings(loaded.tournament);
-    const qrImageUrl = payment.qrImageUrl || "";
+    const categoryName = String(req.query.category || "").trim();
+    const qrImageUrl = settingsUtil.resolvePaymentQrImageUrl(loaded.tournament, categoryName);
     if (!qrImageUrl) {
       res.status(404).end();
+      return;
+    }
+    if (/^https?:\/\//i.test(qrImageUrl)) {
+      res.redirect(302, qrImageUrl);
       return;
     }
     const file = await photoStorage.streamPaymentQr(qrImageUrl);
@@ -611,7 +621,8 @@ mountTournamentRoute("get", "/jersey-size-chart-image", async (req, res) => {
 mountTournamentRoute("get", "/payment-qr", async (req, res) => {
   try {
     const slug = await resolveRouteSlug(req.params);
-    const data = await paymentQrPayload(slug, "");
+    const categoryName = String(req.query.category || "").trim();
+    const data = await paymentQrPayload(slug, "", categoryName);
     if (!data) {
       res.status(404).json({ error: "Tournament not found" });
       return;
@@ -733,7 +744,7 @@ mountTournamentRoute("get", "/roster", async (req, res) => {
 mountTournamentRoute("post", "/register", async (req, res) => {
   try {
     const preview = req.query.preview === "1" || req.body.preview === true;
-    const loaded = await loadTournamentFromParams(req.params);
+    const loaded = await db.loadTournamentFromParams(req.params, { sponsors: false });
     if (!loaded) {
       res.status(404).json({ error: "Tournament not found" });
       return;
@@ -777,12 +788,6 @@ mountTournamentRoute("post", "/register", async (req, res) => {
       return;
     }
 
-    const existing = await findRegistration(slug, phone);
-    if (existing) {
-      res.json({ record: existing, existing: true });
-      return;
-    }
-
     const dob = req.body.dob || null;
     const jersey = req.body.jersey === "" || req.body.jersey == null ? null : Number(req.body.jersey);
     const size = req.body.size || null;
@@ -802,6 +807,14 @@ mountTournamentRoute("post", "/register", async (req, res) => {
       let photoUrl = "";
       if (player.rows[0]) {
         playerId = player.rows[0].id;
+        const dup = await client.query(
+          `SELECT registration_number FROM registrations
+           WHERE tournament_id = $1 AND player_id = $2 LIMIT 1`,
+          [loaded.row.id, playerId]
+        );
+        if (dup.rows[0]) {
+          return { duplicate: true };
+        }
         const updated = await client.query(
           `UPDATE players
            SET full_name = $2, date_of_birth = COALESCE($3, date_of_birth),
@@ -852,10 +865,16 @@ mountTournamentRoute("post", "/register", async (req, res) => {
         ]
       );
       return {
+        duplicate: false,
         registeredAt: registration.rows[0].registered_at,
         photoUrl
       };
     });
+
+    if (saved.duplicate) {
+      res.json({ record: await findRegistration(slug, phone), existing: true });
+      return;
+    }
 
     const record = db.buildRegistrationClient({
       slug,
@@ -876,12 +895,14 @@ mountTournamentRoute("post", "/register", async (req, res) => {
       extraFields,
       verificationStatus
     });
-    notifications.notifyReserved(loaded.tournament, record).catch((err) => {
-      console.error("Reserved WhatsApp:", err.message);
-    });
     res.status(201).json({
       record,
       existing: false
+    });
+    setImmediate(() => {
+      notifications.notifyReserved(loaded.tournament, record).catch((err) => {
+        console.error("Reserved WhatsApp:", err.message);
+      });
     });
   } catch (err) {
     if (err.code === "23505") {
@@ -1351,6 +1372,59 @@ app.post("/api/admin/tournaments/:slug/payment-qr", requireSuperadmin, withUploa
   }
 });
 
+app.post("/api/admin/tournaments/:slug/category-payment-qr", requireSuperadmin, withUpload("qr"), async (req, res) => {
+  try {
+    if (!req.file) {
+      res.status(400).json({ error: "No QR image uploaded" });
+      return;
+    }
+    const categoryIndex = Number(req.body.categoryIndex);
+    if (!Number.isFinite(categoryIndex) || categoryIndex < 0) {
+      if (req.file.path) fs.unlink(req.file.path, () => {});
+      res.status(400).json({ error: "Category index is required" });
+      return;
+    }
+    const loaded = await db.loadTournament(adminTournamentSlug(req));
+    if (!loaded) {
+      if (req.file.path) fs.unlink(req.file.path, () => {});
+      res.status(404).json({ error: "Tournament not found" });
+      return;
+    }
+    const slugKey = adminTournamentSlug(req);
+    const tournament = loaded.tournament;
+    const categories = settingsUtil.normalizeCategories(tournament.categories);
+    if (categoryIndex >= categories.length) {
+      if (req.file.path) fs.unlink(req.file.path, () => {});
+      res.status(400).json({ error: "Category not found" });
+      return;
+    }
+    const categoryName = categories[categoryIndex].name;
+    const qrImageUrl = await photoStorage.saveCategoryPaymentQr(
+      slugKey,
+      slugify(categoryName),
+      req.file
+    );
+    categories[categoryIndex] = { ...categories[categoryIndex], qrImageUrl };
+    const settings = db.settingsFromClient({
+      ...tournament,
+      categories
+    });
+    const updated = await db.query(
+      `UPDATE tournaments SET settings = $2::jsonb, updated_at = NOW() WHERE id = $1 RETURNING *`,
+      [loaded.row.id, JSON.stringify(settings)]
+    );
+    res.json({
+      qrImageUrl,
+      categoryIndex,
+      categoryName,
+      tournament: db.toClient(updated.rows[0], db.sponsorsFromClient(tournament.sponsors))
+    });
+  } catch (err) {
+    if (req.file && req.file.path) fs.unlink(req.file.path, () => {});
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.post("/api/admin/tournaments/:slug/jersey-size-chart", requireSuperadmin, withUpload("chart"), async (req, res) => {
   try {
     if (!req.file) {
@@ -1558,6 +1632,34 @@ app.post("/api/admin/tournaments/:slug/registrations/:id/reject", requireAdmin, 
     const record = await findRegistration(req.params.slug, req.params.id);
     notifications.notifyRejected(loaded.tournament, record, reason).catch(() => {});
     res.json({ record });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete("/api/admin/tournaments/:slug/registrations/:id", requireSuperadmin, async (req, res) => {
+  try {
+    const registrationId = String(req.params.id || "").trim();
+    if (!registrationId) {
+      res.status(400).json({ error: "Registration id required" });
+      return;
+    }
+    const loaded = await db.loadTournament(req.params.slug);
+    if (!loaded) {
+      res.status(404).json({ error: "Tournament not found" });
+      return;
+    }
+    const deleted = await db.query(
+      `DELETE FROM registrations r
+       WHERE r.tournament_id = $1 AND r.registration_number = $2
+       RETURNING r.id`,
+      [loaded.row.id, registrationId]
+    );
+    if (!deleted.rows[0]) {
+      res.status(404).json({ error: "Registration not found" });
+      return;
+    }
+    res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
