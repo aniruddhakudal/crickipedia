@@ -55,9 +55,12 @@ CREATE TABLE IF NOT EXISTS registrations (
   category VARCHAR(80),
   extra_fields JSONB NOT NULL DEFAULT '{}'::jsonb,
   status VARCHAR(30) NOT NULL DEFAULT 'PENDING_PAYMENT',
-  registered_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  UNIQUE(tournament_id, player_id)
+  registered_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_registrations_active_player_category
+  ON registrations (tournament_id, player_id, COALESCE(category, ''))
+  WHERE status <> 'RECEIPT_REJECTED';
 
 CREATE TABLE IF NOT EXISTS payments (
   id BIGSERIAL PRIMARY KEY,

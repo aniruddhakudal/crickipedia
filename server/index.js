@@ -377,21 +377,39 @@ function tournamentPaymentMode(tournament) {
   return "razorpay";
 }
 
+const REGISTRATION_CLIENT_SELECT = `
+  SELECT r.registration_number, r.category, r.extra_fields, r.status, r.registered_at,
+         t.slug, p.full_name, p.date_of_birth, p.flat_number, p.whatsapp_number, p.photo_url,
+         p.cricheroes_url, p.instagram_url,
+         pref.skill, pref.suggested_jersey_number, pref.jersey_size, pref.sleeve_type,
+         pay.payment_status, pay.verification_status, pay.receipt_url, pay.receipt_upi_ref, pay.reject_reason
+  FROM registrations r
+  JOIN tournaments t ON t.id = r.tournament_id
+  JOIN players p ON p.id = r.player_id
+  LEFT JOIN player_preferences pref ON pref.player_id = p.id
+  LEFT JOIN payments pay ON pay.registration_id = r.id`;
+
 async function findRegistration(slug, phoneOrId) {
   const result = await db.query(
-    `SELECT r.registration_number, r.category, r.extra_fields, r.status, r.registered_at,
-            t.slug, p.full_name, p.date_of_birth, p.flat_number, p.whatsapp_number, p.photo_url,
-            p.cricheroes_url, p.instagram_url,
-            pref.skill, pref.suggested_jersey_number, pref.jersey_size, pref.sleeve_type,
-            pay.payment_status, pay.verification_status, pay.receipt_url, pay.receipt_upi_ref, pay.reject_reason
-     FROM registrations r
-     JOIN tournaments t ON t.id = r.tournament_id
-     JOIN players p ON p.id = r.player_id
-     LEFT JOIN player_preferences pref ON pref.player_id = p.id
-     LEFT JOIN payments pay ON pay.registration_id = r.id
+    `${REGISTRATION_CLIENT_SELECT}
      WHERE t.slug = $1 AND (p.whatsapp_number = $2 OR r.registration_number = $2)
      LIMIT 1`,
     [slug, phoneOrId]
+  );
+  return result.rows[0] ? db.registrationToClient(result.rows[0]) : null;
+}
+
+/** Active registration for phone + category (declined / rejected receipts do not count). */
+async function findActiveRegistrationByPhone(slug, phone, category) {
+  const result = await db.query(
+    `${REGISTRATION_CLIENT_SELECT}
+     WHERE t.slug = $1 AND p.whatsapp_number = $2
+       AND COALESCE(r.category, '') = COALESCE($3, '')
+       AND r.status <> 'RECEIPT_REJECTED'
+       AND COALESCE(pay.verification_status, '') <> 'REJECTED'
+     ORDER BY r.registered_at DESC
+     LIMIT 1`,
+    [slug, phone, category || null]
   );
   return result.rows[0] ? db.registrationToClient(result.rows[0]) : null;
 }
@@ -697,7 +715,8 @@ mountTournamentRoute("get", "/lookup", async (req, res) => {
       return;
     }
     const slug = await resolveRouteSlug(req.params);
-    res.json({ record: await findRegistration(slug, phone) });
+    const category = String(req.query.category || "").trim();
+    res.json({ record: await findActiveRegistrationByPhone(slug, phone, category) });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -808,9 +827,15 @@ mountTournamentRoute("post", "/register", async (req, res) => {
       if (player.rows[0]) {
         playerId = player.rows[0].id;
         const dup = await client.query(
-          `SELECT registration_number FROM registrations
-           WHERE tournament_id = $1 AND player_id = $2 LIMIT 1`,
-          [loaded.row.id, playerId]
+          `SELECT r.registration_number
+           FROM registrations r
+           LEFT JOIN payments pay ON pay.registration_id = r.id
+           WHERE r.tournament_id = $1 AND r.player_id = $2
+             AND COALESCE(r.category, '') = COALESCE($3, '')
+             AND r.status <> 'RECEIPT_REJECTED'
+             AND COALESCE(pay.verification_status, '') <> 'REJECTED'
+           LIMIT 1`,
+          [loaded.row.id, playerId, category || null]
         );
         if (dup.rows[0]) {
           return { duplicate: true };
@@ -872,7 +897,7 @@ mountTournamentRoute("post", "/register", async (req, res) => {
     });
 
     if (saved.duplicate) {
-      res.json({ record: await findRegistration(slug, phone), existing: true });
+      res.json({ record: await findActiveRegistrationByPhone(slug, phone, category), existing: true });
       return;
     }
 
@@ -906,7 +931,17 @@ mountTournamentRoute("post", "/register", async (req, res) => {
     });
   } catch (err) {
     if (err.code === "23505") {
-      res.json({ record: await findRegistration(slug, String(req.body.phone || "").replace(/\D/g, "")), existing: true });
+      const conflictLoaded = await db.loadTournamentFromParams(req.params, { sponsors: false });
+      const phone = String(req.body.phone || "").replace(/\D/g, "");
+      const category = String(req.body.category || "").trim();
+      if (conflictLoaded) {
+        res.json({
+          record: await findActiveRegistrationByPhone(conflictLoaded.row.slug, phone, category),
+          existing: true
+        });
+      } else {
+        res.status(409).json({ error: "This number is already registered for that category" });
+      }
       return;
     }
     res.status(500).json({ error: err.message });

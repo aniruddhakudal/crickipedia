@@ -823,6 +823,7 @@ input:focus,select:focus{border-color:var(--green2);background:var(--surface);bo
     cat.dataset.qrBound = "1";
     cat.addEventListener("change", function () {
       refreshFormPaymentQr();
+      checkDuplicate();
     });
   }
   renderOrderedFormFields();
@@ -1067,19 +1068,23 @@ input:focus,select:focus{border-color:var(--green2);background:var(--surface);bo
   var lookupTimer = null;
   var lastExisting = null;
   var lastLookupPhone = "";
+  var lastLookupCategory = "";
   var lastLookupClear = false;
   function checkDuplicate() {
     var phone = val("phone");
     var hint = document.getElementById("dupHint");
     lastExisting = null;
     lastLookupPhone = "";
+    lastLookupCategory = "";
     lastLookupClear = false;
     if (phone.length !== 10) {
       hint.classList.add("hidden");
       return Promise.resolve(null);
     }
-    return C.api.lookup(tournament, phone).then(function (existing) {
+    var category = val("category");
+    return C.api.lookup(tournament, phone, category).then(function (existing) {
       lastLookupPhone = phone;
+      lastLookupCategory = category;
       lastLookupClear = !existing;
       lastExisting = existing;
       if (!existing) {
@@ -1087,7 +1092,8 @@ input:focus,select:focus{border-color:var(--green2);background:var(--surface);bo
         return null;
       }
       hint.classList.remove("hidden");
-      hint.innerHTML = "This WhatsApp number is already registered. <button type='button' class='link' id='openExisting'>View registration</button>";
+      var catNote = category ? " in " + category : "";
+      hint.innerHTML = "This WhatsApp number is already registered" + catNote + ". <button type='button' class='link' id='openExisting'>View registration</button>";
       document.getElementById("openExisting").onclick = function () { showExisting(existing, true); };
       return existing;
     }).catch(function () { return null; });
@@ -1122,7 +1128,8 @@ input:focus,select:focus{border-color:var(--green2);background:var(--surface);bo
     event.preventDefault();
     var phone = val("phone");
     var existing = lastExisting;
-    if (!existing && !(lastLookupPhone === phone && lastLookupClear)) {
+    var category = val("category");
+    if (!existing && !(lastLookupPhone === phone && lastLookupCategory === category && lastLookupClear)) {
       existing = await checkDuplicate();
     }
     if (existing) {

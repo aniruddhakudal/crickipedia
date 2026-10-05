@@ -643,8 +643,12 @@
     config: function (ref, preview) {
       return request(apiTournamentPath(ref) + "/config" + (preview ? "?preview=1" : ""));
     },
-    lookup: function (ref, phone) {
-      return request(apiTournamentPath(ref) + "/lookup?phone=" + encodeURIComponent(phone)).then(function (data) {
+    lookup: function (ref, phone, category) {
+      var q = "phone=" + encodeURIComponent(phone);
+      if (category != null && String(category).trim() !== "") {
+        q += "&category=" + encodeURIComponent(String(category).trim());
+      }
+      return request(apiTournamentPath(ref) + "/lookup?" + q).then(function (data) {
         return data.record || null;
       });
     },
