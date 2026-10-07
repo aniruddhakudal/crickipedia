@@ -370,8 +370,43 @@
     return state === "OPEN" || (preview && state !== "CLOSED");
   }
 
-  function formatMoney(tournament) {
-    return (tournament.currency || "₹") + Number(tournament.fee || 0);
+  function entryFeeForCategory(tournament, categoryName) {
+    var base = Number(tournament.fee || 0);
+    var name = String(categoryName || "").trim();
+    if (!name) return base;
+    var key = name.toLowerCase();
+    var list = normalizeCategories(tournament.categories);
+    for (var i = 0; i < list.length; i += 1) {
+      if (String(list[i].name || "").trim().toLowerCase() !== key) continue;
+      if (list[i].fee != null && !isNaN(Number(list[i].fee))) return Number(list[i].fee);
+      break;
+    }
+    return base;
+  }
+
+  function formatMoney(tournament, categoryName) {
+    return (tournament.currency || "₹") + entryFeeForCategory(tournament, categoryName);
+  }
+
+  function categoryFeesConfigured(tournament) {
+    var cats = normalizeCategories(tournament.categories);
+    for (var i = 0; i < cats.length; i += 1) {
+      if (cats[i].fee != null && !isNaN(Number(cats[i].fee))) return true;
+    }
+    return false;
+  }
+
+  function feeRangeLabel(tournament) {
+    var cats = normalizeCategories(tournament.categories);
+    if (!cats.length) return formatMoney(tournament);
+    var fees = cats.map(function (c) {
+      return entryFeeForCategory(tournament, c.name);
+    });
+    var min = Math.min.apply(null, fees);
+    var max = Math.max.apply(null, fees);
+    var cur = tournament.currency || "₹";
+    if (min === max) return cur + min;
+    return cur + min + " – " + cur + max;
   }
 
   function formatPrettyDate(value) {
@@ -505,10 +540,14 @@
       if (typeof item === "string" && item.trim()) {
         out.push({ name: item.trim(), whatsappGroupUrl: "" });
       } else if (item && item.name) {
+        var feeRaw = item.fee;
+        var fee =
+          feeRaw != null && feeRaw !== "" && !isNaN(Number(feeRaw)) ? Number(feeRaw) : null;
         out.push({
           name: String(item.name).trim(),
           whatsappGroupUrl: String(item.whatsappGroupUrl || "").trim(),
-          qrImageUrl: String(item.qrImageUrl || "").trim()
+          qrImageUrl: String(item.qrImageUrl || "").trim(),
+          fee: fee
         });
       }
     }
@@ -657,11 +696,24 @@
         return { categories: data.categories || [], players: data.players || [] };
       });
     },
-    register: function (ref, body, preview) {
-      return request(apiTournamentPath(ref) + "/register" + (preview ? "?preview=1" : ""), {
-        method: "POST",
-        body: body
-      });
+    register: function (ref, body, preview, photoFile) {
+      var url = apiTournamentPath(ref) + "/register" + (preview ? "?preview=1" : "");
+      if (photoFile) {
+        var fd = new FormData();
+        Object.keys(body || {}).forEach(function (key) {
+          var val = body[key];
+          if (val == null || val === "") return;
+          if (key === "customFields" && typeof val === "object") {
+            fd.append(key, JSON.stringify(val));
+          } else {
+            fd.append(key, String(val));
+          }
+        });
+        if (preview) fd.append("preview", "true");
+        fd.append("photo", photoFile);
+        return request(url, { method: "POST", body: fd });
+      }
+      return request(url, { method: "POST", body: body });
     },
     paymentConfig: function () {
       return request("/api/payments/config");
@@ -935,6 +987,9 @@
     normalizeCategories: normalizeCategories,
     categoryNames: categoryNames,
     groupLinkForCategory: groupLinkForCategory,
+    entryFeeForCategory: entryFeeForCategory,
+    categoryFeesConfigured: categoryFeesConfigured,
+    feeRangeLabel: feeRangeLabel,
     resolvePaymentQrImageUrl: resolvePaymentQrImageUrl,
     paymentQrImageSrc: paymentQrImageSrc,
     publicUrl: publicUrl,

@@ -356,9 +356,10 @@ async function migrate() {
   await query(
     "ALTER TABLE registrations DROP CONSTRAINT IF EXISTS registrations_tournament_id_player_id_key"
   );
+  await query("DROP INDEX IF EXISTS idx_registrations_active_player_category");
   await query(
     `CREATE UNIQUE INDEX IF NOT EXISTS idx_registrations_active_player_category
-     ON registrations (tournament_id, player_id, COALESCE(category, ''))
+     ON registrations (tournament_id, player_id, LOWER(TRIM(COALESCE(category, ''))))
      WHERE status <> 'RECEIPT_REJECTED'`
   );
   const admins = require("./admins");

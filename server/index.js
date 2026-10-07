@@ -399,17 +399,27 @@ async function findRegistration(slug, phoneOrId) {
   return result.rows[0] ? db.registrationToClient(result.rows[0]) : null;
 }
 
+const ACTIVE_REG_CATEGORY_MATCH =
+  "LOWER(TRIM(COALESCE(r.category, ''))) = LOWER(TRIM(COALESCE($3::text, '')))";
+
+function duplicateRegistrationMessage(category) {
+  const cat = String(category || "").trim();
+  return cat
+    ? `This WhatsApp number is already registered in ${cat}.`
+    : "This WhatsApp number is already registered for this tournament.";
+}
+
 /** Active registration for phone + category (declined / rejected receipts do not count). */
 async function findActiveRegistrationByPhone(slug, phone, category) {
   const result = await db.query(
     `${REGISTRATION_CLIENT_SELECT}
      WHERE t.slug = $1 AND p.whatsapp_number = $2
-       AND COALESCE(r.category, '') = COALESCE($3, '')
+       AND ${ACTIVE_REG_CATEGORY_MATCH}
        AND r.status <> 'RECEIPT_REJECTED'
        AND COALESCE(pay.verification_status, '') <> 'REJECTED'
      ORDER BY r.registered_at DESC
      LIMIT 1`,
-    [slug, phone, category || null]
+    [slug, phone, category || ""]
   );
   return result.rows[0] ? db.registrationToClient(result.rows[0]) : null;
 }
@@ -457,10 +467,10 @@ async function completeRegistrationPaid(slug, registrationNumber, paymentId, ord
   return record;
 }
 
-function buildUpiUri(payment, tournament, registrationNumber) {
+function buildUpiUri(payment, tournament, registrationNumber, categoryName) {
   const upiId = String(payment.upiId || "").trim();
   if (!upiId) return "";
-  const amount = Number(tournament.fee || 0).toFixed(2);
+  const amount = settingsUtil.entryFeeForCategory(tournament, categoryName).toFixed(2);
   const payee = encodeURIComponent(payment.upiPayeeName || tournament.name || "Tournament");
   const note = encodeURIComponent(`Reg ${registrationNumber}`);
   return `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${payee}&am=${amount}&cu=INR&tn=${note}`;
@@ -531,7 +541,7 @@ async function paymentQrPayload(slug, registrationId, categoryOverride) {
     categoryName = record && record.category ? String(record.category).trim() : "";
   }
   const qrImageUrl = settingsUtil.resolvePaymentQrImageUrl(loaded.tournament, categoryName);
-  const upiUri = buildUpiUri(payment, loaded.tournament, registrationId || "");
+  const upiUri = buildUpiUri(payment, loaded.tournament, registrationId || "", categoryName);
   if (!upiUri) {
     return { upiUri: "", qrDataUrl: "", qrImageUrl };
   }
@@ -760,7 +770,7 @@ mountTournamentRoute("get", "/roster", async (req, res) => {
   }
 });
 
-mountTournamentRoute("post", "/register", async (req, res) => {
+mountTournamentRoute("post", "/register", upload.single("photo"), async (req, res) => {
   try {
     const preview = req.query.preview === "1" || req.body.preview === true;
     const loaded = await db.loadTournamentFromParams(req.params, { sponsors: false });
@@ -773,6 +783,8 @@ mountTournamentRoute("post", "/register", async (req, res) => {
       res.status(400).json({ error: "Registration is not open" });
       return;
     }
+
+    const customFieldsBody = settingsUtil.parseCustomFieldsInput(req.body.customFields);
 
     const name = String(req.body.name || "").trim();
     const phone = String(req.body.phone || "").replace(/\D/g, "");
@@ -789,7 +801,10 @@ mountTournamentRoute("post", "/register", async (req, res) => {
       res.status(400).json({ error: "Select a playing skill" });
       return;
     }
-    const fieldErrors = settingsUtil.validateRegistrationFields(loaded.tournament, req.body);
+    const fieldErrors = settingsUtil.validateRegistrationFields(loaded.tournament, {
+      ...req.body,
+      customFields: customFieldsBody
+    });
     if (fieldErrors.length) {
       res.status(400).json({ error: fieldErrors[0] });
       return;
@@ -799,7 +814,7 @@ mountTournamentRoute("post", "/register", async (req, res) => {
     const wantCategory = settingsUtil.fieldModeForTournament(loaded.tournament, "category") !== "off";
     const extraFields = settingsUtil.sanitizeCustomFieldValues(
       loaded.tournament,
-      req.body.customFields
+      customFieldsBody
     );
     const allowed = settingsUtil.categoryNames(loaded.tournament.categories);
     if (wantCategory && allowed.length && category && allowed.indexOf(category) === -1) {
@@ -817,6 +832,23 @@ mountTournamentRoute("post", "/register", async (req, res) => {
     const payMode = tournamentPaymentMode(loaded.tournament);
     const verificationStatus = payMode === "manual_qr" ? "AWAITING_RECEIPT" : "";
 
+    const priorReg = await findActiveRegistrationByPhone(slug, phone, category);
+    if (priorReg) {
+      res.status(409).json({ error: duplicateRegistrationMessage(category) });
+      return;
+    }
+
+    const photoMode = settingsUtil.fieldModeForTournament(loaded.tournament, "photo");
+    const playerPhotoRow = await db.query(
+      "SELECT photo_url FROM players WHERE whatsapp_number = $1",
+      [phone]
+    );
+    const storedPhotoUrl = playerPhotoRow.rows[0] ? playerPhotoRow.rows[0].photo_url || "" : "";
+    if (photoMode === "required" && !storedPhotoUrl && !req.file) {
+      res.status(400).json({ error: "Profile photo is required" });
+      return;
+    }
+
     const saved = await db.withTransaction(async (client) => {
       let player = await client.query(
         "SELECT id, photo_url FROM players WHERE whatsapp_number = $1",
@@ -831,11 +863,11 @@ mountTournamentRoute("post", "/register", async (req, res) => {
            FROM registrations r
            LEFT JOIN payments pay ON pay.registration_id = r.id
            WHERE r.tournament_id = $1 AND r.player_id = $2
-             AND COALESCE(r.category, '') = COALESCE($3, '')
+             AND LOWER(TRIM(COALESCE(r.category, ''))) = LOWER(TRIM(COALESCE($3::text, '')))
              AND r.status <> 'RECEIPT_REJECTED'
              AND COALESCE(pay.verification_status, '') <> 'REJECTED'
            LIMIT 1`,
-          [loaded.row.id, playerId, category || null]
+          [loaded.row.id, playerId, category || ""]
         );
         if (dup.rows[0]) {
           return { duplicate: true };
@@ -884,7 +916,7 @@ mountTournamentRoute("post", "/register", async (req, res) => {
          VALUES ($1, $2, 'PENDING', $3, $4)`,
         [
           registration.rows[0].id,
-          loaded.tournament.fee,
+          settingsUtil.entryFeeForCategory(loaded.tournament, category),
           gateway,
           payMode === "manual_qr" ? "AWAITING_RECEIPT" : null
         ]
@@ -897,8 +929,20 @@ mountTournamentRoute("post", "/register", async (req, res) => {
     });
 
     if (saved.duplicate) {
-      res.json({ record: await findActiveRegistrationByPhone(slug, phone, category), existing: true });
+      res.status(409).json({ error: duplicateRegistrationMessage(category) });
       return;
+    }
+
+    let finalPhotoUrl = saved.photoUrl;
+    if (req.file) {
+      const playerRow = await db.query("SELECT id FROM players WHERE whatsapp_number = $1", [phone]);
+      if (playerRow.rows[0]) {
+        finalPhotoUrl = await photoStorage.savePlayerPhoto(playerRow.rows[0].id, req.file);
+        await db.query("UPDATE players SET photo_url = $2, updated_at = NOW() WHERE id = $1", [
+          playerRow.rows[0].id,
+          finalPhotoUrl
+        ]);
+      }
     }
 
     const record = db.buildRegistrationClient({
@@ -915,15 +959,12 @@ mountTournamentRoute("post", "/register", async (req, res) => {
       sleeve,
       cricheroes,
       instagram,
-      photoUrl: saved.photoUrl,
+      photoUrl: finalPhotoUrl,
       registeredAt: saved.registeredAt,
       extraFields,
       verificationStatus
     });
-    res.status(201).json({
-      record,
-      existing: false
-    });
+    res.status(201).json({ record });
     setImmediate(() => {
       notifications.notifyReserved(loaded.tournament, record).catch((err) => {
         console.error("Reserved WhatsApp:", err.message);
@@ -931,17 +972,8 @@ mountTournamentRoute("post", "/register", async (req, res) => {
     });
   } catch (err) {
     if (err.code === "23505") {
-      const conflictLoaded = await db.loadTournamentFromParams(req.params, { sponsors: false });
-      const phone = String(req.body.phone || "").replace(/\D/g, "");
       const category = String(req.body.category || "").trim();
-      if (conflictLoaded) {
-        res.json({
-          record: await findActiveRegistrationByPhone(conflictLoaded.row.slug, phone, category),
-          existing: true
-        });
-      } else {
-        res.status(409).json({ error: "This number is already registered for that category" });
-      }
+      res.status(409).json({ error: duplicateRegistrationMessage(category) });
       return;
     }
     res.status(500).json({ error: err.message });
@@ -1067,7 +1099,7 @@ mountTournamentRoute("post", "/registrations/:id/payment-order", async (req, res
       res.json({ record: await findRegistration(slug, req.params.id), alreadyPaid: true });
       return;
     }
-    const amountPaise = razorpay.amountToPaise(row.entry_fee);
+    const amountPaise = razorpay.amountToPaise(Number(row.amount != null ? row.amount : row.entry_fee));
     if (amountPaise < 100) {
       res.status(400).json({ error: "Entry fee must be at least ₹1" });
       return;
@@ -1350,6 +1382,11 @@ app.put("/api/admin/tournaments/:slug", requireSuperadmin, async (req, res) => {
     const seasonSlug = slugify(req.body.seasonSlug || existing.season_slug);
     const nextSlug = db.combinedSlug(tournamentSlug, seasonSlug);
     const settings = db.settingsFromClient(req.body);
+    const categoryFeeError = settingsUtil.validateCategoryFees(settings);
+    if (categoryFeeError) {
+      res.status(400).json({ error: categoryFeeError });
+      return;
+    }
     const saved = await db.updateTournamentFromAdmin(existing, {
       tournamentSlug,
       seasonSlug,

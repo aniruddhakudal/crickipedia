@@ -67,10 +67,14 @@ function normalizeCategories(raw) {
       continue;
     }
     if (item && typeof item === "object" && String(item.name || "").trim()) {
+      const feeRaw = item.fee;
+      const fee =
+        feeRaw != null && feeRaw !== "" && Number.isFinite(Number(feeRaw)) ? Number(feeRaw) : null;
       out.push({
         name: String(item.name).trim(),
         whatsappGroupUrl: String(item.whatsappGroupUrl || "").trim(),
-        qrImageUrl: String(item.qrImageUrl || "").trim()
+        qrImageUrl: String(item.qrImageUrl || "").trim(),
+        fee
       });
     }
   }
@@ -88,9 +92,33 @@ function categoryNames(categories) {
   return normalizeCategories(categories).map((item) => item.name);
 }
 
+function findCategoryByName(categories, categoryName) {
+  const key = String(categoryName || "").trim().toLowerCase();
+  if (!key) return null;
+  return (
+    normalizeCategories(categories).find(
+      (item) => String(item.name || "").trim().toLowerCase() === key
+    ) || null
+  );
+}
+
 function groupLinkForCategory(categories, categoryName) {
-  const match = normalizeCategories(categories).find((item) => item.name === categoryName);
+  const match = findCategoryByName(categories, categoryName);
   return match ? match.whatsappGroupUrl || "" : "";
+}
+
+function entryFeeForCategory(tournament, categoryName) {
+  const base = Number(tournament.fee || 0);
+  const match = findCategoryByName(tournament.categories, categoryName);
+  if (match && match.fee != null && Number.isFinite(Number(match.fee))) {
+    return Number(match.fee);
+  }
+  return base;
+}
+
+function formatFeeForCategory(tournament, categoryName) {
+  const currency = tournament.currency || "₹";
+  return currency + entryFeeForCategory(tournament, categoryName);
 }
 
 function resolvePaymentQrImageUrl(tournament, categoryName) {
@@ -127,7 +155,10 @@ function mergeWhatsappSettings(settings) {
   return out;
 }
 
-function formatFee(tournament) {
+function formatFee(tournament, categoryName) {
+  if (categoryName != null && String(categoryName).trim()) {
+    return formatFeeForCategory(tournament, categoryName);
+  }
   const currency = tournament.currency || "₹";
   return currency + Number(tournament.fee || 0);
 }
@@ -139,7 +170,7 @@ function buildMessageContext(tournament, record, extra) {
     registrationId: record.id || record.registration_number || "",
     name: record.name || record.full_name || "",
     category: record.category || "",
-    fee: formatFee(tournament),
+    fee: formatFee(tournament, record.category),
     groupLink: groupLinkForCategory(tournament.categories, record.category) || "",
     paymentInstructions: payment.paymentInstructions || "",
     rejectReason: (extra && extra.rejectReason) || ""
@@ -305,9 +336,23 @@ function customFormFields(tournament) {
   return normalizeFormFields(tournament.formFields, tournament.fields).filter((f) => f.source === "custom");
 }
 
+function parseCustomFieldsInput(customValues) {
+  if (customValues == null) return {};
+  if (typeof customValues === "string") {
+    try {
+      const parsed = JSON.parse(customValues);
+      return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+    } catch (e) {
+      return {};
+    }
+  }
+  if (typeof customValues === "object" && !Array.isArray(customValues)) return customValues;
+  return {};
+}
+
 function validateCustomRegistrationFields(tournament, customValues) {
   const errors = [];
-  const values = customValues && typeof customValues === "object" ? customValues : {};
+  const values = parseCustomFieldsInput(customValues);
   const isEmpty = (value) => value == null || String(value).trim() === "";
 
   customFormFields(tournament).forEach((field) => {
@@ -337,7 +382,7 @@ function validateCustomRegistrationFields(tournament, customValues) {
 }
 
 function sanitizeCustomFieldValues(tournament, customValues) {
-  const values = customValues && typeof customValues === "object" ? customValues : {};
+  const values = parseCustomFieldsInput(customValues);
   const out = {};
   customFormFields(tournament).forEach((field) => {
     const raw = values[field.id];
@@ -347,6 +392,16 @@ function sanitizeCustomFieldValues(tournament, customValues) {
     out[field.id] = value;
   });
   return out;
+}
+
+function validateCategoryFees(settings) {
+  const cats = normalizeCategories(settings && settings.categories);
+  for (const cat of cats) {
+    if (cat.fee == null || !Number.isFinite(Number(cat.fee))) {
+      return `Set an entry fee for category "${cat.name}".`;
+    }
+  }
+  return "";
 }
 
 function validateRegistrationFields(tournament, body) {
@@ -381,6 +436,9 @@ module.exports = {
   normalizeCategories,
   categoryNames,
   groupLinkForCategory,
+  findCategoryByName,
+  entryFeeForCategory,
+  formatFeeForCategory,
   resolvePaymentQrImageUrl,
   mergePaymentSettings,
   mergeWhatsappSettings,
@@ -398,5 +456,7 @@ module.exports = {
   fieldsObjectFromFormFields,
   customFormFields,
   sanitizeCustomFieldValues,
+  parseCustomFieldsInput,
+  validateCategoryFees,
   validateRegistrationFields
 };

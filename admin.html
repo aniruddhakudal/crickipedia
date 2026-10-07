@@ -44,6 +44,11 @@ label{font-weight:700;font-size:13px;display:grid;gap:6px}
 .check input{width:auto}
 .rowline{display:grid;grid-template-columns:70px 1fr 1fr auto;gap:8px;margin-bottom:8px;align-items:center}
 .srow{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;margin-bottom:8px}
+.srow.cat-row{grid-template-columns:minmax(100px,1fr) minmax(96px,120px) minmax(120px,1.2fr) auto}
+.srow.cat-head{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:#5a6b64;margin-bottom:4px}
+.srow.cat-head span{padding:0 2px}
+.cat-fee-summary{margin:0 0 12px;padding:10px 12px;background:#f0f7f3;border-radius:10px;font-size:13px;line-height:1.5}
+.cat-fee-summary strong{display:block;margin-bottom:4px}
 .cat-block{margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid #e8f0ec}
 .cat-block:last-child{border-bottom:0;margin-bottom:0;padding-bottom:0}
 .cat-qr-row{display:grid;grid-template-columns:minmax(0,1.4fr) auto auto;gap:8px;align-items:center;margin-top:8px;padding:10px 12px;background:#f4faf7;border-radius:12px;border:1px solid #d7e8de}
@@ -168,7 +173,7 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
       <div class="grid3">
         <label>Opens<input id="registrationStart" type="date"></label>
         <label>Ends<input id="registrationEnd" type="date"></label>
-        <label>Entry fee<input id="fee" type="number" min="0" step="1"></label>
+        <label>Default entry fee (fallback)<input id="fee" type="number" min="0" step="1" title="Used only if a category has no fee set. Set fees on each category below."></label>
         <label>Currency symbol<input id="currency" maxlength="4"></label>
       </div>
       <div class="grid2" style="margin-top:14px">
@@ -266,8 +271,12 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
         <label class="check"><input id="showPublicRoster" type="checkbox"> Show &quot;View registered players&quot; on registration page</label>
       </div>
       <div class="section">
-        <h3>Registration categories</h3>
-        <p class="muted">These appear in the player dropdown. Add, rename, or remove any. With QR + receipt payment, set a separate payment QR per category below each row.</p>
+        <h3>Registration categories &amp; entry fees</h3>
+        <p class="muted">Each category can have its own entry fee, WhatsApp group, and (optional) payment QR. Players see the fee for their category on the registration page, in UPI/QR amounts, and in payment records.</p>
+        <div id="categoryFeeSummary" class="cat-fee-summary hidden"></div>
+        <div class="srow cat-row cat-head" aria-hidden="true">
+          <span>Category name</span><span>Entry fee</span><span>WhatsApp group link</span><span></span>
+        </div>
         <div id="categoryRows"></div>
         <button class="btn ghost" type="button" id="addCategory">Add category</button>
       </div>
@@ -572,6 +581,24 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
     img.style.display = "block";
   }
 
+  function refreshCategoryFeeSummary() {
+    var box = document.getElementById("categoryFeeSummary");
+    if (!box) return;
+    var cur = document.getElementById("currency").value || "₹";
+    var cats = readCategories();
+    if (!cats.length) {
+      box.classList.add("hidden");
+      box.innerHTML = "";
+      return;
+    }
+    var lines = cats.map(function (c) {
+      var fee = c.fee != null && !isNaN(Number(c.fee)) ? cur + c.fee : "(set fee)";
+      return C.escapeHtml(c.name) + ": " + fee;
+    });
+    box.innerHTML = "<strong>Configured fees (register page)</strong>" + lines.join(" · ");
+    box.classList.remove("hidden");
+  }
+
   function renderCategories(categories) {
     var list = C.normalizeCategories(categories);
     var showQr = isManualQrPayment();
@@ -585,10 +612,12 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
           '<p class="muted">Players in <strong>' + C.escapeHtml(item.name) + "</strong> see this QR instead of the default when set.</p></div>"
         : "";
       return '<div class="cat-block">' +
-        '<div class="srow">' +
+        '<div class="srow cat-row">' +
         '<input data-cat="' + index + '" data-k="name" value="' + C.escapeHtml(item.name) + '" placeholder="Category name">' +
+        '<input data-cat="' + index + '" data-k="fee" type="number" min="0" step="1" required value="' +
+        (item.fee != null && item.fee !== "" ? C.escapeHtml(String(item.fee)) : "") +
+        '" placeholder="Entry fee" title="Fee for this category">' +
         '<input data-cat="' + index + '" data-k="group" value="' + C.escapeHtml(item.whatsappGroupUrl || "") + '" placeholder="WhatsApp group invite link">' +
-        '<span></span>' +
         '<button class="btn ghost" type="button" data-remove-cat="' + index + '">Remove</button></div>' +
         qrRow +
         "</div>";
@@ -598,6 +627,7 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
         if (item.qrImageUrl) refreshCategoryQrPreview(index, item.name, item.qrImageUrl);
       });
     }
+    refreshCategoryFeeSummary();
   }
 
   function readFormFields() {
@@ -693,11 +723,16 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
       var groupEl = document.querySelector('[data-cat="' + i + '"][data-k="group"]');
       if (!nameEl || !nameEl.value.trim()) continue;
       var qrEl = document.querySelector('[data-cat="' + i + '"][data-k="qrImageUrl"]');
-      rows.push({
+      var feeEl = document.querySelector('[data-cat="' + i + '"][data-k="fee"]');
+      var row = {
         name: nameEl.value.trim(),
         whatsappGroupUrl: groupEl ? groupEl.value.trim() : "",
         qrImageUrl: qrEl ? qrEl.value.trim() : ""
-      });
+      };
+      if (feeEl && feeEl.value.trim() !== "" && !isNaN(Number(feeEl.value))) {
+        row.fee = Number(feeEl.value);
+      }
+      rows.push(row);
     }
     return rows;
   }
@@ -1183,6 +1218,13 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
       return;
     }
     var next = collect();
+    var cats = next.categories || [];
+    for (var ci = 0; ci < cats.length; ci += 1) {
+      if (cats[ci].fee == null || cats[ci].fee === "" || isNaN(Number(cats[ci].fee))) {
+        toast("Set an entry fee for each category (row: " + (cats[ci].name || "unnamed") + ").");
+        return;
+      }
+    }
     var previousSlug = current.slug;
     var saveBtn = document.getElementById("saveBtn");
     saveBtn.disabled = true;
@@ -1282,10 +1324,17 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
 
   document.getElementById("addCategory").addEventListener("click", function () {
     var cats = readCategories();
-    cats.push({ name: "New category", whatsappGroupUrl: "", qrImageUrl: "" });
+    cats.push({ name: "New category", whatsappGroupUrl: "", qrImageUrl: "", fee: null });
     renderCategories(cats);
     dirty = true;
   });
+  document.getElementById("categoryRows").addEventListener("input", function (event) {
+    if (event.target && event.target.matches("[data-cat][data-k]")) {
+      refreshCategoryFeeSummary();
+      dirty = true;
+    }
+  });
+  document.getElementById("currency").addEventListener("input", refreshCategoryFeeSummary);
   document.getElementById("paymentMode").addEventListener("change", togglePaymentSections);
   document.getElementById("qrSource").addEventListener("change", toggleQrSourceFields);
   document.getElementById("qrFile").addEventListener("change", async function (event) {

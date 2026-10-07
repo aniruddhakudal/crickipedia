@@ -438,12 +438,31 @@ input:focus,select:focus{border-color:var(--green2);background:var(--surface);bo
   document.getElementById("heroSub").textContent = tournament.heroSub || "";
   document.getElementById("noticeTitle").textContent = tournament.noticeTitle || "Important";
   document.getElementById("noticeText").textContent = tournament.notice || "";
-  document.getElementById("feeAmount").textContent = C.formatMoney(tournament);
+  function selectedCategoryName() {
+    var el = document.getElementById("category");
+    var cat = el ? el.value.trim() : "";
+    return cat || undefined;
+  }
+  function updateFeeDisplay() {
+    var cat = selectedCategoryName();
+    var heroFee = document.getElementById("heroFeeBadge");
+    if (!cat && C.categoryFeesConfigured(tournament)) {
+      var range = C.feeRangeLabel(tournament);
+      document.getElementById("feeAmount").textContent = range;
+      document.getElementById("infoFee").textContent = "Select a category — fee varies";
+      document.getElementById("payBtn").textContent = "Pay after you register";
+      if (heroFee) heroFee.textContent = "💰 Entry Fee " + range;
+      return;
+    }
+    var amount = C.formatMoney(tournament, cat);
+    document.getElementById("feeAmount").textContent = amount;
+    document.getElementById("infoFee").textContent = cat ? amount + " (" + cat + ")" : amount + " per player";
+    document.getElementById("payBtn").textContent = "Pay " + amount + " now";
+    if (heroFee) heroFee.textContent = "💰 Entry Fee " + amount;
+  }
   document.getElementById("infoDates").textContent = C.formatDateRange(tournament);
-  document.getElementById("infoFee").textContent = C.formatMoney(tournament) + " per player";
   document.getElementById("whatsNext").textContent = tournament.whatsNext || "";
   document.getElementById("footerText").textContent = "© 2026 " + (tournament.shortName || tournament.name) + " • Crickipedia";
-  document.getElementById("payBtn").textContent = "Pay " + C.formatMoney(tournament) + " now";
 
   function applyPaymentUi(cfg) {
     if (!cfg) return;
@@ -474,8 +493,7 @@ input:focus,select:focus{border-color:var(--green2);background:var(--surface);bo
   }
 
   function paymentQrCategoryName() {
-    var cat = val("category");
-    return cat ? cat : undefined;
+    return selectedCategoryName();
   }
 
   function defaultPaymentQrStored() {
@@ -553,6 +571,7 @@ input:focus,select:focus{border-color:var(--green2);background:var(--surface);bo
 
   function refreshFormPaymentQr() {
     fillPaymentQrWrap(document.getElementById("formQrWrap"), paymentQrCategoryName());
+    updateFeeDisplay();
   }
 
   function setupFormPaymentUi() {
@@ -614,7 +633,7 @@ input:focus,select:focus{border-color:var(--green2);background:var(--surface);bo
   document.getElementById("badges").innerHTML = [
     '<span class="badge">' + (state === "OPEN" ? "🟢 " : state === "CLOSED" ? "🔴 " : "🟡 ") + C.escapeHtml(C.stateLabel(state)) + "</span>",
     '<span class="badge">📅 ' + C.escapeHtml(C.formatDateRange(tournament)) + "</span>",
-    '<span class="badge">💰 Entry Fee ' + C.escapeHtml(C.formatMoney(tournament)) + "</span>"
+    '<span class="badge" id="heroFeeBadge">💰 Entry Fee ' + C.escapeHtml(C.formatMoney(tournament)) + "</span>"
   ].join("");
 
   var skills = tournament.skills && tournament.skills.length ? tournament.skills : C.defaultTournament().skills;
@@ -636,7 +655,8 @@ input:focus,select:focus{border-color:var(--green2);background:var(--surface);bo
   }
   var categories = C.normalizeCategories(tournament.categories);
   var categoryOptionsHtml = '<option value="">Select category</option>' + categories.map(function (item) {
-    return '<option value="' + C.escapeHtml(item.name) + '">' + C.escapeHtml(item.name) + "</option>";
+    var feeLabel = " — " + C.formatMoney(tournament, item.name);
+    return '<option value="' + C.escapeHtml(item.name) + '">' + C.escapeHtml(item.name + feeLabel) + "</option>";
   }).join("");
 
   function fieldSuffixFromMode(mode) {
@@ -824,6 +844,7 @@ input:focus,select:focus{border-color:var(--green2);background:var(--surface);bo
     cat.addEventListener("change", function () {
       refreshFormPaymentQr();
       checkDuplicate();
+      updateFeeDisplay();
     });
   }
   renderOrderedFormFields();
@@ -881,6 +902,7 @@ input:focus,select:focus{border-color:var(--green2);background:var(--surface);bo
   }
 
   fillForm(C.getDraft(tournament));
+  updateFeeDisplay();
 
   function persistDraft() {
     C.saveDraft(tournament, {
@@ -1019,6 +1041,10 @@ input:focus,select:focus{border-color:var(--green2);background:var(--surface);bo
     if (hideQr) {
       qrWrap.innerHTML = "";
       qrWrap.classList.add("hidden");
+      if (!showReceiptFields && record.verificationStatus !== "REJECTED") {
+        box.classList.add("hidden");
+        return;
+      }
       if (titleEl) titleEl.textContent = "Payment receipt";
       document.getElementById("manualPayInstructions").textContent = showReceiptFields
         ? "Upload your payment receipt below to finish verification."
@@ -1124,37 +1150,43 @@ input:focus,select:focus{border-color:var(--green2);background:var(--surface);bo
     }).catch(function () { return record; });
   }
 
+  function showFormError(message) {
+    var hint = document.getElementById("dupHint");
+    hint.classList.remove("hidden");
+    hint.textContent = message;
+    hint.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
   document.getElementById("regForm").addEventListener("submit", async function (event) {
     event.preventDefault();
+    document.getElementById("dupHint").classList.add("hidden");
     var phone = val("phone");
-    var existing = lastExisting;
     var category = val("category");
-    if (!existing && !(lastLookupPhone === phone && lastLookupCategory === category && lastLookupClear)) {
-      existing = await checkDuplicate();
-    }
-    if (existing) {
-      showExisting(existing, true);
-      sendPhoto(existing, photoFile);
-      return;
-    }
     var skill = document.querySelector('input[name="skill"]:checked')?.value;
     var receiptFile = document.getElementById("formReceiptFile").files[0];
     var receiptUpi = document.getElementById("formReceiptUpi").value.trim();
     if (fm("photo") === "required" && !photoFile) {
-      document.getElementById("dupHint").classList.remove("hidden");
-      document.getElementById("dupHint").textContent = "Please add a profile photo.";
+      showFormError("Please add a profile photo.");
+      return;
+    }
+    if (fm("category") === "required" && !category) {
+      showFormError("Please select a category.");
+      return;
+    }
+    var existing = await checkDuplicate();
+    if (existing) {
+      var catNote = category ? " in " + category : "";
+      showFormError("This WhatsApp number is already registered" + catNote + ". Use “View registration” above the number field if you need your confirmation.");
       return;
     }
     if (paymentCfg && paymentCfg.mode === "manual_qr") {
       var pay = paymentCfg.payment || {};
       if (pay.receiptImage === "required" && !receiptFile) {
-        document.getElementById("dupHint").classList.remove("hidden");
-        document.getElementById("dupHint").textContent = "Please upload your payment receipt screenshot.";
+        showFormError("Please upload your payment receipt screenshot.");
         return;
       }
       if (pay.receiptUpiRef === "required" && !receiptUpi) {
-        document.getElementById("dupHint").classList.remove("hidden");
-        document.getElementById("dupHint").textContent = "Please enter your UPI transaction ID.";
+        showFormError("Please enter your UPI transaction ID.");
         return;
       }
     }
@@ -1167,7 +1199,7 @@ input:focus,select:focus{border-color:var(--green2);background:var(--surface);bo
         name: val("name"),
         dob: val("dob"),
         flat: val("flat"),
-        category: val("category"),
+        category: category,
         phone: phone,
         skill: skill,
         jersey: val("jersey"),
@@ -1176,14 +1208,13 @@ input:focus,select:focus{border-color:var(--green2);background:var(--surface);bo
         cricheroes: val("cricheroes"),
         instagram: val("instagram"),
         customFields: collectCustomFieldValues()
-      }, preview);
+      }, preview, photoFile || undefined);
       C.clearDraft(tournament);
       document.getElementById("successEmoji").textContent = "✅";
       var record = result.record;
       currentRecord = record;
-      skipSuccessPaymentQr = !result.existing;
-      showExisting(record, result.existing);
-      applySuccessMessage(record, !!result.existing);
+      skipSuccessPaymentQr = true;
+      showExisting(record, false);
       updatePayUi(record);
       submitBtn.disabled = false;
       submitBtn.textContent = submitLabel;
@@ -1191,18 +1222,18 @@ input:focus,select:focus{border-color:var(--green2);background:var(--surface);bo
         C.api.uploadReceipt(tournament, record.id, receiptFile, receiptUpi).then(function (updated) {
           currentRecord = updated;
           updatePayUi(updated);
-          applySuccessMessage(updated, result.existing);
+          applySuccessMessage(updated, false);
         }).catch(function (receiptErr) {
-          document.getElementById("dupHint").classList.remove("hidden");
-          document.getElementById("dupHint").textContent = receiptErr.message || "Registered, but receipt upload failed. Submit it on the next screen.";
+          showFormError(receiptErr.message || "Registered, but receipt upload failed. Submit it on the next screen.");
         });
       }
-      sendPhoto(record, photoFile).then(function (updated) {
-        currentRecord = updated;
-      });
+      if (photoFile && !record.photoUrl) {
+        sendPhoto(record, photoFile).then(function (updated) {
+          currentRecord = updated;
+        });
+      }
     } catch (err) {
-      document.getElementById("dupHint").classList.remove("hidden");
-      document.getElementById("dupHint").textContent = err.message || "Could not save. Try again.";
+      showFormError(err.message || "Could not save. Try again.");
       submitBtn.disabled = false;
       submitBtn.textContent = submitLabel;
     }

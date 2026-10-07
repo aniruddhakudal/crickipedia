@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS registrations (
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_registrations_active_player_category
-  ON registrations (tournament_id, player_id, COALESCE(category, ''))
+  ON registrations (tournament_id, player_id, LOWER(TRIM(COALESCE(category, ''))))
   WHERE status <> 'RECEIPT_REJECTED';
 
 CREATE TABLE IF NOT EXISTS payments (
