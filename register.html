@@ -24,6 +24,8 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;l
 .hero .sub{font-size:1.05rem;opacity:.9;margin:0;line-height:1.55}
 .badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:24px}
 .badge{background:rgba(255,255,255,.14);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.22);padding:8px 14px;border-radius:999px;font-size:.8rem;font-weight:600}
+.badge.hero-fee-cat.badge-active{background:rgba(255,255,255,.26);border-color:rgba(255,215,120,.55);box-shadow:0 0 0 1px rgba(255,215,120,.25)}
+#heroFeeBadges{display:contents}
 .grid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,.75fr);gap:28px;margin-top:-32px;position:relative;z-index:2;padding-bottom:40px}
 .card{background:var(--surface);border-radius:24px;padding:28px;box-shadow:var(--shadow);margin-bottom:24px;border:1px solid var(--line)}
 .card h3{margin:0;font-size:1.2rem;font-weight:800;letter-spacing:-.02em}
@@ -443,22 +445,38 @@ input:focus,select:focus{border-color:var(--green2);background:var(--surface);bo
     var cat = el ? el.value.trim() : "";
     return cat || undefined;
   }
+  function renderHeroFeeBadges(selectedCat) {
+    var cats = C.normalizeCategories(tournament.categories);
+    var sel = selectedCat ? String(selectedCat).trim().toLowerCase() : "";
+    var feeHtml;
+    if (cats.length && C.categoryFeesConfigured(tournament)) {
+      feeHtml = cats.map(function (c) {
+        var name = c.name;
+        var active = sel && String(name).trim().toLowerCase() === sel;
+        var fee = C.formatMoney(tournament, name);
+        return '<span class="badge hero-fee-cat' + (active ? " badge-active" : "") + '" data-cat-fee="' + C.escapeHtml(name) + '">💰 ' +
+          C.escapeHtml(name) + " " + C.escapeHtml(fee) + "</span>";
+      }).join("");
+    } else {
+      feeHtml = '<span class="badge hero-fee-cat">💰 Entry fee ' + C.escapeHtml(C.formatMoney(tournament)) + "</span>";
+    }
+    var wrap = document.getElementById("heroFeeBadges");
+    if (wrap) wrap.innerHTML = feeHtml;
+  }
+
   function updateFeeDisplay() {
     var cat = selectedCategoryName();
-    var heroFee = document.getElementById("heroFeeBadge");
+    renderHeroFeeBadges(cat);
     if (!cat && C.categoryFeesConfigured(tournament)) {
-      var range = C.feeRangeLabel(tournament);
-      document.getElementById("feeAmount").textContent = range;
-      document.getElementById("infoFee").textContent = "Select a category — fee varies";
+      document.getElementById("feeAmount").textContent = C.feeRangeLabel(tournament);
+      document.getElementById("infoFee").textContent = "Select a category — fees listed above";
       document.getElementById("payBtn").textContent = "Pay after you register";
-      if (heroFee) heroFee.textContent = "💰 Entry Fee " + range;
       return;
     }
     var amount = C.formatMoney(tournament, cat);
     document.getElementById("feeAmount").textContent = amount;
     document.getElementById("infoFee").textContent = cat ? amount + " (" + cat + ")" : amount + " per player";
     document.getElementById("payBtn").textContent = "Pay " + amount + " now";
-    if (heroFee) heroFee.textContent = "💰 Entry Fee " + amount;
   }
   document.getElementById("infoDates").textContent = C.formatDateRange(tournament);
   document.getElementById("whatsNext").textContent = tournament.whatsNext || "";
@@ -633,8 +651,9 @@ input:focus,select:focus{border-color:var(--green2);background:var(--surface);bo
   document.getElementById("badges").innerHTML = [
     '<span class="badge">' + (state === "OPEN" ? "🟢 " : state === "CLOSED" ? "🔴 " : "🟡 ") + C.escapeHtml(C.stateLabel(state)) + "</span>",
     '<span class="badge">📅 ' + C.escapeHtml(C.formatDateRange(tournament)) + "</span>",
-    '<span class="badge" id="heroFeeBadge">💰 Entry Fee ' + C.escapeHtml(C.formatMoney(tournament)) + "</span>"
+    '<span id="heroFeeBadges"></span>'
   ].join("");
+  renderHeroFeeBadges(selectedCategoryName());
 
   var skills = tournament.skills && tournament.skills.length ? tournament.skills : C.defaultTournament().skills;
   document.getElementById("skills").innerHTML = skills.map(function (skill) {
