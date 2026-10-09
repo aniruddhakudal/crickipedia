@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Season stats — Crickipedia</title>
+<script>(function(){try{var t=localStorage.getItem("crickipedia_ui_theme");document.documentElement.setAttribute("data-ui-theme",t==="dark"?"dark":"bright");}catch(e){}})();</script>
+<link rel="stylesheet" href="/cricket-theme.css">
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:"DM Sans",Inter,system-ui,sans-serif;color:var(--text,#0f1f17)}
+.stats-toolbar{display:flex;justify-content:flex-end;margin-bottom:8px}
+.wrap{max-width:1100px;margin:0 auto;padding:20px 16px 48px}
+.top{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between;margin-bottom:20px}
+.top h1{margin:0;font-size:1.6rem}
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:end}
+label{font-size:12px;font-weight:800;display:grid;gap:4px;color:var(--muted,#5a6b64)}
+select{padding:10px 12px;border-radius:10px;border:1px solid var(--line,#d7e3dd);font:inherit;background:var(--input-bg,#fff);min-width:120px}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
+.tab{border:1px solid var(--line);background:var(--surface,#fff);padding:10px 14px;border-radius:10px;font-weight:800;cursor:pointer;font-family:inherit}
+.tab.on{background:var(--green,#0b6b45);color:#fff;border-color:var(--green)}
+.panel{background:var(--surface,#fff);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow,0 8px 24px rgba(15,31,23,.06));margin-bottom:16px}
+.chart-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.chart-box{min-height:280px}
+.chart-box--pie .chart-canvas-wrap{height:300px}
+.chart-box h3{margin:0 0 8px;font-size:15px}
+.chart-canvas-wrap{position:relative;height:240px}
+.muted{color:var(--muted);font-size:13px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:10px 8px;border-bottom:1px solid var(--line);text-align:left}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.status{font-size:12px;font-weight:700;color:var(--green)}
+.error{color:#b52e2e;font-weight:700}
+a.back{color:var(--green);font-weight:800;text-decoration:none}
+a.back:hover{text-decoration:underline}
+@media(max-width:640px){.chart-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body class="cricket-ui">
+<div class="wrap">
+  <div class="stats-toolbar">
+    <button type="button" class="ui-theme-toggle ui-theme-toggle--surface" data-ui-theme-toggle aria-label="Toggle theme">🌙 Dark</button>
+  </div>
+  <p><a class="back" id="backLink" href="/">← Back</a></p>
+  <div class="top">
+    <div>
+      <h1 id="pageTitle">Season stats</h1>
+      <p class="muted" id="subtitle">Leaderboards and charts for this tournament season.</p>
+      <p style="margin-top:12px"><a id="playersSearchLink" href="/players.html" style="color:var(--green);font-weight:800;text-decoration:none">Search player stats →</a></p>
+    </div>
+    <div class="controls">
+      <label>Division
+        <select id="gender">
+          <option value="men">Men</option>
+          <option value="women">Women</option>
+        </select>
+      </label>
+      <label>Edition
+        <select id="edition"></select>
+      </label>
+    </div>
+  </div>
+  <p class="status" id="freshness" aria-live="polite"></p>
+  <div class="tabs" id="boardTabs" role="tablist"></div>
+  <div id="loadError" class="error hidden"></div>
+  <div class="panel">
+    <div class="chart-grid" id="chartGrid"></div>
+  </div>
+  <div class="panel">
+    <h2 style="margin-top:0;font-size:1.1rem">Full table</h2>
+    <div style="overflow:auto">
+      <table>
+        <thead id="tableHead"></thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<script src="/app.js"></script>
+<script src="/stats.js"></script>
+</body>
+</html>

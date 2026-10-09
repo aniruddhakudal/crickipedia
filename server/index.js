@@ -12,6 +12,7 @@ const settingsUtil = require("./settings");
 const notifications = require("./notifications");
 const whatsapp = require("./whatsapp");
 const admins = require("./admins");
+const srplStats = require("./stats/srpl");
 
 const PORT = Number(process.env.PORT || 3000);
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || "admin";
@@ -57,6 +58,33 @@ function withUpload(fieldName) {
   };
 }
 
+const statsCsvUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 2 * 1024 * 1024 },
+  fileFilter(req, file, done) {
+    const name = String(file.originalname || "").toLowerCase();
+    const mime = String(file.mimetype || "").toLowerCase();
+    if (mime.includes("csv") || mime === "text/plain" || name.endsWith(".csv")) {
+      done(null, true);
+      return;
+    }
+    done(new Error("File must be a .csv"));
+  }
+});
+
+function withStatsCsvUpload(req, res, next) {
+  statsCsvUpload.single("csv")(req, res, function (err) {
+    if (err) {
+      const message = err.code === "LIMIT_FILE_SIZE"
+        ? "CSV must be 2 MB or smaller"
+        : (err.message || "Upload failed");
+      res.status(400).json({ error: message });
+      return;
+    }
+    next();
+  });
+}
+
 function adminTournamentSlug(req) {
   return decodeURIComponent(String(req.params.slug || "").trim());
 }
@@ -66,6 +94,112 @@ const app = express();
 app.get("/api/ping", (req, res) => {
   res.json({ ok: true, service: "crickipedia", ts: new Date().toISOString() });
 });
+
+app.get("/api/stats/srpl/manifest", (req, res) => {
+  try {
+    const manifest = srplStats.getManifest();
+    srplStats.sendJsonWithCache(res, manifest, hashManifestVersion(manifest));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/api/stats/srpl/:gender/:edition/players", (req, res) => {
+  try {
+    const players = srplStats.listPlayers(req.params.gender, req.params.edition);
+    srplStats.sendJsonWithCache(
+      res,
+      { players, gender: req.params.gender, edition: req.params.edition },
+      `players-${req.params.gender}-${req.params.edition}-${players.length}`
+    );
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.get("/api/stats/srpl/:gender/:edition/players/:playerId", (req, res) => {
+  try {
+    const profile = srplStats.getPlayerProfile(
+      req.params.gender,
+      req.params.edition,
+      req.params.playerId
+    );
+    if (!profile) {
+      res.status(404).json({ error: "Player not found" });
+      return;
+    }
+    srplStats.sendJsonWithCache(res, profile, profile.v);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.get("/api/stats/srpl/:gender/:edition/:board", (req, res) => {
+  try {
+    if (req.params.board === "players") {
+      res.status(404).json({ error: "Use /players or /players/:playerId" });
+      return;
+    }
+    const bundle = srplStats.readBundle(req.params.gender, req.params.edition, req.params.board);
+    if (!bundle) {
+      res.status(404).json({ error: "Stats not found for this selection" });
+      return;
+    }
+    srplStats.sendJsonWithCache(res, bundle, bundle.v);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.post("/api/admin/stats/srpl/upload", requireSuperadmin, withStatsCsvUpload, (req, res) => {
+  try {
+    if (!req.file || !req.file.buffer) {
+      res.status(400).json({ error: "No CSV uploaded" });
+      return;
+    }
+    const gender = req.body && req.body.gender;
+    const edition = req.body && req.body.edition;
+    const board = req.body && req.body.board;
+    const tournamentId = req.body && req.body.tournamentId;
+    const result = srplStats.saveCsvUpload({
+      gender,
+      edition,
+      board,
+      buffer: req.file.buffer,
+      originalName: req.file.originalname,
+      tournamentId
+    });
+    res.json({
+      ok: true,
+      fileName: result.fileName,
+      v: result.bundle.v,
+      updatedAt: result.bundle.updatedAt,
+      rowCount: result.bundle.rowCount,
+      manifest: srplStats.getManifest()
+    });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.post("/api/admin/stats/srpl/rebuild", requireSuperadmin, (req, res) => {
+  try {
+    const rebuilt = srplStats.rebuildAll();
+    res.json({
+      ok: true,
+      count: rebuilt.length,
+      manifest: srplStats.getManifest()
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+function hashManifestVersion(manifest) {
+  const crypto = require("crypto");
+  const payload = (manifest.datasets || []).map((d) => `${d.gender}/${d.edition}/${d.board}:${d.v}`).join("|");
+  return crypto.createHash("sha256").update(payload).digest("hex").slice(0, 12);
+}
 
 app.get("/api/webhooks/whatsapp", (req, res) => {
   try {
@@ -157,7 +291,9 @@ app.use("/uploads", express.static(uploadDir));
 
 const siteRoot = path.join(__dirname, "..");
 const publicPathReserved = new Set([
-  "api", "uploads", "admin.html", "index.html", "register.html", "app.js", "cricket-theme.css", "favicon.ico"
+  "api", "uploads", "admin.html", "index.html", "register.html", "stats.html", "stats.js",
+  "players.html", "players.js", "player.html", "player.js",
+  "app.js", "cricket-theme.css", "favicon.ico"
 ]);
 
 function sendHomePage(req, res) {
@@ -1821,6 +1957,16 @@ async function start() {
   const host = process.env.HOST || "0.0.0.0";
   app.listen(PORT, host, () => {
     console.log(`Crickipedia Phase 2 http://${host === "0.0.0.0" ? "localhost" : host}:${PORT}`);
+  });
+  setImmediate(function () {
+    try {
+      const rebuilt = srplStats.rebuildAll();
+      if (rebuilt.length) {
+        console.log(`SRPL stats: rebuilt ${rebuilt.length} leaderboard bundle(s).`);
+      }
+    } catch (err) {
+      console.error("SRPL stats rebuild:", err.message);
+    }
   });
   try {
     await db.connect();

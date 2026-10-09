@@ -148,6 +148,23 @@ function parseLegacySlug(slug) {
   return { tournamentSlug: text || "tournament", seasonSlug: "season" };
 }
 
+function normalizeLeaderboardStats(raw) {
+  if (!raw || raw.enabled === false) {
+    return { enabled: false, provider: "srpl", gender: "men", edition: "" };
+  }
+  const edition = String(raw.edition || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return {
+    enabled: Boolean(edition),
+    provider: "srpl",
+    gender: raw.gender === "women" ? "women" : "men",
+    edition
+  };
+}
+
 function toClient(row, sponsors) {
   const settings = row.settings || {};
   const tournamentSlug = row.tournament_slug || parseLegacySlug(row.slug).tournamentSlug;
@@ -175,6 +192,7 @@ function toClient(row, sponsors) {
     whatsNext: settings.whatsNext || "",
     supportWhatsapp: settings.supportWhatsapp || "",
     showPublicRoster: settings.showPublicRoster !== false,
+    leaderboardStats: normalizeLeaderboardStats(settings.leaderboardStats),
     formFields: settingsUtil.normalizeFormFields(settings.formFields, settings.fields),
     fields: settingsUtil.fieldsObjectFromFormFields(
       settingsUtil.normalizeFormFields(settings.formFields, settings.fields)
@@ -210,6 +228,7 @@ function settingsFromClient(body) {
     whatsNext: body.whatsNext || "",
     supportWhatsapp: body.supportWhatsapp || "",
     showPublicRoster: body.showPublicRoster !== false,
+    leaderboardStats: normalizeLeaderboardStats(body.leaderboardStats),
     formFields: settingsUtil.normalizeFormFields(body.formFields, body.fields),
     fields: settingsUtil.fieldsObjectFromFormFields(
       settingsUtil.normalizeFormFields(body.formFields, body.fields)

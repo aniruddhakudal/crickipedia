@@ -1,0 +1,29 @@
+player_id,name,team_id,team_name,total_match,innings,total_runs,highest_run,average,not_out,strike_rate,ball_faced,batting_hand,4s,6s,50s,100s
+6732597,Saiyam Shah,8816240,Buildsmart Cricsmart,4,4,99,31,33.00,1,137.50,72,RHB,5,8,0,0
+963036,Mayur Shah,8816240,Buildsmart Cricsmart,4,4,79,37,26.33,1,164.58,48,RHB,4,8,0,0
+1420452,Pavan Dayama,8816229,Dayama Daredevils,4,4,72,38,24.00,1,240.00,30,RHB,1,10,0,0
+9335161,Bhavesh Jain,8816225,Oswal Strikers,3,3,47,31,15.67,0,102.17,46,RHB,0,5,0,0
+36181203,Samyak Chopda,8816229,Dayama Daredevils,4,3,42,25,21.00,1,127.27,33,RHB,0,5,0,0
+27023592,Kanishk Jain,8816225,Oswal Strikers,3,3,35,13,35.00,2,116.67,30,RHB,0,3,0,0
+10731355,Smit Mehta,8816216,Ergo Royals,3,3,35,30,17.50,1,152.17,23,RHB,0,4,0,0
+36269858,Chirag Shah,8816216,Ergo Royals,3,3,35,32,17.50,1,109.38,32,-,1,3,0,0
+4204822,Hardik Shah,8816225,Oswal Strikers,3,3,34,16,11.33,0,113.33,30,RHB,3,1,0,0
+18608728,Jignesh Adesara,8816225,Oswal Strikers,3,2,26,14,13.00,0,152.94,17,RHB,2,2,0,0
+9077048,Viraj Dave,8816229,Dayama Daredevils,4,4,26,9,8.67,1,100.00,26,RHB,1,2,0,0
+9927909,Bhavin Oswal,8816229,Dayama Daredevils,4,2,14,14,14.00,1,140.00,10,-,0,2,0,0
+1457841,Sandesh Gandhi,8816216,Ergo Royals,3,3,14,13,4.67,0,58.33,24,RHB,0,1,0,0
+36224628,Rahul Porwal,8816216,Ergo Royals,3,3,12,11,6.00,1,60.00,20,-,1,0,0,0
+36228481,Krish Jain,8816216,Ergo Royals,3,3,11,8,3.67,0,78.57,14,-,0,1,0,0
+36225712,Dikshit Dhah,8816240,Buildsmart Cricsmart,4,1,7,7,-,1,140.00,5,RHB,1,0,0,0
+2903049,Sameer Jain,8816240,Buildsmart Cricsmart,4,3,7,4,2.33,0,53.85,13,RHB,0,0,0,0
+20304212,Mayank Parekh,8816240,Buildsmart Cricsmart,4,4,6,4,6.00,3,40.00,15,RHB,0,0,0,0
+12487826,Raj Jain,8816229,Dayama Daredevils,4,3,5,4,2.50,1,38.46,13,RHB,0,0,0,0
+20304589,Mayur,8816225,Oswal Strikers,3,2,4,4,4.00,1,66.67,6,RHB,0,0,0,0
+12119852,Siddharth Chopra,8816216,Ergo Royals,3,3,4,3,2.00,1,44.44,9,RHB,0,0,0,0
+32140378,Siddharth Gelda,8816240,Buildsmart Cricsmart,4,2,2,1,1.00,0,40.00,5,LHB,0,0,0,0
+36235416,Darshit Shah,8816229,Dayama Daredevils,4,3,2,1,-,3,13.33,15,RHB,0,0,0,0
+18615486,Loukik Shah,8816216,Ergo Royals,3,2,1,1,-,2,16.67,6,RHB,0,0,0,0
+28593615,Harsh Manish Thakkar,8816240,Buildsmart Cricsmart,4,2,1,1,1.00,1,50.00,2,-,0,0,0,0
+36235405,Pratik Bamb,8816229,Dayama Daredevils,4,4,1,1,0.25,0,11.11,9,RHB,0,0,0,0
+9117576,Divyam Jain,8816225,Oswal Strikers,3,0,0,0,-,0,0,0,RHB,0,0,0,0
+36269905,Raj Katariya,8816225,Oswal Strikers,3,0,0,0,-,0,0,0,-,0,0,0,0

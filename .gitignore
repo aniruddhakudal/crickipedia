@@ -4,4 +4,7 @@ node_modules/
 !.env.example
 uploads/*
 !uploads/.gitkeep
-data/
+data/*
+!data/srpl/
+!data/srpl/**
+data/srpl/_generated/

@@ -1,0 +1,22 @@
+player_id,name,team_id,team_name,total_match,innings,total_wickets,balls,highest_wicket,economy,SR,maidens,avg,runs,bowling_style,overs,dot_balls
+46442779,Stuti,12095860,Oswal Queens,4,4,4,24,2,3.25,6,0,3.25,13,-,4,13
+46441738,Pammi,12095836,ADs Diamond Divas,3,3,4,24,3,4,6,0,4,16,-,4,12
+36255377,Arya,12095836,ADs Diamond Divas,3,2,3,12,3,1.5,4,0,1,3,-,2,10
+34625143,Aarti Adesara,12095860,Oswal Queens,4,4,3,24,1,3,8,0,4,12,-,4,15
+19777044,Dharmishtha Soni,12095860,Oswal Queens,4,4,2,24,1,4.25,12,1,8.5,17,-,4,14
+46441784,Krupasankeshwaram,12095836,ADs Diamond Divas,3,2,2,12,1,6,6,0,6,12,-,2,5
+36255578,Ca Karuna Shah,12095871,Kotak Super Womens,3,2,2,12,1,6.5,6,0,6.5,13,-,2,4
+36255496,Palak,12095860,Oswal Queens,4,4,1,24,1,3,24,0,12,12,-,4,19
+30307740,Bhavna Jain,12095836,ADs Diamond Divas,3,3,1,18,1,4.67,18,0,14,14,Right-arm medium,3,9
+16555970,Chandrika Jain,12095871,Kotak Super Womens,3,3,1,18,1,4.67,18,0,14,14,Right-arm fast,3,10
+36251038,Divya Shah,12095836,ADs Diamond Divas,3,2,1,12,1,5,12,0,10,10,-,2,5
+17938918,Vishakha Oswal,12095860,Oswal Queens,4,4,1,24,1,5,24,0,20,20,-,4,16
+36241914,Krisha Jain,12095860,Oswal Queens,4,3,1,13,1,6,13,0,13,13,-,2.1,6
+46441757,Mehakshankeshwaram,12095836,ADs Diamond Divas,3,3,1,18,1,6.33,18,0,19,19,-,3,8
+36255662,Rakhi Shah,12095871,Kotak Super Womens,3,2,1,12,1,7.5,12,0,15,15,None,2,5
+46466582,Dviti Ranjeet Jain,12095871,Kotak Super Womens,3,1,0,6,0,3,0,0,0,3,-,1,3
+46440674,Bhakti Shah,12095871,Kotak Super Womens,3,3,0,18,0,4.33,0,0,0,13,-,3,9
+36254873,Payal Dayama,12095871,Kotak Super Womens,3,3,0,18,0,4.33,0,0,0,13,-,3,10
+36248177,Vanita Jain,12095871,Kotak Super Womens,3,2,0,12,0,5.5,0,0,0,11,-,2,5
+36269860,Asha Mehta,12095860,Oswal Queens,4,2,0,12,0,6,0,0,0,12,Right-arm medium,2,6
+46441731,Jayasankeshwaram,12095836,ADs Diamond Divas,3,2,0,12,0,9.5,0,0,0,19,-,2,6

@@ -412,7 +412,7 @@ html[data-ui-theme="bright"] .cricket-ui .tag.pending {
 
 .cricket-ui .btn.primary,
 .cricket-ui button.primary,
-.cricket-ui .btn:not(.ghost):not(.danger):not(.tab):not(.wa):not(.btn-primary):not(.btn-ghost):not(.btn-muted) {
+.cricket-ui .btn:not(.ghost):not(.danger):not(.tab):not(.wa):not(.btn-primary):not(.btn-ghost):not(.btn-muted):not(.roster-open):not(.stats-open) {
   background: var(--btn-primary);
   box-shadow: var(--btn-primary-shadow);
 }

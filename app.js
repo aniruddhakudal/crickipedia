@@ -248,7 +248,9 @@
   }
 
   var PATH_RESERVED = {
-    api: true, uploads: true, admin: true, "admin.html": true, "index.html": true, "register.html": true, "app.js": true
+    api: true, uploads: true, admin: true, "admin.html": true, "index.html": true, "register.html": true,
+    "stats.html": true, "stats.js": true, "players.html": true, "players.js": true,
+    "player.html": true, "player.js": true, "app.js": true
   };
 
   function parsePublicUrl() {
@@ -425,6 +427,20 @@
       hour: "numeric",
       minute: "2-digit"
     });
+  }
+
+  function roundStatNumber(value) {
+    if (value == null || value === "") return null;
+    var n = Number(value);
+    if (!Number.isFinite(n)) return null;
+    return Math.round(n * 100) / 100;
+  }
+
+  function formatStat(value) {
+    var n = roundStatNumber(value);
+    if (n == null) return "—";
+    if (Math.abs(n - Math.round(n)) < 1e-9) return String(Math.round(n));
+    return n.toFixed(2);
   }
 
   function resolvePhotoUrl(url) {
@@ -611,6 +627,35 @@
     }
     if (preview) path += "&preview=1";
     return path;
+  }
+
+  function normalizeLeaderboardStats(raw) {
+    if (!raw || raw.enabled === false) {
+      return { enabled: false, provider: "srpl", gender: "men", edition: "" };
+    }
+    var edition = slugify(String(raw.edition || ""));
+    return {
+      enabled: Boolean(edition),
+      provider: "srpl",
+      gender: raw.gender === "women" ? "women" : "men",
+      edition: edition
+    };
+  }
+
+  function tournamentStatsUrl(tournament) {
+    var ls = normalizeLeaderboardStats(tournament && tournament.leaderboardStats);
+    if (!ls.enabled) return null;
+    var params = new URLSearchParams();
+    params.set("gender", ls.gender);
+    params.set("edition", ls.edition);
+    var keys = tournamentKeys(tournament);
+    if (keys.tournament && keys.season) {
+      params.set("tournament", keys.tournament);
+      params.set("season", keys.season);
+    } else if (keys.slug) {
+      params.set("t", keys.slug);
+    }
+    return "/stats.html?" + params.toString();
   }
 
   function publicPathUrl(tournament) {
@@ -941,6 +986,60 @@
         link.download = slug + "-registrations.csv";
         link.click();
       });
+    },
+    statsManifest: function () {
+      return request("/api/stats/srpl/manifest");
+    },
+    statsBundle: function (gender, edition, board, version) {
+      var url =
+        "/api/stats/srpl/" + encodeURIComponent(gender) + "/" +
+        encodeURIComponent(edition) + "/" + encodeURIComponent(board);
+      if (version) url += "?v=" + encodeURIComponent(version);
+      return request(url);
+    },
+    uploadSrplStatsCsv: function (formData) {
+      return request("/api/admin/stats/srpl/upload", { method: "POST", body: formData });
+    },
+    rebuildSrplStats: function () {
+      return request("/api/admin/stats/srpl/rebuild", { method: "POST", body: {} });
+    },
+    statsPlayers: function (gender, edition) {
+      return request(
+        "/api/stats/srpl/" + encodeURIComponent(gender) + "/" + encodeURIComponent(edition) + "/players"
+      );
+    },
+    statsPlayer: function (gender, edition, playerId) {
+      return request(
+        "/api/stats/srpl/" + encodeURIComponent(gender) + "/" + encodeURIComponent(edition) +
+        "/players/" + encodeURIComponent(playerId)
+      );
+    },
+    playerProfileUrl: function (gender, edition, playerId, extraParams) {
+      var params = new URLSearchParams();
+      params.set("gender", gender);
+      params.set("edition", edition);
+      params.set("player", String(playerId));
+      if (extraParams) {
+        Object.keys(extraParams).forEach(function (key) {
+          if (extraParams[key] != null && extraParams[key] !== "") {
+            params.set(key, extraParams[key]);
+          }
+        });
+      }
+      return "/player.html?" + params.toString();
+    },
+    playersSearchUrl: function (gender, edition, extraParams) {
+      var params = new URLSearchParams();
+      params.set("gender", gender);
+      params.set("edition", edition);
+      if (extraParams) {
+        Object.keys(extraParams).forEach(function (key) {
+          if (extraParams[key] != null && extraParams[key] !== "") {
+            params.set(key, extraParams[key]);
+          }
+        });
+      }
+      return "/players.html?" + params.toString();
     }
   };
 
@@ -961,6 +1060,8 @@
     formatMoney: formatMoney,
     formatPrettyDate: formatPrettyDate,
     formatDateTime: formatDateTime,
+    roundStatNumber: roundStatNumber,
+    formatStat: formatStat,
     resolvePhotoUrl: resolvePhotoUrl,
     formatDateRange: formatDateRange,
     stateLabel: stateLabel,
@@ -994,6 +1095,14 @@
     paymentQrImageSrc: paymentQrImageSrc,
     publicUrl: publicUrl,
     publicPathUrl: publicPathUrl,
+    normalizeLeaderboardStats: normalizeLeaderboardStats,
+    tournamentStatsUrl: tournamentStatsUrl,
+    playerProfileUrl: function (gender, edition, playerId, extraParams) {
+      return api.playerProfileUrl(gender, edition, playerId, extraParams);
+    },
+    playersSearchUrl: function (gender, edition, extraParams) {
+      return api.playersSearchUrl(gender, edition, extraParams);
+    },
     waDigits: waDigits,
     waMeUrl: waMeUrl,
     registrationWaText: registrationWaText,

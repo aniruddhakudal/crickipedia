@@ -129,6 +129,7 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
   <div class="tabs">
     <button class="btn tab on superadmin-only" type="button" data-tab="customize" id="tabCustomize">Customize</button>
     <button class="btn tab" type="button" data-tab="players" id="tabPlayers">Players</button>
+    <button class="btn tab superadmin-only" type="button" data-tab="srplstats" id="tabSrplStats">SRPL stats</button>
     <span class="muted" id="roleBadge" style="margin-left:auto;font-size:13px;font-weight:700"></span>
   </div>
 
@@ -271,6 +272,20 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
         <label class="check"><input id="showPublicRoster" type="checkbox"> Show &quot;View registered players&quot; on registration page</label>
       </div>
       <div class="section">
+        <h3>Season leaderboard stats</h3>
+        <p class="muted">Shows a stats link on this tournament&apos;s registration page only (not on the Crickipedia home page). Uses CSV data uploaded under Admin → SRPL stats.</p>
+        <label class="check"><input id="statsEnabled" type="checkbox"> Show season stats on registration page</label>
+        <div class="grid2" style="margin-top:12px">
+          <label>Division
+            <select id="statsGender">
+              <option value="men">Men</option>
+              <option value="women">Women</option>
+            </select>
+          </label>
+          <label>Data edition (folder name)<input id="statsEdition" placeholder="e.g. srpl2" maxlength="32"></label>
+        </div>
+      </div>
+      <div class="section">
         <h3>Registration categories &amp; entry fees</h3>
         <p class="muted">Each category can have its own entry fee, WhatsApp group, and (optional) payment QR. Players see the fee for their category on the registration page, in UPI/QR amounts, and in payment records.</p>
         <div id="categoryFeeSummary" class="cat-fee-summary hidden"></div>
@@ -329,6 +344,55 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
       <button class="btn" type="button" id="saveBtn">Save tournament</button>
       <a class="btn ghost" id="previewBtn" href="index.html" target="_blank" rel="noopener">Preview as player</a>
       <button class="btn danger" type="button" id="deleteBtn">Delete tournament</button>
+    </div>
+  </section>
+
+  <section id="srplstats" class="hidden superadmin-only">
+    <div class="panel">
+      <h2 style="margin-top:0">SRPL leaderboard CSVs</h2>
+      <p class="muted">Upload CricHeroes leaderboard exports. Charts on the public stats page update within a minute (or immediately after upload). CSV is the source file; the server builds small JSON bundles for fast charts.</p>
+      <div class="grid3" style="margin-top:14px">
+        <label>Division
+          <select id="srplGender">
+            <option value="men">Men</option>
+            <option value="women">Women</option>
+          </select>
+        </label>
+        <label>Edition
+          <input id="srplEdition" placeholder="e.g. srpl2" maxlength="32">
+        </label>
+        <label>Board
+          <select id="srplBoard">
+            <option value="batting">Batting</option>
+            <option value="bowling">Bowling</option>
+            <option value="fielding">Fielding</option>
+            <option value="mvp">MVP</option>
+          </select>
+        </label>
+      </div>
+      <div class="grid2" style="margin-top:14px">
+        <label>CricHeroes tournament ID (optional)<input id="srplTournamentId" placeholder="From filename, e.g. 1809359"></label>
+        <label>CSV file<input type="file" id="srplCsvFile" accept=".csv,text/csv"></label>
+      </div>
+      <div class="actions">
+        <button class="btn" type="button" id="srplUploadBtn">Upload &amp; publish</button>
+        <button class="btn ghost" type="button" id="srplRebuildBtn">Rebuild all from disk</button>
+        <a class="btn ghost" href="/stats.html" target="_blank" rel="noopener">Open public stats page</a>
+      </div>
+      <p class="muted" id="srplUploadStatus" style="margin-top:12px"></p>
+    </div>
+    <div class="panel">
+      <h3 style="margin-top:0">Published datasets</h3>
+      <div style="overflow:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>Division</th><th>Edition</th><th>Board</th><th>Rows</th><th>Version</th><th>File</th><th>Updated</th>
+            </tr>
+          </thead>
+          <tbody id="srplManifestRows"></tbody>
+        </table>
+      </div>
     </div>
   </section>
 
@@ -434,7 +498,35 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
     });
     document.getElementById("customize").classList.toggle("hidden", name !== "customize");
     document.getElementById("players").classList.toggle("hidden", name !== "players");
+    document.getElementById("srplstats").classList.toggle("hidden", name !== "srplstats");
     if (name === "players") renderPlayers();
+    if (name === "srplstats") renderSrplManifest();
+  }
+
+  function renderSrplManifestTable(datasets) {
+    var tbody = document.getElementById("srplManifestRows");
+    if (!tbody) return;
+    var rows = datasets || [];
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="7" class="muted">No CSV files yet. Upload a leaderboard or add files under data/srpl/ on the server.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = rows.map(function (d) {
+      return "<tr><td>" + C.escapeHtml(d.gender) + "</td><td>" + C.escapeHtml(d.edition) +
+        "</td><td>" + C.escapeHtml(d.board) + "</td><td>" + C.escapeHtml(String(d.rowCount || 0)) +
+        "</td><td><code>" + C.escapeHtml(d.v || "") + "</code></td><td>" + C.escapeHtml(d.sourceFile || "") +
+        "</td><td>" + C.escapeHtml(C.formatDateTime(d.updatedAt)) + "</td></tr>";
+    }).join("");
+  }
+
+  async function renderSrplManifest() {
+    try {
+      var data = await C.api.statsManifest();
+      renderSrplManifestTable(data.datasets || []);
+    } catch (err) {
+      renderSrplManifestTable([]);
+      toast(err.message || "Could not load SRPL manifest");
+    }
   }
 
   function fillAdminTournamentPick() {
@@ -905,6 +997,12 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
       whatsNext: document.getElementById("whatsNext").value,
       supportWhatsapp: document.getElementById("supportWhatsapp").value.trim(),
       showPublicRoster: document.getElementById("showPublicRoster").checked,
+      leaderboardStats: {
+        enabled: document.getElementById("statsEnabled").checked,
+        provider: "srpl",
+        gender: document.getElementById("statsGender").value,
+        edition: document.getElementById("statsEdition").value.trim()
+      },
       formFields: readFormFields(),
       skills: readSkills().length ? readSkills() : C.defaultTournament().skills,
       categories: readCategories().length ? readCategories() : C.defaultTournament().categories,
@@ -960,6 +1058,10 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
     document.getElementById("whatsNext").value = tournament.whatsNext || "";
     loadFormFields(tournament);
     document.getElementById("showPublicRoster").checked = tournament.showPublicRoster !== false;
+    var lb = C.normalizeLeaderboardStats(tournament.leaderboardStats);
+    document.getElementById("statsEnabled").checked = lb.enabled;
+    document.getElementById("statsGender").value = lb.gender || "men";
+    document.getElementById("statsEdition").value = lb.edition || "";
     document.getElementById("jerseySizes").value = (tournament.jerseySizes || []).join(", ");
     document.getElementById("sleeves").value = (tournament.sleeves || []).join(", ");
     document.getElementById("jerseySizeChartUrl").value = tournament.jerseySizeChartUrl || "";
@@ -1244,8 +1346,58 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
   document.querySelectorAll(".tab").forEach(function (tab) {
     tab.addEventListener("click", function () {
       if (tab.dataset.tab === "customize" && !isSuperadmin()) return;
+      if (tab.dataset.tab === "srplstats" && !isSuperadmin()) return;
       switchToTab(tab.dataset.tab);
     });
+  });
+
+  document.getElementById("srplUploadBtn").addEventListener("click", async function () {
+    var fileInput = document.getElementById("srplCsvFile");
+    var file = fileInput.files && fileInput.files[0];
+    var edition = document.getElementById("srplEdition").value.trim();
+    if (!edition) {
+      toast("Edition is required (e.g. srpl2)");
+      return;
+    }
+    if (!file) {
+      toast("Choose a CSV file");
+      return;
+    }
+    var form = new FormData();
+    form.append("gender", document.getElementById("srplGender").value);
+    form.append("edition", edition);
+    form.append("board", document.getElementById("srplBoard").value);
+    var tid = document.getElementById("srplTournamentId").value.trim();
+    if (tid) form.append("tournamentId", tid);
+    form.append("csv", file);
+    var status = document.getElementById("srplUploadStatus");
+    this.disabled = true;
+    status.textContent = "Uploading…";
+    try {
+      var result = await C.api.uploadSrplStatsCsv(form);
+      status.textContent = "Published " + result.fileName + " · v" + result.v + " · " + result.rowCount + " rows";
+      fileInput.value = "";
+      renderSrplManifestTable((result.manifest && result.manifest.datasets) || []);
+      toast("SRPL stats updated");
+    } catch (err) {
+      status.textContent = "";
+      toast(err.message || "Upload failed");
+    } finally {
+      this.disabled = false;
+    }
+  });
+
+  document.getElementById("srplRebuildBtn").addEventListener("click", async function () {
+    this.disabled = true;
+    try {
+      var result = await C.api.rebuildSrplStats();
+      renderSrplManifestTable((result.manifest && result.manifest.datasets) || []);
+      toast("Rebuilt " + result.count + " bundle(s)");
+    } catch (err) {
+      toast(err.message || "Rebuild failed");
+    } finally {
+      this.disabled = false;
+    }
   });
 
   document.getElementById("createTournamentAdminBtn").addEventListener("click", async function () {

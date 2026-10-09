@@ -118,8 +118,42 @@ input:focus,select:focus{border-color:var(--green2);background:var(--surface);bo
 .tourney-links{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:12px}
 .tourney-links a{color:var(--green);font-weight:700;text-decoration:none;padding:6px 12px;background:#fff;border-radius:999px;border:1px solid var(--line);font-size:.85rem}
 .tourney-links a:hover{background:#eef9f4}
-.roster-open{width:100%;margin-top:4px;background:#fff;color:var(--green);border:1px solid var(--line);box-shadow:none}
-.roster-open:hover{background:#eef9f4;filter:none}
+.cricket-ui .aside-card .btn.roster-open,
+.cricket-ui .aside-card .btn.stats-open{
+  width:100%;
+  margin-top:10px;
+  display:block;
+  text-align:center;
+  text-decoration:none;
+  box-sizing:border-box;
+  background:var(--surface,#fff)!important;
+  color:var(--green,#00875a)!important;
+  border:2px solid var(--green2,#00c17c)!important;
+  box-shadow:0 4px 14px rgba(0,135,90,.12)!important;
+  filter:none!important;
+}
+.cricket-ui .aside-card .btn.roster-open{margin-top:4px}
+.cricket-ui .aside-card .btn.roster-open:hover,
+.cricket-ui .aside-card .btn.stats-open:hover{
+  background:#eef9f4!important;
+  filter:none!important;
+}
+.cricket-ui .aside-card .btn.roster-open:focus-visible,
+.cricket-ui .aside-card .btn.stats-open:focus-visible{
+  outline:2px solid var(--green2);
+  outline-offset:2px;
+}
+html[data-ui-theme="dark"] .cricket-ui .aside-card .btn.roster-open,
+html[data-ui-theme="dark"] .cricket-ui .aside-card .btn.stats-open{
+  background:var(--input-bg,#0f1e30)!important;
+  color:var(--green,#3dffa8)!important;
+  border-color:var(--green2,#22e890)!important;
+  box-shadow:0 4px 18px rgba(0,0,0,.35)!important;
+}
+html[data-ui-theme="dark"] .cricket-ui .aside-card .btn.roster-open:hover,
+html[data-ui-theme="dark"] .cricket-ui .aside-card .btn.stats-open:hover{
+  background:rgba(61,255,168,.1)!important;
+}
 .roster-modal{position:fixed;inset:0;z-index:1000;display:flex;align-items:flex-end;justify-content:center;padding:0}
 .roster-modal.hidden{display:none!important}
 .roster-backdrop{position:absolute;inset:0;background:rgba(7,27,22,.45)}
@@ -314,6 +348,8 @@ input:focus,select:focus{border-color:var(--green2);background:var(--surface);bo
         <div class="info-chip hidden" id="infoWa"><strong>Questions?</strong><a id="infoWaLink" href="https://wa.me/" target="_blank" rel="noopener" style="color:var(--green);font-weight:700;text-decoration:none">Message the desk</a></div>
       </div>
       <button type="button" class="btn roster-open" id="rosterOpenBtn">View registered players</button>
+      <a class="btn stats-open hidden" id="statsLink" href="#">View season stats</a>
+      <a class="btn stats-open hidden" id="playersSearchLink" href="#">Search player stats</a>
     </div>
     <div class="card">
       <h3>🏆 What's Next?</h3>
@@ -640,6 +676,31 @@ input:focus,select:focus{border-color:var(--green2);background:var(--surface);bo
   }
   if (tournament.showPublicRoster === false) {
     document.getElementById("rosterOpenBtn").classList.add("hidden");
+  }
+  var statsUrl = C.tournamentStatsUrl(tournament);
+  var statsLink = document.getElementById("statsLink");
+  var playersSearchLink = document.getElementById("playersSearchLink");
+  var lb = C.normalizeLeaderboardStats(tournament.leaderboardStats);
+  var statsExtra = {};
+  var keys = C.tournamentKeys(tournament);
+  if (keys.tournament && keys.season) {
+    statsExtra.tournament = keys.tournament;
+    statsExtra.season = keys.season;
+  } else if (keys.slug) {
+    statsExtra.t = keys.slug;
+  }
+  if (statsUrl) {
+    statsLink.href = statsUrl;
+    statsLink.classList.remove("hidden");
+    if (playersSearchLink && lb.enabled) {
+      playersSearchLink.href = C.playersSearchUrl(lb.gender, lb.edition, statsExtra);
+      playersSearchLink.classList.remove("hidden");
+    } else if (playersSearchLink) {
+      playersSearchLink.classList.add("hidden");
+    }
+  } else {
+    statsLink.classList.add("hidden");
+    if (playersSearchLink) playersSearchLink.classList.add("hidden");
   }
 
   var deskNumber = tournament.supportWhatsapp || "";

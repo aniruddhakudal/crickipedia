@@ -1,0 +1,36 @@
+player_id,name,team_id,team_name,total_match,innings,total_wickets,balls,highest_wicket,economy,SR,maidens,avg,runs,bowling_style,overs,dot_balls
+46448315,Taksh Jain,12095825,Orient Orbits,6,6,7,35,2,10.11,5,0,8.43,59,-,5.5,18
+6732597,Saiyam Shah,12095865,B2 Buster,6,6,6,36,2,5.83,6,0,5.83,35,Right-arm medium,6,18
+22299668,Yaksh Sakaria,12095865,B2 Buster,6,6,5,33,2,3.82,6.6,1,4.2,21,Left-arm fast,5.3,20
+18608728,Jignesh Adesara,12095848,Ergoluxe Titans,7,7,5,42,2,9.14,8.4,0,12.8,64,Right-arm medium,7,18
+36228481,Krish Jain,12095848,Ergoluxe Titans,7,6,4,34,1,7.06,8.5,0,10,40,-,5.4,21
+21453073,Hitendra Rajnikant Shah,12095804,Parekh Warriors,5,5,4,30,2,7.6,7.5,0,9.5,38,Right-arm fast,5,14
+46468025,Jinay Jain,12095804,Parekh Warriors,5,5,3,28,2,5.57,9.33,0,8.67,26,-,4.4,15
+36269858,Chirag Shah,12095804,Parekh Warriors,5,5,3,30,1,6.8,10,0,11.33,34,-,5,15
+963036,Mayur Shah,12095825,Orient Orbits,6,6,3,36,2,9.83,12,0,19.67,59,Left-arm medium,6,15
+36269905,Raj Katariya,12095825,Orient Orbits,6,4,3,24,1,10.75,8,0,14.33,43,-,4,11
+36181203,Samyak Chopda,12095825,Orient Orbits,6,6,3,32,1,11.62,10.67,0,20.67,62,Right-arm medium,5.2,11
+17934157,Pankaj S,12095825,Orient Orbits,6,6,3,36,2,12.17,12,0,24.33,73,-,6,13
+2903049,Sameer Jain,12095865,B2 Buster,6,6,2,36,2,3.5,18,0,10.5,21,Right-arm medium,6,24
+9122302,Shubham Dhoka,12095865,B2 Buster,6,6,2,36,1,5.33,18,0,16,32,Left-arm fast,6,23
+5181997,Parvesh Parekh,12095804,Parekh Warriors,5,5,2,30,1,6.8,15,0,17,34,-,5,14
+4204822,Hardik Shah,12095804,Parekh Warriors,5,5,2,30,2,7,15,0,17.5,35,Right-arm fast,5,16
+32140378,Siddharth Gelda,12095848,Ergoluxe Titans,7,6,2,32,1,9.75,16,0,26,52,Right-arm Leg Break,5.2,18
+1420452,Pavan Dayama,12095814,Dayamas Dhurandhar,4,4,2,24,1,11.5,12,0,23,46,Right-arm medium,4,10
+9927909,Bhavin Oswal,12095814,Dayamas Dhurandhar,4,4,2,21,1,12.29,10.5,0,21.5,43,-,3.3,10
+34684015,Pankaj Rathod,12095865,B2 Buster,6,6,2,36,1,13.83,18,0,41.5,83,Right-arm fast,6,9
+46441554,Venkatesh Kasat,12095865,B2 Buster,6,6,2,36,2,14,18,0,42,84,-,6,14
+36224628,Rahul Porwal,12095848,Ergoluxe Titans,7,6,2,34,1,14.12,17,0,40,80,-,5.4,10
+9117576,Divyam Jain,12095825,Orient Orbits,6,6,1,36,1,4.83,36,0,29,29,Slow left-arm chinaman,6,12
+36251277,Anshu,12095814,Dayamas Dhurandhar,4,4,1,24,1,5.25,24,0,21,21,None,4,13
+941366,Yash Shah,12095825,Orient Orbits,6,6,1,36,1,6.83,36,0,41,41,Right-arm medium,6,20
+9122282,Sahil Shah,12095848,Ergoluxe Titans,7,7,1,42,1,7,42,0,49,49,Slow left-arm orthodox,7,24
+1457841,Sandesh Gandhi,12095848,Ergoluxe Titans,7,7,1,31,1,11.23,31,0,58,58,Right-arm medium,5.1,11
+1311928,Ravi Barot,12095865,B2 Buster,6,6,1,36,1,11.33,36,0,68,68,Right-arm fast,6,14
+36225712,Dikshit Shah,12095804,Parekh Warriors,5,3,1,13,1,18,13,0,39,39,Right-arm medium,2.1,6
+10731355,Smit Mehta,12095848,Ergoluxe Titans,7,7,0,42,0,7.43,0,0,0,52,Right-arm fast,7,22
+13479616,Mithil Shah,12095814,Dayamas Dhurandhar,4,4,0,24,0,7.75,0,0,0,31,Right-arm medium,4,8
+439891,Dikshit Jain,12095814,Dayamas Dhurandhar,4,4,0,24,0,10.75,0,0,0,43,-,4,11
+9335161,Bhavesh Jain,12095814,Dayamas Dhurandhar,4,4,0,24,0,13.5,0,0,0,54,Right-arm medium,4,10
+46468193,Bhupendra Shah,12095804,Parekh Warriors,5,4,0,22,0,14.73,0,0,0,54,-,3.4,7
+19023138,Akshay Jain,12095814,Dayamas Dhurandhar,4,3,0,18,0,16.33,0,0,0,49,Right-arm medium,3,7

@@ -96,6 +96,15 @@ Per tournament (Admin → **Payment method**):
 
 Messages fire on: new registration (reserved), Razorpay success (if enabled), admin approve (confirmed), admin decline (rejected).
 
+## Tournament season stats (charts)
+
+- Stats are **per tournament**, not on the home page. Enable in Admin → **Customize** → **Season leaderboard stats** (division + data edition, e.g. `srpl2`). Players see **View season stats** on that tournament’s registration page.
+- CSV data: `data/srpl/{gender}/{edition}/*_leaderboard.csv`; JSON bundles in `data/srpl/_generated/`.
+- Superadmin: Admin → **SRPL stats** tab to upload CricHeroes CSVs.
+- API: `GET /api/stats/srpl/manifest`, `GET /api/stats/srpl/:gender/:edition/:board`, `GET .../players`, `GET .../players/:playerId`.
+- **Search players:** `/players.html?gender=men&edition=srpl2` — search by name, then open a profile.
+- Player profiles: `/player.html?gender=men&edition=srpl2&player=<id>` (from search or from names on the stats table).
+
 ## Later phases
 
-Auctions, teams, live scoring, and stats integration.
+Auctions, teams, live scoring, and deeper stats integration.

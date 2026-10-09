@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Player profile — Crickipedia</title>
+<script>(function(){try{var t=localStorage.getItem("crickipedia_ui_theme");document.documentElement.setAttribute("data-ui-theme",t==="dark"?"dark":"bright");}catch(e){}})();</script>
+<link rel="stylesheet" href="/cricket-theme.css">
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:"DM Sans",Inter,system-ui,sans-serif;color:var(--text,#0f1f17)}
+.page-toolbar{display:flex;justify-content:flex-end;margin-bottom:8px}
+.wrap{max-width:900px;margin:0 auto;padding:20px 16px 48px}
+.back{color:var(--green);font-weight:800;text-decoration:none}
+.back:hover{text-decoration:underline}
+.hero-panel{background:var(--surface,#fff);border:1px solid var(--line);border-radius:18px;padding:22px 20px;margin:12px 0 20px;box-shadow:var(--shadow)}
+.hero-panel h1{margin:0 0 6px;font-size:1.65rem}
+.hero-panel .team{color:var(--muted);font-weight:700;margin:0}
+.pick-row{display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin:16px 0}
+.pick-row label{font-size:12px;font-weight:800;display:grid;gap:4px;color:var(--muted)}
+.pick-row select{min-width:200px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);font:inherit;background:var(--input-bg,#fff)}
+.section{margin-bottom:18px}
+.section h2{margin:0 0 12px;font-size:1.05rem}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+.stat-card{background:var(--surface,#fff);border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center}
+.stat-card b{display:block;font-size:1.35rem;color:var(--green);margin-bottom:4px}
+.stat-card span{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.muted{color:var(--muted);font-size:13px}
+.error{color:#b52e2e;font-weight:700}
+.hidden{display:none!important}
+</style>
+</head>
+<body class="cricket-ui">
+<div class="wrap">
+  <div class="page-toolbar">
+    <button type="button" class="ui-theme-toggle ui-theme-toggle--surface" data-ui-theme-toggle aria-label="Toggle theme">🌙 Dark</button>
+  </div>
+  <p><a class="back" id="backLink" href="/stats.html">← Back to stats</a></p>
+  <div id="pickPanel" class="pick-row hidden">
+    <label>Player
+      <select id="playerPick"></select>
+    </label>
+  </div>
+  <div id="loadError" class="error hidden"></div>
+  <div id="profileRoot" class="hidden">
+    <div class="hero-panel">
+      <p class="muted" id="profileMeta" style="margin:0 0 8px"></p>
+      <h1 id="playerName">Player</h1>
+      <p class="team" id="playerTeam"></p>
+    </div>
+    <div id="sections"></div>
+  </div>
+</div>
+<script src="/app.js"></script>
+<script src="/player.js"></script>
+</body>
+</html>

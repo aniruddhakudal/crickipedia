@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Find a player — Crickipedia</title>
+<script>(function(){try{var t=localStorage.getItem("crickipedia_ui_theme");document.documentElement.setAttribute("data-ui-theme",t==="dark"?"dark":"bright");}catch(e){}})();</script>
+<link rel="stylesheet" href="/cricket-theme.css">
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:"DM Sans",Inter,system-ui,sans-serif;color:var(--text,#0f1f17)}
+.page-toolbar{display:flex;justify-content:flex-end;margin-bottom:8px}
+.wrap{max-width:720px;margin:0 auto;padding:20px 16px 48px}
+.back{color:var(--green);font-weight:800;text-decoration:none}
+.back:hover{text-decoration:underline}
+.top{margin:12px 0 20px}
+.top h1{margin:0 0 8px;font-size:1.55rem}
+.controls{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0}
+label{font-size:12px;font-weight:800;display:grid;gap:4px;color:var(--muted)}
+select,input[type=search]{padding:12px 14px;border-radius:12px;border:1px solid var(--line);font:inherit;background:var(--input-bg,#fff);color:var(--text)}
+select{min-width:120px}
+.search-wrap{flex:1;min-width:200px}
+.search-wrap input{width:100%}
+.panel{background:var(--surface,#fff);border:1px solid var(--line);border-radius:14px;padding:8px;box-shadow:var(--shadow);margin-top:12px}
+.player-list{list-style:none;margin:0;padding:0;max-height:min(60vh,520px);overflow:auto}
+.player-list li{border-bottom:1px solid var(--line)}
+.player-list li:last-child{border-bottom:0}
+.player-list a{display:flex;justify-content:space-between;gap:12px;padding:14px 12px;text-decoration:none;color:var(--text);font-weight:700;border-radius:10px}
+.player-list a:hover{background:var(--input-bg,#f0fdf7)}
+.player-list .team{font-weight:600;color:var(--muted);font-size:.9rem;text-align:right}
+.empty{padding:24px 12px;text-align:center;color:var(--muted)}
+.muted{color:var(--muted);font-size:13px}
+.error{color:#b52e2e;font-weight:700}
+.count{font-size:12px;font-weight:800;color:var(--green);margin:8px 4px 0}
+</style>
+</head>
+<body class="cricket-ui">
+<div class="wrap">
+  <div class="page-toolbar">
+    <button type="button" class="ui-theme-toggle ui-theme-toggle--surface" data-ui-theme-toggle aria-label="Toggle theme">🌙 Dark</button>
+  </div>
+  <p><a class="back" id="backLink" href="/stats.html">← Back</a></p>
+  <div class="top">
+    <h1>Player stats</h1>
+    <p class="muted">Search by name and open a full profile — runs, wickets, fielding, and MVP for this season.</p>
+  </div>
+  <div class="controls">
+    <label>Division
+      <select id="gender">
+        <option value="men">Men</option>
+        <option value="women">Women</option>
+      </select>
+    </label>
+    <label>Edition
+      <select id="edition"></select>
+    </label>
+    <label class="search-wrap">Search
+      <input type="search" id="search" placeholder="Type a player or team name…" autocomplete="off">
+    </label>
+  </div>
+  <p class="count" id="resultCount" aria-live="polite"></p>
+  <div id="loadError" class="error hidden"></div>
+  <div class="panel">
+    <ul class="player-list" id="results"></ul>
+  </div>
+</div>
+<script src="/app.js"></script>
+<script src="/players.js"></script>
+</body>
+</html>

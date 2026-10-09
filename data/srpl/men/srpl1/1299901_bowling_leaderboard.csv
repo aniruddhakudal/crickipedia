@@ -1,0 +1,29 @@
+player_id,name,team_id,team_name,total_match,innings,total_wickets,balls,highest_wicket,economy,SR,maidens,avg,runs,bowling_style,overs,dot_balls
+963036,Mayur Shah,8816240,Buildsmart Cricsmart,4,4,4,24,1,3.00,6.00,1,3,12,Left-arm medium,4.0,15
+1420452,Pavan Dayama,8816229,Dayama Daredevils,4,4,4,24,1,4.00,6.00,0,4,16,Right-arm medium,4.0,16
+32140378,Siddharth Gelda,8816240,Buildsmart Cricsmart,4,4,4,24,2,11.75,6.00,0,11.75,47,Right-arm Leg Break,4.0,9
+9335161,Bhavesh Jain,8816225,Oswal Strikers,3,3,3,18,2,6.67,6.00,1,6.67,20,Right-arm medium,3.0,10
+1457841,Sandesh Gandhi,8816216,Ergo Royals,3,3,3,18,1,7.33,6.00,0,7.33,22,Right-arm medium,3.0,13
+28593615,Harsh Manish Thakkar,8816240,Buildsmart Cricsmart,4,4,3,24,1,8.00,8.00,0,10.67,32,-,4.0,13
+27023592,Kanishk Jain,8816225,Oswal Strikers,3,2,3,12,3,9.00,4.00,0,6,18,Right-arm Leg Break,2.0,9
+36235416,Darshit Shah,8816229,Dayama Daredevils,4,4,3,24,1,9.25,8.00,0,12.33,37,None,4.0,15
+36235405,Pratik Bamb,8816229,Dayama Daredevils,4,4,2,24,1,3.50,12.00,0,7,14,None,4.0,13
+2903049,Sameer Jain,8816240,Buildsmart Cricsmart,4,4,2,24,1,3.50,12.00,0,7,14,Right-arm medium,4.0,15
+12487826,Raj Jain,8816229,Dayama Daredevils,4,4,2,24,1,4.50,12.00,0,9,18,Right-arm fast,4.0,10
+36225712,Dikshit Dhah,8816240,Buildsmart Cricsmart,4,3,2,18,1,7.33,9.00,0,11,22,Right-arm medium,3.0,10
+20304212,Mayank Parekh,8816240,Buildsmart Cricsmart,4,4,2,21,1,8.86,10.50,0,15.5,31,Right-arm fast,3.3,6
+12119852,Siddharth Chopra,8816216,Ergo Royals,3,3,2,18,1,15.67,9.00,0,23.5,47,Right-arm fast,3.0,5
+9077048,Viraj Dave,8816229,Dayama Daredevils,4,4,1,24,1,7.00,24.00,0,28,28,Right-arm fast,4.0,8
+36224628,Rahul Porwal,8816216,Ergo Royals,3,3,1,18,1,8.33,18.00,0,25,25,-,3.0,10
+9927909,Bhavin Oswal,8816229,Dayama Daredevils,4,4,1,24,1,12.00,24.00,0,48,48,-,4.0,7
+36269905,Raj Katariya,8816225,Oswal Strikers,3,2,1,10,1,15.00,10.00,0,25,25,-,1.4,3
+36269858,Chirag Shah,8816216,Ergo Royals,3,3,0,18,0,4.00,0.00,0,0,12,-,3.0,12
+36181203,Samyak Chopda,8816229,Dayama Daredevils,4,4,0,24,0,5.25,0.00,0,0,21,Right-arm medium,4.0,11
+36228481,Krish Jain,8816216,Ergo Royals,3,3,0,18,0,7.33,0.00,0,0,22,-,3.0,8
+10731355,Smit Mehta,8816216,Ergo Royals,3,2,0,12,0,7.50,0.00,0,0,15,Right-arm fast,2.0,6
+18608728,Jignesh Adesara,8816225,Oswal Strikers,3,2,0,12,0,8.00,0.00,0,0,16,Right-arm medium,2.0,7
+9117576,Divyam Jain,8816225,Oswal Strikers,3,2,0,12,0,8.00,0.00,0,0,16,Slow left-arm chinaman,2.0,5
+4204822,Hardik Shah,8816225,Oswal Strikers,3,3,0,17,0,8.82,0.00,0,0,25,Right-arm fast,2.5,7
+6732597,Saiyam Shah,8816240,Buildsmart Cricsmart,4,4,0,24,0,9.50,0.00,0,0,38,Right-arm medium,4.0,10
+20304589,Mayur,8816225,Oswal Strikers,3,3,0,18,0,14.00,0.00,0,0,42,Right-arm fast,3.0,6
+18615486,Loukik Shah,8816216,Ergo Royals,3,3,0,15,0,16.00,0.00,0,0,40,Left-arm medium,2.3,6
