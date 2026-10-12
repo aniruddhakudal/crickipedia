@@ -1,0 +1,51 @@
+player_id,name,team_id,team_name,total_match,innings,total_runs,highest_run,average,not_out,strike_rate,ball_faced,batting_hand,4s,6s,50s,100s
+4867029,Kishore Soni,4127223,Squad Matadors,7,7,176,50,25.14,0,187.23,94,RHB,3,24,1,0
+1494410,Abhishek Upare,4127223,Squad Matadors,7,7,114,61,19.00,1,120.00,95,RHB,2,11,1,0
+822917,Lavin Raheja,4127229,Conan The Destroyer,6,6,109,28,36.33,3,113.54,96,RHB,5,11,0,0
+14298782,Manoj Wagh,4127205,Ganimikawa,5,5,93,28,18.60,0,155.00,60,RHB,3,11,0,0
+10745523,Kishor Wagh,4127207,Shiv Tandav,6,6,73,18,36.50,4,107.35,68,RHB,3,7,0,0
+10765292,Ashish Makwana,4127207,Shiv Tandav,6,5,66,26,13.20,0,146.67,45,RHB,2,7,0,0
+10814344,Dinesh,4127205,Ganimikawa,5,4,65,24,32.50,2,144.44,45,RHB,5,6,0,0
+234632,Krushna Malpani,4127229,Conan The Destroyer,6,6,58,29,9.67,0,90.63,64,RHB,2,5,0,0
+10765294,Atharva M,4127205,Ganimikawa,5,5,53,28,10.60,0,112.77,47,RHB,2,6,0,0
+14019875,Ashish Naik,4127200,Falcon,3,3,51,34,25.50,1,106.25,48,RHB,1,6,0,0
+10765268,Akshay Upare,4127206,Thunderbird,3,3,49,39,16.33,0,128.95,38,RHB,3,4,0,0
+14299007,Abhay Patil,4127207,Shiv Tandav,6,6,47,17,9.40,1,82.46,57,RHB,6,1,0,0
+10619512,Tanishq Wagh,4127223,Squad Matadors,7,7,43,30,8.60,2,102.38,42,RHB,1,5,0,0
+16889668,Digesh Panchal,4127229,Conan The Destroyer,6,4,42,21,14.00,1,100.00,42,RHB,1,5,0,0
+10765307,Sagar Shelar,4127207,Shiv Tandav,6,6,35,23,5.83,0,50.00,70,RHB,3,1,0,0
+20273947,Yogesh Rane,4127223,Squad Matadors,7,6,33,24,6.60,1,165.00,20,RHB,0,5,0,0
+10765288,Dilip Achari,4127206,Thunderbird,3,2,28,22,28.00,1,280.00,10,RHB,1,4,0,0
+1883604,Raman Toshniwal,4127200,Falcon,3,3,28,15,9.33,0,96.55,29,RHB,0,3,0,0
+14298575,Manoj Upadhyay,4127200,Falcon,3,3,23,14,7.67,0,69.70,33,RHB,1,2,0,0
+1669464,Abhishek Satam,4127205,Ganimikawa,5,3,23,20,7.67,0,100.00,23,RHB,0,3,0,0
+10765338,Omkar Bhalgat,4127207,Shiv Tandav,6,5,22,14,7.33,2,157.14,14,RHB,1,2,0,0
+4962614,Siva Kohler,4127223,Squad Matadors,7,6,22,12,4.40,1,51.16,43,RHB,1,1,0,0
+10244981,Kaushlendra Singh,4127206,Thunderbird,3,3,21,14,10.50,1,233.33,9,RHB,0,3,0,0
+20788992,Pratik Ratnaparkhi,4127206,Thunderbird,3,3,20,13,10.00,1,100.00,20,RHB,1,2,0,0
+20788820,Celebria Chandan Patil,4127205,Ganimikawa,5,2,19,18,9.50,0,146.15,13,RHB,0,3,0,0
+16898163,Drsuhas Dhekane,4127207,Shiv Tandav,6,3,19,15,9.50,1,105.56,18,RHB,2,0,0,0
+10765284,Chandrakant Vipat,4127206,Thunderbird,3,2,18,13,-,2,69.23,26,RHB,2,0,0,0
+20206025,Yogesh Angulwar Amdocs,4127206,Thunderbird,3,3,16,10,5.33,0,123.08,13,RHB,1,2,0,0
+16898071,Shripad,4127223,Squad Matadors,7,5,16,14,4.00,1,55.17,29,RHB,1,1,0,0
+10765220,Shree,4127205,Ganimikawa,5,5,13,9,6.50,3,81.25,16,RHB,0,1,0,0
+10765311,Rohit Akhade,4127200,Falcon,3,3,12,8,4.00,0,109.09,11,RHB,1,1,0,0
+10765325,Amit Kesharkar,4127229,Conan The Destroyer,6,6,12,8,2.40,1,54.55,22,RHB,0,1,0,0
+10765116,Aditya Agrawal,4127206,Thunderbird,3,2,11,6,5.50,0,122.22,9,RHB,0,1,0,0
+16890310,Pritesh Sail,4127229,Conan The Destroyer,6,4,11,6,5.50,2,64.71,17,RHB,2,0,0,0
+10745512,Onkar,4127229,Conan The Destroyer,6,5,10,4,3.33,2,50.00,20,RHB,2,0,0,0
+3604165,Aniruddha Kudal,4127206,Thunderbird,3,3,9,8,3.00,0,40.91,22,RHB,0,1,0,0
+14298851,Vinay Satam,4127200,Falcon,3,3,8,4,2.67,0,61.54,13,RHB,0,0,0,0
+14299002,Pritam Pashankar,4127223,Squad Matadors,7,4,7,6,2.33,1,58.33,12,LHB,0,1,0,0
+10814023,Ayush M,4127200,Falcon,3,2,6,4,-,2,120.00,5,RHB,1,0,0,0
+20788786,Bhushan Ladda,4127205,Ganimikawa,5,5,6,6,2.00,2,54.55,11,RHB,1,0,0,0
+16888722,Amar Toshniwal,4127223,Squad Matadors,3,2,4,4,2.00,0,30.77,13,RHB,0,0,0,0
+10765297,Jagdeep,4127207,Shiv Tandav,6,2,4,3,2.00,0,100.00,4,RHB,0,0,0,0
+16889685,Rohan Akhade,4127200,Falcon,3,2,3,3,3.00,1,100.00,3,RHB,0,0,0,0
+16898156,Aniket Wadkar,4127229,Conan The Destroyer,6,2,3,2,1.50,0,20.00,15,LHB,0,0,0,0
+10765317,Suhas Agawane,4127207,Shiv Tandav,6,3,3,2,1.00,0,75.00,4,LHB,0,0,0,0
+20788981,Celebria Rohan Agawane,4127223,Squad Matadors,4,2,1,1,-,2,11.11,9,LHB,0,0,0,0
+10765262,Pratik Zagade,4127205,Ganimikawa,5,2,1,1,0.50,0,14.29,7,RHB,0,0,0,0
+14298878,Abhishek Achari,4127200,Falcon,3,3,1,1,0.50,1,16.67,6,RHB,0,0,0,0
+10814350,Arya K,4127229,Conan The Destroyer,6,2,0,0,-,0,0.00,7,RHB,0,0,0,0
+14298775,Non Striker,4127206,Thunderbird,15,8,0,0,-,8,0,0,RHB,0,0,0,0

@@ -1,0 +1,50 @@
+player_id,name,team_id,team_name,total_match,innings,total_runs,highest_run,average,not_out,strike_rate,ball_faced,batting_hand,4s,6s,50s,100s
+4867029,Kishore Soni,7973014,Supernovas,7,7,189,51,37.80,2,201.06,94,RHB,3,26,1,0
+14019875,Ashish Naik,7973014,Supernovas,7,7,168,56,28.00,1,152.73,110,RHB,4,20,1,0
+234632,Krushna Malpani,7973037,Kingmaker Boys,7,7,144,38,36.00,3,169.41,85,RHB,3,14,0,0
+10765307,Sagar Shelar,7973022,Smashers,6,6,135,49,27.00,1,195.65,69,RHB,2,18,0,0
+1883604,Raman Toshniwal,7973037,Kingmaker Boys,7,7,125,36,31.25,3,117.92,106,RHB,4,11,0,0
+822917,Lavin Raheja,7973037,Kingmaker Boys,7,7,110,29,15.71,0,100.00,110,RHB,5,12,0,0
+234634,Shubham Chougule,7973014,Supernovas,7,7,108,41,21.60,2,128.57,84,RHB,3,12,0,0
+16845639,Saurabh Mantri,7973022,Smashers,6,6,106,30,26.50,2,130.86,81,RHB,2,11,0,0
+10765311,Rohit Akhade,7973044,Infamous Mafias,8,7,100,56,16.67,1,131.58,76,RHB,2,12,1,0
+10619512,Tanishq Wagh,7973044,Infamous Mafias,8,8,96,33,19.20,3,126.32,76,RHB,2,10,0,0
+13221867,Akash Patil,7973044,Infamous Mafias,8,6,92,48,23.00,2,204.44,45,RHB,5,11,0,0
+10745523,Kishor Wagh,7973022,Smashers,6,6,89,28,29.67,3,104.71,85,RHB,4,8,0,0
+14298575,Manoj Upadhyay,7973003,Crusaders 2.0,5,5,74,30,24.67,2,102.78,72,RHB,3,8,0,0
+26751992,Saurabh Thakur,7973044,Infamous Mafias,8,7,74,40,12.33,1,121.31,61,RHB,3,8,0,0
+10765294,Atharva M,7973058,Thalas,5,5,71,23,23.67,2,151.06,47,RHB,5,7,0,0
+16898163,Drsuhas Dhekane,7973044,Infamous Mafias,8,6,69,26,17.25,2,107.81,64,RHB,3,6,0,0
+19794211,Ballal Sanket,7973044,Infamous Mafias,8,6,55,26,13.75,2,144.74,38,RHB,2,7,0,0
+10765297,Jagdeep,7973058,Thalas,5,5,53,21,10.60,0,110.42,48,RHB,0,5,0,0
+32365258,Atharva Patil Celebria,7973037,Kingmaker Boys,7,5,52,30,17.33,2,179.31,29,RHB,1,7,0,0
+3604165,Aniruddha Kudal,7973003,Crusaders 2.0,5,5,46,23,15.33,2,92.00,50,RHB,1,5,0,0
+10765116,Aditya Agrawal,7973003,Crusaders 2.0,5,5,45,25,9.00,0,104.65,43,RHB,1,6,0,0
+19892409,Jonty,7973058,Thalas,5,4,43,17,10.75,0,130.30,33,RHB,2,5,0,0
+4962614,Siva Kohler,7973037,Kingmaker Boys,7,2,35,24,17.50,0,218.75,16,RHB,1,4,0,0
+10765292,Ashish Makwana,7973003,Crusaders 2.0,5,5,35,23,7.00,0,79.55,44,RHB,2,1,0,0
+14298782,Manoj Wagh,7973058,Thalas,5,4,33,20,11.00,1,132.00,25,RHB,0,3,0,0
+32766099,Suhas Kale 702,7973014,Supernovas,7,5,32,12,6.40,0,114.29,28,RHB,1,4,0,0
+7036836,Prashant,7973058,Thalas,5,5,23,7,5.75,1,82.14,28,RHB,3,1,0,0
+10765261,Aditya Akmar,7973044,Infamous Mafias,8,5,20,12,6.67,2,105.26,19,RHB,1,2,0,0
+10745512,Onkar,7973003,Crusaders 2.0,5,5,18,8,4.50,1,100.00,18,RHB,1,1,0,0
+16890310,Pritesh Sail,7973014,Supernovas,7,3,16,10,8.00,1,100.00,16,RHB,0,2,0,0
+1669464,Abhishek Satam,7973022,Smashers,6,3,15,14,7.50,1,75.00,20,RHB,1,1,0,0
+14298851,Vinay Satam,7973014,Supernovas,7,5,14,12,3.50,1,73.68,19,RHB,0,2,0,0
+6608477,Abhishek Axhari,7973014,Supernovas,7,3,11,7,11.00,2,91.67,12,RHB,1,0,0,0
+16889668,Digesh Panchal,7973037,Kingmaker Boys,7,4,9,6,3.00,1,100.00,9,RHB,0,1,0,0
+14299002,Pritam Pashankar,7973022,Smashers,6,2,8,5,-,2,72.73,11,LHB,0,0,0,0
+20788786,Bhushan Ladda,7973022,Smashers,6,5,7,6,1.40,0,46.67,15,RHB,0,1,0,0
+24517164,Hemant Chaudhari,7973003,Crusaders 2.0,5,1,6,6,-,1,200.00,3,RHB,1,0,0,0
+10765325,Amit Kesharkar,7973058,Thalas,5,3,5,4,1.67,0,41.67,12,RHB,0,0,0,0
+16898156,Aniket Wadkar,7973022,Smashers,6,3,5,5,2.50,1,83.33,6,LHB,1,0,0,0
+14906098,Tushar Tonape,7973058,Thalas,5,3,4,4,2.00,1,36.36,11,RHB,0,0,0,0
+32388597,Tanmay,7973022,Smashers,6,4,4,2,1.33,1,44.44,9,RHB,0,0,0,0
+10765288,Dilip Achari,7973037,Kingmaker Boys,7,1,1,1,-,1,100.00,1,RHB,0,0,0,0
+20273947,Yogesh Rane,7973003,Crusaders 2.0,5,2,1,1,1.00,1,12.50,8,RHB,0,0,0,0
+29266041,Anvit Bhosale,7973037,Kingmaker Boys,7,2,0,0,-,0,0.00,1,RHB,0,0,0,0
+33388631,Abhishek Dayama,7973014,Supernovas,7,2,0,0,-,0,0.00,3,RHB,0,0,0,0
+10814023,Ayush M,7973044,Infamous Mafias,8,2,0,0,-,2,0.00,4,RHB,0,0,0,0
+14298775,Non Striker,7973037,Kingmaker Boys,10,2,0,0,-,2,0,0,RHB,0,0,0,0
+10765284,Chandrakant Vipat,7973058,Thalas,5,3,0,0,-,2,0.00,20,RHB,0,0,0,0
+16898071,Shripad,7973003,Crusaders 2.0,5,4,0,0,-,2,0.00,10,RHB,0,0,0,0

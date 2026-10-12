@@ -1,0 +1,48 @@
+player_id,name,team_id,team_name,total_match,innings,total_runs,highest_run,average,not_out,strike_rate,ball_faced,batting_hand,4s,6s,50s,100s
+10765294,Atharv M,3267288,Super Kings,6,6,140,51,23.33,0,119.66,117,RHB,2,11,1,0
+1494410,Abhishek Upare,3267285,Shouting Eagles,7,7,123,51,17.57,0,82.55,149,RHB,3,5,1,0
+3604165,Aniruddha Kudal,3267282,Pirates,6,6,116,47,23.20,1,106.42,109,RHB,3,11,0,0
+7036836,Prashant Kshirsagar,3267288,Super Kings,6,6,85,37,14.17,0,114.86,74,RHB,3,8,0,0
+14299007,Abhay Patil,3267285,Shouting Eagles,7,7,82,37,11.71,0,96.47,85,RHB,1,7,0,0
+10765311,Rohit Akhade,3267285,Shouting Eagles,7,7,70,29,11.67,1,137.25,51,RHB,5,6,0,0
+10745523,Kishor Wagh,3267290,Swaggers,4,4,67,40,16.75,0,117.54,57,RHB,2,4,0,0
+14019875,Ashish,3267282,Pirates,6,6,65,24,10.83,0,68.42,95,RHB,5,2,0,0
+10765307,Sagar Shelar,3267293,Unicorns,5,5,55,25,11.00,0,88.71,62,RHB,2,3,0,0
+4867029,Kishore Soni,3267290,Swaggers,4,4,51,28,25.50,2,137.84,37,RHB,1,3,0,0
+1883604,Raman Toshniwal,3267285,Shouting Eagles,7,6,48,27,16.00,3,114.29,42,RHB,0,5,0,0
+14298851,Vinay Satam,3267282,Pirates,6,5,44,16,14.67,2,110.00,40,RHB,2,3,0,0
+10745512,Onkar,3267288,Super Kings,6,6,43,9,14.33,3,148.28,29,RHB,1,4,0,0
+10765220,Shree,3267282,Pirates,6,6,41,17,8.20,1,97.62,42,RHB,1,4,0,0
+822917,Lavin Raheja,3267293,Unicorns,5,5,39,18,9.75,1,67.24,58,RHB,2,1,0,0
+4962614,Siva Kohler,3267290,Swaggers,4,3,36,25,12.00,0,102.86,35,RHB,3,1,0,0
+14298878,Abhishek Achari,3267293,Unicorns,5,2,34,33,17.00,0,79.07,43,RHB,1,1,0,0
+10244981,Kaushlendra Singh,3267285,Shouting Eagles,7,5,32,13,8.00,1,100.00,32,RHB,0,3,0,0
+14298782,Manoj Wagh,3267290,Swaggers,4,3,31,24,15.50,1,134.78,23,RHB,1,2,0,0
+10765292,Ashish Makwana,3267290,Swaggers,4,2,27,26,13.50,0,112.50,24,RHB,0,2,0,0
+14298575,Manoj Upadhyay,3267293,Unicorns,5,4,25,18,6.25,0,65.79,38,RHB,0,1,0,0
+10814344,Dinesh,3267288,Super Kings,6,4,23,20,7.67,1,50.00,46,RHB,0,2,0,0
+1669464,Abhishek Satam,3267293,Unicorns,5,4,14,13,4.67,1,107.69,13,RHB,0,2,0,0
+16890310,Pritesh Sail,3267293,Unicorns,5,3,13,7,4.33,0,86.67,15,RHB,0,2,0,0
+10765288,Dilip Achari,3267288,Super Kings,6,6,11,5,2.20,1,61.11,18,RHB,2,0,0,0
+14298775,Non Striker,3267282,Pirates,14,28,10,9,10.00,27,55.56,18,RHB,0,1,0,0
+10765116,Aditya Agrawal,3267293,Unicorns,5,2,7,7,7.00,1,63.64,11,RHB,1,0,0,0
+16917863,Raju Dhale,3267282,Pirates,6,2,6,6,6.00,1,200.00,3,RHB,0,1,0,0
+10619512,Tanishq Wagh,3267288,Super Kings,6,3,4,4,2.00,1,80.00,5,RHB,0,0,0,0
+16888722,Amar Toshniwal,3267285,Shouting Eagles,7,1,3,3,3.00,0,27.27,11,RHB,0,0,0,0
+10814350,Arya K,3267285,Shouting Eagles,7,1,2,2,2.00,0,100.00,2,RHB,0,0,0,0
+10814023,Ayush M,3267285,Shouting Eagles,7,1,1,1,-,1,50.00,2,RHB,0,0,0,0
+16898156,Aniket Wadkar,3267290,Swaggers,4,2,1,1,0.50,0,12.50,8,LHB,0,0,0,0
+10765325,Amit Kesharkar,3267282,Pirates,6,2,1,1,0.50,0,25.00,4,RHB,0,0,0,0
+16889668,Digesh Panchal,3267282,Pirates,6,2,1,1,0.50,0,20.00,5,RHB,0,0,0,0
+16898163,Drsuhas Dhekane,3267290,Swaggers,4,1,0,0,-,0,0.00,1,RHB,0,0,0,0
+10765268,Akshay Upare,3267285,Shouting Eagles,7,1,0,0,-,0,0.00,1,RHB,0,0,0,0
+10765317,Suhas Agawane,3267282,Pirates,6,2,0,0,-,0,0.00,4,LHB,0,0,0,0
+16898071,Shripad,3267288,Super Kings,3,0,0,0,-,0,0,0,RHB,0,0,0,0
+10765284,Chandrakant Vipat,3267288,Super Kings,3,0,0,0,-,0,0,0,RHB,0,0,0,0
+14299002,Pritam Pashankar,3267290,Swaggers,4,0,0,0,-,0,0,0,LHB,0,0,0,0
+10765262,Pratik Zagade,3267290,Swaggers,4,0,0,0,-,0,0,0,RHB,0,0,0,0
+16890289,Nitin Dayma,3267293,Unicorns,5,0,0,0,-,0,0,0,RHB,0,0,0,0
+16898173,Arham,3267293,Unicorns,5,0,0,0,-,0,0,0,RHB,0,0,0,0
+16889685,Rohan Akhade,3267288,Super Kings,6,0,0,0,-,0,0,0,RHB,0,0,0,0
+10765297,Jagdeep,3267282,Pirates,6,0,0,0,-,0,0,0,RHB,0,0,0,0
+16921882,Vatsal,3267288,Super Kings,6,0,0,0,-,0,0,0,-,0,0,0,0

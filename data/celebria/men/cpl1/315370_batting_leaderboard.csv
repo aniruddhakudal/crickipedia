@@ -1,0 +1,32 @@
+player_id,name,team_id,team_name,total_match,innings,total_runs,highest_run,average,not_out,strike_rate,ball_faced,batting_hand,4s,6s,50s,100s
+3604165,Aniruddha Kudal,1753538,Celebria B,5,5,120,53,30.00,1,82.19,146,RHB,2,0,1,0
+10765311,Rohit Akhade,1753541,Celebria C2-C3,4,4,89,30,22.25,0,115.58,77,RHB,6,2,0,0
+10765294,Atharv M,1753540,Celebria C1,4,4,89,44,22.25,0,80.18,111,RHB,1,0,0,0
+10745523,Kishor Wagh,1753538,Celebria B,5,5,75,44,37.50,3,115.38,65,RHB,2,2,0,0
+10765307,Sagar Shelar,1753541,Celebria C2-C3,4,4,31,16,7.75,0,55.36,56,RHB,1,1,0,0
+10814344,Dinesh,1753541,Celebria C2-C3,4,4,29,13,9.67,1,74.36,39,RHB,0,0,0,0
+10765116,Aditya Agrawal,1753535,Celebria A,3,3,20,16,6.67,0,48.78,41,RHB,1,0,0,0
+10765212,Ramchandra Patil,1753535,Celebria A,3,2,17,12,8.50,0,106.25,16,RHB,1,0,0,0
+10813952,Abhishek Achari,1753540,Celebria C1,4,2,16,16,8.00,0,76.19,21,RHB,1,0,0,0
+10765317,Suhas Agawane,1753541,Celebria C2-C3,4,4,14,7,14.00,3,87.50,16,LHB,0,0,0,0
+10745512,Onkar,1753535,Celebria A,3,3,13,12,6.50,1,61.90,21,RHB,1,0,0,0
+10765292,Ashish Makwana,1753540,Celebria C1,4,4,13,12,6.50,2,92.86,14,RHB,3,0,0,0
+10619512,Tanishq Wagh,1753535,Celebria A,4,3,12,11,6.00,1,37.50,32,RHB,0,0,0,0
+10765297,Jagdeep,1753540,Celebria C1,4,2,11,10,5.50,0,36.67,30,RHB,0,0,0,0
+10765284,Chandrakant Vipat,1753540,Celebria C1,4,4,10,4,5.00,2,47.62,21,RHB,0,0,0,0
+10814350,Arya K,1753541,Celebria C2-C3,4,1,8,8,-,1,200.00,4,RHB,2,0,0,0
+10765248,Shivraj Magadum,1753538,Celebria B,5,2,8,8,4.00,0,114.29,7,RHB,0,1,0,0
+10765268,Akshay Upare,1753538,Celebria B,3,2,7,7,3.50,0,63.64,11,RHB,0,0,0,0
+10765338,Omkar Bhalgat,1753541,Celebria C2-C3,2,2,6,5,6.00,1,75.00,8,RHB,1,0,0,0
+10765205,Nilesh Shirsat,1753535,Celebria A,3,3,5,4,-,3,55.56,9,RHB,1,0,0,0
+1494410,Abhishek Upare,1753535,Celebria A,1,1,4,4,4.00,0,40.00,10,RHB,0,0,0,0
+10765325,Amit Kesharkar,1753541,Celebria C2-C3,4,2,4,4,4.00,1,66.67,6,RHB,0,0,0,0
+10765129,Sachin Kulkarni,1753535,Celebria A,3,3,3,2,1.00,0,15.79,19,RHB,0,0,0,0
+10765288,Dilip Achari,1753540,Celebria C1,4,2,1,1,1.00,1,25.00,4,RHB,0,0,0,0
+10765302,Vijay Darkonde,1753540,Celebria C1,4,2,1,1,-,2,50.00,2,RHB,0,0,0,0
+4962614,Siva Kohler,1753538,Celebria B,5,4,1,1,0.33,1,20.00,5,RHB,0,0,0,0
+10765333,Pranav Shende,1753541,Celebria C2-C3,1,1,0,0,-,1,0,0,RHB,0,0,0,0
+10765262,Pratik Zagade,1753538,Celebria B,3,1,0,0,-,1,0,0,RHB,0,0,0,0
+10765220,Shree Atharva Patil,1753535,Celebria A,3,2,0,0,-,1,0.00,2,RHB,0,0,0,0
+10765261,Aditya Akmar,1753538,Celebria B,5,2,0,0,-,1,0.00,6,RHB,0,0,0,0
+10814023,Ayush M,1753538,Celebria B,5,2,0,0,-,1,0.00,2,RHB,0,0,0,0

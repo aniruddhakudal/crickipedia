@@ -7,6 +7,8 @@
   var currentBoard = "batting";
   var pollTimer = null;
   var chartJsPromise = null;
+  var scopedStats = null;
+  var leagueSeasons = [];
 
   var BOARD_LABELS = {
     batting: "Batting",
@@ -21,8 +23,43 @@
 
   function manifestFingerprint(data) {
     return (data.datasets || []).map(function (d) {
-      return d.gender + "/" + d.edition + "/" + d.board + ":" + d.v;
+      return (d.store || "srpl") + "/" + d.gender + "/" + d.edition + "/" + d.board + ":" + d.v;
     }).join("|");
+  }
+
+  function isStatsScopedToTournament() {
+    return Boolean(scopedStats && scopedStats.enabled && scopedStats.edition);
+  }
+
+  function hasStatsLeague() {
+    return Boolean(scopedStats && scopedStats.leagueId && leagueSeasons.length);
+  }
+
+  function leagueSeasonsForGender(gender) {
+    return leagueSeasons.filter(function (s) { return s.gender === gender; });
+  }
+
+  function parseEditionsFromUrl() {
+    var multi = C.queryParam("editions");
+    if (multi) {
+      return multi.split(",").map(function (s) { return s.trim(); }).filter(Boolean);
+    }
+    var single = C.queryParam("edition");
+    return single ? [single] : [];
+  }
+
+  function getSelectedEditions() {
+    if (hasStatsLeague()) {
+      var panel = qs("leagueSeasonChecks");
+      if (!panel) return scopedStats.edition ? [scopedStats.edition] : [];
+      var picked = [];
+      panel.querySelectorAll("input[data-edition]:checked").forEach(function (input) {
+        picked.push(input.getAttribute("data-edition"));
+      });
+      return picked.length ? picked : (scopedStats.edition ? [scopedStats.edition] : []);
+    }
+    var ed = qs("edition").value;
+    return ed ? [ed] : [];
   }
 
   function editionsForGender(gender) {
@@ -30,10 +67,16 @@
     return Object.keys(manifest.editions[gender]).sort();
   }
 
-  function boardsForSelection(gender, edition) {
+  function boardsForSelection(gender, editions) {
     if (!manifest || !manifest.editions || !manifest.editions[gender]) return [];
-    var list = manifest.editions[gender][edition] || [];
-    return list.slice().sort(function (a, b) {
+    var editionList = editions && editions.length ? editions : [""];
+    var set = {};
+    editionList.forEach(function (edition) {
+      (manifest.editions[gender][edition] || []).forEach(function (board) {
+        set[board] = true;
+      });
+    });
+    return Object.keys(set).sort(function (a, b) {
       var order = ["batting", "bowling", "fielding", "mvp"];
       return order.indexOf(a) - order.indexOf(b);
     });
@@ -64,67 +107,165 @@
   function updatePlayersSearchLink() {
     var link = qs("playersSearchLink");
     if (!link) return;
-    link.href = C.playersSearchUrl(qs("gender").value, qs("edition").value, contextParamsObject());
+    var extra = contextParamsObject();
+    var editions = getSelectedEditions();
+    if (editions.length > 1) extra.editions = editions.join(",");
+    link.href = C.playersSearchUrl(qs("gender").value, editions[0] || "", extra);
   }
 
   function syncUrl() {
     var gender = qs("gender").value;
-    var edition = qs("edition").value;
+    var editions = getSelectedEditions();
     var params = tournamentContextParams();
     params.set("gender", gender);
-    params.set("edition", edition);
+    if (editions.length > 1) {
+      params.set("editions", editions.join(","));
+      params.delete("edition");
+    } else if (editions.length === 1) {
+      params.set("edition", editions[0]);
+      params.delete("editions");
+    }
     if (currentBoard) params.set("board", currentBoard);
     history.replaceState(null, "", "?" + params.toString());
     updatePlayersSearchLink();
   }
 
-  function initTournamentContext() {
+  function renderLeagueSeasonChecks(initialEditions) {
+    var panel = qs("leagueSeasonsPanel");
+    var box = qs("leagueSeasonChecks");
+    if (!panel || !box) return;
+    var gender = qs("gender").value;
+    var seasons = leagueSeasonsForGender(gender);
+    if (!hasStatsLeague() || !seasons.length) {
+      panel.classList.add("hidden");
+      return;
+    }
+    panel.classList.remove("hidden");
+    var title = qs("leagueSeasonsTitle");
+    if (title) title.textContent = "Seasons in league “" + scopedStats.leagueId + "”";
+    var initialSet = {};
+    (initialEditions && initialEditions.length ? initialEditions : [scopedStats.edition]).forEach(function (e) {
+      initialSet[e] = true;
+    });
+    var html = '<label class="check"><input type="checkbox" data-select-all> <span>All seasons</span></label>';
+    seasons.forEach(function (s) {
+      var checked = initialSet[s.edition] ? " checked" : "";
+      html += '<label class="check"><input type="checkbox" data-edition="' + C.escapeHtml(s.edition) + '"' +
+        checked + "> <span>" + C.escapeHtml(s.label) + " (" + C.escapeHtml(s.edition) + ")</span></label>";
+    });
+    box.innerHTML = html;
+    var allInput = box.querySelector("[data-select-all]");
+    function syncAll() {
+      var inputs = box.querySelectorAll("input[data-edition]");
+      var allOn = inputs.length && Array.prototype.every.call(inputs, function (i) { return i.checked; });
+      if (allInput) allInput.checked = allOn;
+    }
+    if (allInput) {
+      allInput.addEventListener("change", function () {
+        var on = allInput.checked;
+        box.querySelectorAll("input[data-edition]").forEach(function (input) {
+          input.checked = on;
+        });
+        renderBoardTabs();
+        syncUrl();
+        loadBoard(false);
+      });
+    }
+    box.querySelectorAll("input[data-edition]").forEach(function (input) {
+      input.addEventListener("change", function () {
+        syncAll();
+        renderBoardTabs();
+        syncUrl();
+        loadBoard(false);
+      });
+    });
+    syncAll();
+  }
+
+  function applyScopedControls() {
+    var controls = document.querySelector(".controls");
+    var editionLabel = qs("editionSingleLabel");
+    var genderSelect = qs("gender");
+    if (hasStatsLeague()) {
+      if (controls) controls.classList.remove("hidden");
+      if (editionLabel) editionLabel.classList.add("hidden");
+      qs("gender").value = scopedStats.gender;
+      if (genderSelect) genderSelect.disabled = true;
+      var sub = qs("subtitle");
+      if (sub) {
+        sub.textContent = "Pick one or more seasons in this league to view or combine stats.";
+      }
+      return;
+    }
+    if (editionLabel) editionLabel.classList.remove("hidden");
+    var leaguePanel = qs("leagueSeasonsPanel");
+    if (leaguePanel) leaguePanel.classList.add("hidden");
+    if (genderSelect) genderSelect.disabled = false;
+    if (!isStatsScopedToTournament()) {
+      if (controls) controls.classList.remove("hidden");
+      return;
+    }
+    qs("gender").value = scopedStats.gender;
+    if (controls) controls.classList.add("hidden");
+    var sub = qs("subtitle");
+    if (sub) {
+      sub.textContent = "Leaderboards for " + (scopedStats.gender === "women" ? "women" : "men") +
+        " · data edition “" + scopedStats.edition + "”.";
+    }
+  }
+
+  function initTournamentContext(tournament) {
     var back = qs("backLink");
-    var tournament = C.queryParam("tournament");
+    var tournamentParam = C.queryParam("tournament");
     var season = C.queryParam("season");
     var slug = C.queryParam("t");
-    if (tournament && season) {
-      back.href = "/" + encodeURIComponent(tournament) + "/" + encodeURIComponent(season);
+    if (tournamentParam && season) {
+      back.href = "/" + encodeURIComponent(tournamentParam) + "/" + encodeURIComponent(season);
       back.textContent = "← Back to tournament";
-      C.api.config({ tournamentSlug: tournament, seasonSlug: season }).then(function (data) {
-        if (data.tournament && data.tournament.name) {
-          qs("pageTitle").textContent = data.tournament.name + " — stats";
-          document.title = data.tournament.name + " stats — Crickipedia";
-        }
-      }).catch(function () { /* ignore */ });
-      return;
-    }
-    if (slug) {
+    } else if (slug) {
       back.href = C.publicUrl({ slug: slug });
       back.textContent = "← Back to tournament";
-      C.api.config({ slug: slug }).then(function (data) {
-        if (data.tournament && data.tournament.name) {
-          qs("pageTitle").textContent = data.tournament.name + " — stats";
-          document.title = data.tournament.name + " stats — Crickipedia";
-        }
-      }).catch(function () { /* ignore */ });
-      return;
+    } else {
+      back.href = "/";
+      back.textContent = "← Crickipedia home";
     }
-    back.href = "/";
-    back.textContent = "← Crickipedia home";
+    if (tournament && tournament.name) {
+      qs("pageTitle").textContent = tournament.name + " — stats";
+      document.title = tournament.name + " stats — Crickipedia";
+    }
+    applyScopedControls();
   }
 
   function fillEditionSelect() {
     var gender = qs("gender").value;
-    var editions = editionsForGender(gender);
+    var editions;
+    if (hasStatsLeague()) {
+      editions = leagueSeasonsForGender(gender).map(function (s) { return s.edition; });
+    } else if (isStatsScopedToTournament()) {
+      editions = [scopedStats.edition];
+    } else {
+      editions = editionsForGender(gender);
+    }
     var sel = qs("edition");
     var prev = sel.value;
     sel.innerHTML = editions.map(function (ed) {
       return '<option value="' + C.escapeHtml(ed) + '">' + C.escapeHtml(ed.toUpperCase()) + "</option>";
     }).join("");
-    if (editions.indexOf(prev) >= 0) sel.value = prev;
-    else if (editions.length) sel.value = editions[editions.length - 1];
+    if (hasStatsLeague() && scopedStats.edition && editions.indexOf(scopedStats.edition) >= 0) {
+      sel.value = scopedStats.edition;
+    } else if (isStatsScopedToTournament()) {
+      sel.value = scopedStats.edition;
+    } else if (editions.indexOf(prev) >= 0) {
+      sel.value = prev;
+    } else if (editions.length) {
+      sel.value = editions[editions.length - 1];
+    }
   }
 
   function renderBoardTabs() {
     var gender = qs("gender").value;
-    var edition = qs("edition").value;
-    var boards = boardsForSelection(gender, edition);
+    var editions = getSelectedEditions();
+    var boards = boardsForSelection(gender, editions);
     if (boards.indexOf(currentBoard) < 0) currentBoard = boards[0] || "batting";
     var root = qs("boardTabs");
     root.innerHTML = boards.map(function (board) {
@@ -372,12 +513,14 @@
       return "<th>" + C.escapeHtml(c.label) + "</th>";
     }).join("") + "</tr>";
     var gender = qs("gender").value;
-    var edition = qs("edition").value;
+    var editions = getSelectedEditions();
+    var edition = editions[0] || qs("edition").value;
     var linkExtra = {};
     tournamentContextParams().forEach(function (value, key) {
       linkExtra[key] = value;
     });
     linkExtra.board = currentBoard;
+    if (editions.length > 1) linkExtra.editions = editions.join(",");
     body.innerHTML = bundle.table.map(function (row) {
       return "<tr>" + cols.map(function (c) {
         var val = row[c.key];
@@ -395,19 +538,48 @@
     }).join("");
   }
 
-  function cacheKey(gender, edition, board) {
-    return gender + "|" + edition + "|" + board;
+  function cacheKey(gender, editions, board) {
+    return gender + "|" + editions.join("+") + "|" + board;
   }
 
   function loadBoard(force) {
     var gender = qs("gender").value;
-    var edition = qs("edition").value;
+    var editions = getSelectedEditions();
     var board = currentBoard;
-    var key = cacheKey(gender, edition, board);
+    var key = cacheKey(gender, editions, board);
+    qs("loadError").classList.add("hidden");
+    if (!editions.length) {
+      destroyCharts();
+      qs("chartGrid").innerHTML = '<p class="muted">Select at least one season.</p>';
+      qs("tableHead").innerHTML = "";
+      qs("tableBody").innerHTML = "";
+      qs("freshness").textContent = "";
+      return Promise.resolve();
+    }
+    if (editions.length > 1) {
+      var cached = bundleCache[key];
+      if (!force && cached) {
+        renderCharts(cached.bundle);
+        renderTable(cached.bundle);
+        qs("freshness").textContent = "Combined " + editions.length + " seasons · v" + cached.v +
+          " · " + cached.bundle.rowCount + " players";
+        return Promise.resolve();
+      }
+      return C.api.statsMergedBundle(gender, editions, board).then(function (bundle) {
+        bundleCache[key] = { v: bundle.v, bundle: bundle };
+        renderCharts(bundle);
+        renderTable(bundle);
+        qs("freshness").textContent = "Combined " + editions.length + " seasons · updated " +
+          C.formatDateTime(bundle.updatedAt) + " · v" + bundle.v + " · " + bundle.rowCount + " players";
+      }).catch(function (err) {
+        qs("loadError").textContent = err.message || "Could not load stats";
+        qs("loadError").classList.remove("hidden");
+      });
+    }
+    var edition = editions[0];
     var entry = (manifest.datasets || []).find(function (d) {
       return d.gender === gender && d.edition === edition && d.board === board;
     });
-    qs("loadError").classList.add("hidden");
     if (!entry) {
       destroyCharts();
       qs("chartGrid").innerHTML = '<p class="muted">No CSV uploaded for this board yet.</p>';
@@ -416,10 +588,10 @@
       qs("freshness").textContent = "";
       return Promise.resolve();
     }
-    var cached = bundleCache[key];
-    if (!force && cached && cached.v === entry.v) {
-      renderCharts(cached.bundle);
-      renderTable(cached.bundle);
+    var cachedSingle = bundleCache[key];
+    if (!force && cachedSingle && cachedSingle.v === entry.v) {
+      renderCharts(cachedSingle.bundle);
+      renderTable(cachedSingle.bundle);
       qs("freshness").textContent = "Updated " + C.formatDateTime(entry.updatedAt) + " · v" + entry.v;
       return Promise.resolve();
     }
@@ -443,13 +615,24 @@
     fillEditionSelect();
     renderBoardTabs();
     if (initial) {
-      var g = C.queryParam("gender");
-      var e = C.queryParam("edition");
-      var b = C.queryParam("board");
-      if (g && qs("gender").querySelector('option[value="' + g + '"]')) qs("gender").value = g;
+      var urlEditions = parseEditionsFromUrl();
+      if (isStatsScopedToTournament() || hasStatsLeague()) {
+        qs("gender").value = scopedStats.gender;
+      } else {
+        var g = C.queryParam("gender");
+        if (g && qs("gender").querySelector('option[value="' + g + '"]')) qs("gender").value = g;
+      }
       fillEditionSelect();
-      if (e && editionsForGender(qs("gender").value).indexOf(e) >= 0) qs("edition").value = e;
+      if (!hasStatsLeague() && !isStatsScopedToTournament()) {
+        var e = C.queryParam("edition");
+        if (e && editionsForGender(qs("gender").value).indexOf(e) >= 0) qs("edition").value = e;
+      } else if (!hasStatsLeague() && urlEditions.length === 1) {
+        qs("edition").value = urlEditions[0];
+      }
+      var b = C.queryParam("board");
       if (b) currentBoard = b;
+      applyScopedControls();
+      if (hasStatsLeague()) renderLeagueSeasonChecks(urlEditions.length ? urlEditions : null);
       renderBoardTabs();
     }
     if (changed || initial) {
@@ -487,7 +670,21 @@
     loadBoard(false);
   });
 
-  initTournamentContext();
   C.initUiThemeToggle();
-  refreshManifest(true).then(startPolling);
+  C.fetchTournamentForQueryContext().then(function (tournament) {
+    scopedStats = C.scopedLeaderboardStats(tournament);
+    initTournamentContext(tournament);
+    if (C.tournamentContextFromQuery() && tournament && !scopedStats) {
+      qs("loadError").textContent =
+        "Season stats are not configured for this tournament. Set a data edition under Admin → Customize.";
+      qs("loadError").classList.remove("hidden");
+    }
+    if (scopedStats && scopedStats.leagueId) {
+      return C.api.statsLeague(scopedStats.leagueId).then(function (data) {
+        leagueSeasons = data.seasons || [];
+        return refreshManifest(true);
+      });
+    }
+    return refreshManifest(true);
+  }).then(startPolling);
 })();

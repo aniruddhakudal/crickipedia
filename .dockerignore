@@ -1,6 +1,7 @@
 node_modules
 data/*
 !data/srpl/
+!data/celebria/
 uploads
 .git
 .env

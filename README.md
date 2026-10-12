@@ -98,12 +98,13 @@ Messages fire on: new registration (reserved), Razorpay success (if enabled), ad
 
 ## Tournament season stats (charts)
 
-- Stats are **per tournament**, not on the home page. Enable in Admin → **Customize** → **Season leaderboard stats** (division + data edition, e.g. `srpl2`). Players see **View season stats** on that tournament’s registration page.
-- CSV data: `data/srpl/{gender}/{edition}/*_leaderboard.csv`; JSON bundles in `data/srpl/_generated/`.
-- Superadmin: Admin → **SRPL stats** tab to upload CricHeroes CSVs.
-- API: `GET /api/stats/srpl/manifest`, `GET /api/stats/srpl/:gender/:edition/:board`, `GET .../players`, `GET .../players/:playerId`.
-- **Search players:** `/players.html?gender=men&edition=srpl2` — search by name, then open a profile.
-- Player profiles: `/player.html?gender=men&edition=srpl2&player=<id>` (from search or from names on the stats table).
+- Stats are **per tournament**, not on the home page. Enable in Admin → **Customize** → **Season leaderboard stats** (stats league ID + division + data edition). Players see **View season stats** on that tournament’s registration page.
+- **Stats league ID** groups seasons for the stats page (e.g. `srpl` for all SRPL seasons, `celebria` for CPL and CGL). Same ID on multiple tournaments lets players pick one or more seasons—or **All seasons**—to combine leaderboards.
+- CSV data: `data/srpl/{gender}/{edition}/` and `data/celebria/{gender}/{edition}/` (CPL/CGL); JSON bundles in each store’s `_generated/` folder.
+- Superadmin: Admin → **Season stats (CSVs)** tab to upload CricHeroes CSVs.
+- API: `GET /api/stats/league/:leagueId`, `GET /api/stats/srpl/manifest`, `GET /api/stats/srpl/:gender/:edition/:board`, `GET /api/stats/srpl/:gender/merged/:board?editions=...`, merged players at `.../merged/players?editions=...`.
+- **Search players:** `/players.html?gender=men&edition=cpl11` — search by name, then open a profile.
+- Player profiles: `/player.html?gender=men&edition=cpl11&player=<id>` (from search or from names on the stats table).
 
 ## Later phases
 

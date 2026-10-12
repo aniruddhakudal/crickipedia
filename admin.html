@@ -26,6 +26,7 @@ select.slim{width:auto;min-width:220px}
 .panel{margin-top:16px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
 label{font-weight:700;font-size:13px;display:grid;gap:6px}
 .section{margin-top:22px;padding-top:8px;border-top:1px solid var(--line)}
 .section h3{margin:0 0 14px}
@@ -129,7 +130,7 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
   <div class="tabs">
     <button class="btn tab on superadmin-only" type="button" data-tab="customize" id="tabCustomize">Customize</button>
     <button class="btn tab" type="button" data-tab="players" id="tabPlayers">Players</button>
-    <button class="btn tab superadmin-only" type="button" data-tab="srplstats" id="tabSrplStats">SRPL stats</button>
+    <button class="btn tab superadmin-only" type="button" data-tab="srplstats" id="tabSrplStats">Season stats (CSVs)</button>
     <span class="muted" id="roleBadge" style="margin-left:auto;font-size:13px;font-weight:700"></span>
   </div>
 
@@ -145,7 +146,7 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
       <div class="grid2">
         <label>Tournament name<input id="name"></label>
         <label>Short name<input id="shortName" maxlength="12"></label>
-        <label>Tournament URL key<input id="tournamentSlug" maxlength="48" placeholder="e.g. srpl, cpl"></label>
+        <label>Tournament URL key<input id="tournamentSlug" maxlength="48" placeholder="e.g. cpl, open-league"></label>
         <label>Season URL key<input id="seasonSlug" maxlength="48" placeholder="e.g. 2026"></label>
         <label>Status
           <select id="status">
@@ -273,17 +274,19 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
       </div>
       <div class="section">
         <h3>Season leaderboard stats</h3>
-        <p class="muted">Shows a stats link on this tournament&apos;s registration page only (not on the Crickipedia home page). Uses CSV data uploaded under Admin → SRPL stats.</p>
+        <p class="muted">Shows a stats link on this tournament&apos;s registration page only (not on the Crickipedia home page). Uses CSV data uploaded under Admin → Season stats (CSVs). Set a <strong>unique data edition</strong> for this tournament (e.g. <code>cpl11</code>)—do not reuse another league&apos;s folder (e.g. <code>srpl2</code>).</p>
         <label class="check"><input id="statsEnabled" type="checkbox"> Show season stats on registration page</label>
-        <div class="grid2" style="margin-top:12px">
+        <div class="grid3" style="margin-top:12px">
+          <label>Stats league ID<input id="statsLeagueId" placeholder="e.g. srpl, celebria" maxlength="32"></label>
           <label>Division
             <select id="statsGender">
               <option value="men">Men</option>
               <option value="women">Women</option>
             </select>
           </label>
-          <label>Data edition (folder name)<input id="statsEdition" placeholder="e.g. srpl2" maxlength="32"></label>
+          <label>Data edition (folder name)<input id="statsEdition" placeholder="e.g. cpl11" maxlength="32"></label>
         </div>
+        <p class="muted" style="margin-top:8px">Tournaments with the same <strong>Stats league ID</strong> can compare or combine seasons on the stats page (e.g. all SRPL seasons use <code>srpl</code>; CPL and CGL both use <code>celebria</code>).</p>
       </div>
       <div class="section">
         <h3>Registration categories &amp; entry fees</h3>
@@ -349,9 +352,15 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
 
   <section id="srplstats" class="hidden superadmin-only">
     <div class="panel">
-      <h2 style="margin-top:0">SRPL leaderboard CSVs</h2>
+      <h2 style="margin-top:0">League leaderboard CSVs</h2>
       <p class="muted">Upload CricHeroes leaderboard exports. Charts on the public stats page update within a minute (or immediately after upload). CSV is the source file; the server builds small JSON bundles for fast charts.</p>
-      <div class="grid3" style="margin-top:14px">
+      <div class="grid4" style="margin-top:14px">
+        <label>Data folder
+          <select id="srplDataStore">
+            <option value="srpl">data/srpl</option>
+            <option value="celebria">data/celebria</option>
+          </select>
+        </label>
         <label>Division
           <select id="srplGender">
             <option value="men">Men</option>
@@ -359,7 +368,7 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
           </select>
         </label>
         <label>Edition
-          <input id="srplEdition" placeholder="e.g. srpl2" maxlength="32">
+          <input id="srplEdition" placeholder="e.g. cpl11" maxlength="32">
         </label>
         <label>Board
           <select id="srplBoard">
@@ -387,7 +396,7 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
         <table>
           <thead>
             <tr>
-              <th>Division</th><th>Edition</th><th>Board</th><th>Rows</th><th>Version</th><th>File</th><th>Updated</th>
+              <th>Store</th><th>Division</th><th>Edition</th><th>Board</th><th>Rows</th><th>Version</th><th>File</th><th>Updated</th>
             </tr>
           </thead>
           <tbody id="srplManifestRows"></tbody>
@@ -429,7 +438,7 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
   <div class="modal">
     <h3 style="margin-top:0">New tournament</h3>
     <p class="muted">Copies the current look and form, then you rename it. New event starts as Draft.</p>
-    <label>Name<input id="newName" placeholder="e.g. SRPL 2027"></label>
+    <label>Name<input id="newName" placeholder="e.g. CPL 2027"></label>
     <div class="actions">
       <button class="btn" type="button" id="createBtn">Create</button>
       <button class="btn ghost" type="button" id="cancelCreate">Cancel</button>
@@ -508,11 +517,11 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
     if (!tbody) return;
     var rows = datasets || [];
     if (!rows.length) {
-      tbody.innerHTML = '<tr><td colspan="7" class="muted">No CSV files yet. Upload a leaderboard or add files under data/srpl/ on the server.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" class="muted">No CSV files yet. Upload a leaderboard or add files under data/srpl/ or data/celebria/ on the server.</td></tr>';
       return;
     }
     tbody.innerHTML = rows.map(function (d) {
-      return "<tr><td>" + C.escapeHtml(d.gender) + "</td><td>" + C.escapeHtml(d.edition) +
+      return "<tr><td>" + C.escapeHtml(d.store || "srpl") + "</td><td>" + C.escapeHtml(d.gender) + "</td><td>" + C.escapeHtml(d.edition) +
         "</td><td>" + C.escapeHtml(d.board) + "</td><td>" + C.escapeHtml(String(d.rowCount || 0)) +
         "</td><td><code>" + C.escapeHtml(d.v || "") + "</code></td><td>" + C.escapeHtml(d.sourceFile || "") +
         "</td><td>" + C.escapeHtml(C.formatDateTime(d.updatedAt)) + "</td></tr>";
@@ -525,7 +534,7 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
       renderSrplManifestTable(data.datasets || []);
     } catch (err) {
       renderSrplManifestTable([]);
-      toast(err.message || "Could not load SRPL manifest");
+      toast(err.message || "Could not load stats manifest");
     }
   }
 
@@ -1000,6 +1009,7 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
       leaderboardStats: {
         enabled: document.getElementById("statsEnabled").checked,
         provider: "srpl",
+        leagueId: document.getElementById("statsLeagueId").value.trim(),
         gender: document.getElementById("statsGender").value,
         edition: document.getElementById("statsEdition").value.trim()
       },
@@ -1060,6 +1070,7 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
     document.getElementById("showPublicRoster").checked = tournament.showPublicRoster !== false;
     var lb = C.normalizeLeaderboardStats(tournament.leaderboardStats);
     document.getElementById("statsEnabled").checked = lb.enabled;
+    document.getElementById("statsLeagueId").value = lb.leagueId || "";
     document.getElementById("statsGender").value = lb.gender || "men";
     document.getElementById("statsEdition").value = lb.edition || "";
     document.getElementById("jerseySizes").value = (tournament.jerseySizes || []).join(", ");
@@ -1314,6 +1325,19 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
     list.sort(function (a, b) { return String(a.name || "").localeCompare(String(b.name || "")); });
   }
 
+  /** Update cached tournament list without resetting the customize form (preserves unsaved edits). */
+  function syncCachedTournament(serverTournament) {
+    if (!serverTournament || !serverTournament.slug) return;
+    var previousSlug = current && current.slug ? current.slug : serverTournament.slug;
+    upsertTournamentInList(serverTournament, previousSlug);
+    if (current && (current.slug === previousSlug || current.slug === serverTournament.slug)) {
+      current = list.find(function (item) { return item.slug === serverTournament.slug; }) || serverTournament;
+      slug = current.slug;
+      C.setAdminSlug(slug);
+      fillSelect();
+    }
+  }
+
   async function save() {
     if (!current || !current.slug) {
       toast("Create a tournament first (New tournament).");
@@ -1356,7 +1380,7 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
     var file = fileInput.files && fileInput.files[0];
     var edition = document.getElementById("srplEdition").value.trim();
     if (!edition) {
-      toast("Edition is required (e.g. srpl2)");
+      toast("Edition is required (e.g. cpl11)");
       return;
     }
     if (!file) {
@@ -1364,6 +1388,7 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
       return;
     }
     var form = new FormData();
+    form.append("dataStore", document.getElementById("srplDataStore").value);
     form.append("gender", document.getElementById("srplGender").value);
     form.append("edition", edition);
     form.append("board", document.getElementById("srplBoard").value);
@@ -1378,7 +1403,7 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
       status.textContent = "Published " + result.fileName + " · v" + result.v + " · " + result.rowCount + " rows";
       fileInput.value = "";
       renderSrplManifestTable((result.manifest && result.manifest.datasets) || []);
-      toast("SRPL stats updated");
+      toast("Leaderboard stats updated");
     } catch (err) {
       status.textContent = "";
       toast(err.message || "Upload failed");
@@ -1430,6 +1455,12 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
     dirty = true;
   });
 
+  document.getElementById("formFieldRows").addEventListener("input", function () {
+    dirty = true;
+  });
+  document.getElementById("formFieldRows").addEventListener("change", function () {
+    dirty = true;
+  });
   document.getElementById("formFieldRows").addEventListener("click", function (event) {
     var up = event.target.getAttribute("data-ff-up");
     var down = event.target.getAttribute("data-ff-down");
@@ -1500,8 +1531,8 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
       document.getElementById("qrSource").value = "image";
       toggleQrSourceFields();
       refreshQrPreview(data.qrImageUrl);
-      if (data.tournament) load(data.tournament);
-      status.textContent = "QR uploaded. Save tournament to keep other edits.";
+      if (data.tournament) syncCachedTournament(data.tournament);
+      status.textContent = "QR uploaded and saved. Click Save tournament if you have other unsaved edits.";
       dirty = true;
     } catch (err) {
       status.textContent = err.message || "Upload failed";
@@ -1535,7 +1566,7 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
       var urlInput = document.querySelector('[data-cat="' + index + '"][data-k="qrImageUrl"]');
       if (urlInput) urlInput.value = data.qrImageUrl || "";
       refreshCategoryQrPreview(Number(index), data.categoryName, data.qrImageUrl);
-      if (data.tournament) load(data.tournament);
+      if (data.tournament) syncCachedTournament(data.tournament);
       toast("Category QR uploaded");
       dirty = true;
     } catch (err) {
@@ -1629,9 +1660,9 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
     try {
       var data = await C.api.uploadJerseySizeChart(slug, file);
       document.getElementById("jerseySizeChartUrl").value = data.jerseySizeChartUrl || "";
-      if (data.tournament) load(data.tournament);
+      if (data.tournament) syncCachedTournament(data.tournament);
       else refreshJerseyChartPreview();
-      status.textContent = "Sample T-shirt photo uploaded. Save tournament to keep other edits.";
+      status.textContent = "Sample T-shirt photo uploaded and saved. Click Save tournament if you have other unsaved edits.";
       dirty = true;
     } catch (err) {
       status.textContent = err.message || "Upload failed";

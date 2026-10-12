@@ -1,0 +1,50 @@
+player_id,name,team_id,team_name,total_match,innings,total_wickets,balls,highest_wicket,economy,SR,maidens,avg,runs,bowling_style,overs,dot_balls
+32365258,Atharva Patil Celebria,7973037,Kingmaker Boys,7,7,9,82,3,5.20,9.11,1,7.89,71,Right-arm fast,13.4,62
+234632,Krushna Malpani,7973037,Kingmaker Boys,7,7,8,84,2,4.36,10.50,6,7.63,61,Right-arm medium,14.0,65
+14298575,Manoj Upadhyay,7973003,Crusaders 2.0,5,5,8,60,3,5.30,7.50,0,6.63,53,Right-arm medium,10.0,43
+10619512,Tanishq Wagh,7973044,Infamous Mafias,8,8,8,90,3,6.07,11.25,0,11.38,91,Right-arm medium,15.0,65
+822917,Lavin Raheja,7973037,Kingmaker Boys,7,7,6,48,3,8.00,8.00,0,10.67,64,Right-arm medium,8.0,31
+14019875,Ashish Naik,7973014,Supernovas,7,6,6,60,2,14.20,10.00,0,23.67,142,Right-arm Leg Break,10.0,27
+16845639,Saurabh Mantri,7973022,Smashers,6,6,5,62,3,7.74,12.40,0,16,80,Right-arm fast,10.2,39
+10765307,Sagar Shelar,7973022,Smashers,6,6,5,60,2,8.10,12.00,0,16.2,81,Right-arm fast,10.0,40
+10765311,Rohit Akhade,7973044,Infamous Mafias,8,8,5,48,1,9.12,9.60,0,14.6,73,Right-arm medium,8.0,33
+4867029,Kishore Soni,7973014,Supernovas,7,6,5,46,2,10.43,9.20,0,16,80,Right-arm fast,7.4,26
+19794211,Ballal Sanket,7973044,Infamous Mafias,8,8,5,66,3,12.18,13.20,0,26.8,134,Right-arm fast,11.0,31
+234634,Shubham Chougule,7973014,Supernovas,7,7,4,80,4,4.20,20.00,1,14,56,Right-arm fast,13.2,52
+32388597,Tanmay,7973022,Smashers,6,5,4,36,2,8.17,9.00,1,12.25,49,Right-arm medium,6.0,25
+20788786,Bhushan Ladda,7973022,Smashers,6,5,4,30,3,8.60,7.50,0,10.75,43,Right-arm fast,5.0,20
+6608477,Abhishek Axhari,7973014,Supernovas,7,7,4,54,2,10.89,13.50,0,24.5,98,Right-arm fast,9.0,34
+14298782,Manoj Wagh,7973058,Thalas,5,4,4,24,1,15.50,6.00,0,15.5,62,Right-arm medium,4.0,12
+13221867,Akash Patil,7973044,Infamous Mafias,8,8,3,91,2,4.55,30.33,1,23,69,Right-arm fast,15.1,63
+10745512,Onkar,7973003,Crusaders 2.0,5,5,3,60,2,6.60,20.00,1,22,66,Right-arm medium,10.0,38
+33388631,Abhishek Dayama,7973014,Supernovas,7,5,3,36,2,6.83,12.00,0,13.67,41,Right-arm medium,6.0,23
+10765292,Ashish Makwana,7973003,Crusaders 2.0,5,4,3,24,1,7.50,8.00,0,10,30,Right-arm fast,4.0,16
+16898163,Drsuhas Dhekane,7973044,Infamous Mafias,8,6,3,36,1,8.67,12.00,1,17.33,52,Right-arm Leg Break,6.0,22
+29266041,Anvit Bhosale,7973037,Kingmaker Boys,7,6,3,36,1,10.50,12.00,0,21,63,Right-arm medium,6.0,21
+4962614,Siva Kohler,7973037,Kingmaker Boys,7,7,3,48,1,11.75,16.00,0,31.33,94,Right-arm medium,8.0,27
+10745523,Kishor Wagh,7973022,Smashers,6,6,3,36,3,17.67,12.00,0,35.33,106,Right-arm medium,6.0,17
+10765294,Atharva M,7973058,Thalas,5,5,2,60,2,5.30,30.00,1,26.5,53,Right-arm fast,10.0,33
+16890310,Pritesh Sail,7973014,Supernovas,7,7,2,42,1,10.86,21.00,0,38,76,Right-arm medium,7.0,22
+32766099,Suhas Kale 702,7973014,Supernovas,7,4,2,24,1,14.00,12.00,0,28,56,Right-arm fast,4.0,13
+10765325,Amit Kesharkar,7973058,Thalas,5,2,1,12,1,6.00,12.00,0,12,12,Right-arm medium,2.0,8
+24517164,Hemant Chaudhari,7973003,Crusaders 2.0,5,3,1,18,1,6.33,18.00,1,19,19,Right-arm medium,3.0,13
+19892409,Jonty,7973058,Thalas,5,4,1,30,1,7.40,30.00,0,37,37,Right-arm fast,5.0,20
+3604165,Aniruddha Kudal,7973003,Crusaders 2.0,5,3,1,18,1,10.67,18.00,0,32,32,Right-arm fast,3.0,11
+10765284,Chandrakant Vipat,7973058,Thalas,5,2,1,12,1,11.00,12.00,0,22,22,Right-arm fast,2.0,7
+14906098,Tushar Tonape,7973058,Thalas,5,4,1,24,1,11.00,24.00,0,44,44,Right-arm medium,4.0,8
+10765261,Aditya Akmar,7973044,Infamous Mafias,8,6,1,36,1,11.17,36.00,1,67,67,Right-arm fast,6.0,20
+10765116,Aditya Agrawal,7973003,Crusaders 2.0,5,4,1,24,1,14.00,24.00,0,56,56,Right-arm fast,4.0,13
+10814023,Ayush M,7973044,Infamous Mafias,8,2,1,12,1,15.00,12.00,0,30,30,Right-arm fast,2.0,6
+26751992,Saurabh Thakur,7973044,Infamous Mafias,8,5,1,30,1,17.20,30.00,0,86,86,Right-arm medium,5.0,12
+1883604,Raman Toshniwal,7973037,Kingmaker Boys,7,4,1,24,1,17.50,24.00,0,70,70,Right-arm fast,4.0,12
+14298851,Vinay Satam,7973014,Supernovas,7,2,0,12,0,4.50,0.00,0,0,9,Right-arm medium,2.0,9
+16898156,Aniket Wadkar,7973022,Smashers,6,4,0,24,0,6.00,0.00,0,0,24,Left-arm medium,4.0,15
+7036836,Prashant,7973058,Thalas,5,5,0,48,0,6.00,0.00,0,0,48,Right-arm fast,8.0,33
+16889668,Digesh Panchal,7973037,Kingmaker Boys,7,4,0,24,0,7.50,0.00,0,0,30,Right-arm medium,4.0,15
+10765288,Dilip Achari,7973037,Kingmaker Boys,7,1,0,6,0,9.00,0.00,0,0,9,Right-arm fast,1.0,4
+1669464,Abhishek Satam,7973022,Smashers,6,1,0,6,0,10.00,0.00,0,0,10,Right-arm medium,1.0,3
+14299002,Pritam Pashankar,7973022,Smashers,6,3,0,18,0,12.33,0.00,0,0,37,Left-arm medium,3.0,8
+16898071,Shripad,7973003,Crusaders 2.0,5,3,0,18,0,14.33,0.00,0,0,43,Right-arm Off Break,3.0,9
+20273947,Yogesh Rane,7973003,Crusaders 2.0,5,2,0,7,0,17.14,0.00,0,0,20,Right-arm medium,1.1,3
+10765297,Jagdeep,7973058,Thalas,5,2,0,11,0,18.55,0.00,0,0,34,Right-arm fast,1.5,5
+14298775,Non Striker,7973037,Kingmaker Boys,10,0,,,,0.00,0.00,0,0,0,Right-arm fast,0.0,0

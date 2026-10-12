@@ -104,6 +104,57 @@ app.get("/api/stats/srpl/manifest", (req, res) => {
   }
 });
 
+app.get("/api/stats/league/:leagueId", async (req, res) => {
+  try {
+    const data = await db.listStatsLeagueSeasons(req.params.leagueId);
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/api/stats/srpl/:gender/merged/players", (req, res) => {
+  try {
+    const editions = String(req.query.editions || "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (!editions.length) {
+      res.status(400).json({ error: "editions query is required" });
+      return;
+    }
+    const players = srplStats.listPlayersMerged(req.params.gender, editions);
+    srplStats.sendJsonWithCache(
+      res,
+      { players, gender: req.params.gender, editions },
+      `players-merged-${req.params.gender}-${editions.join("+")}-${players.length}`
+    );
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.get("/api/stats/srpl/:gender/merged/:board", (req, res) => {
+  try {
+    const editions = String(req.query.editions || "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (!editions.length) {
+      res.status(400).json({ error: "editions query is required" });
+      return;
+    }
+    const bundle = srplStats.readMergedBundle(req.params.gender, editions, req.params.board);
+    if (!bundle) {
+      res.status(404).json({ error: "Stats not found for this selection" });
+      return;
+    }
+    srplStats.sendJsonWithCache(res, bundle, bundle.v);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
 app.get("/api/stats/srpl/:gender/:edition/players", (req, res) => {
   try {
     const players = srplStats.listPlayers(req.params.gender, req.params.edition);
@@ -140,7 +191,13 @@ app.get("/api/stats/srpl/:gender/:edition/:board", (req, res) => {
       res.status(404).json({ error: "Use /players or /players/:playerId" });
       return;
     }
-    const bundle = srplStats.readBundle(req.params.gender, req.params.edition, req.params.board);
+    const preferredStore = req.query && req.query.store;
+    const bundle = srplStats.readBundle(
+      req.params.gender,
+      req.params.edition,
+      req.params.board,
+      preferredStore
+    );
     if (!bundle) {
       res.status(404).json({ error: "Stats not found for this selection" });
       return;
@@ -161,13 +218,15 @@ app.post("/api/admin/stats/srpl/upload", requireSuperadmin, withStatsCsvUpload, 
     const edition = req.body && req.body.edition;
     const board = req.body && req.body.board;
     const tournamentId = req.body && req.body.tournamentId;
+    const dataStore = req.body && req.body.dataStore;
     const result = srplStats.saveCsvUpload({
       gender,
       edition,
       board,
       buffer: req.file.buffer,
       originalName: req.file.originalname,
-      tournamentId
+      tournamentId,
+      dataStore
     });
     res.json({
       ok: true,
@@ -197,7 +256,9 @@ app.post("/api/admin/stats/srpl/rebuild", requireSuperadmin, (req, res) => {
 
 function hashManifestVersion(manifest) {
   const crypto = require("crypto");
-  const payload = (manifest.datasets || []).map((d) => `${d.gender}/${d.edition}/${d.board}:${d.v}`).join("|");
+  const payload = (manifest.datasets || [])
+    .map((d) => `${d.store || "srpl"}/${d.gender}/${d.edition}/${d.board}:${d.v}`)
+    .join("|");
   return crypto.createHash("sha256").update(payload).digest("hex").slice(0, 12);
 }
 
@@ -1558,10 +1619,10 @@ app.post("/api/admin/tournaments/:slug/payment-qr", requireSuperadmin, withUploa
     const slugKey = adminTournamentSlug(req);
     const qrImageUrl = await photoStorage.saveTournamentPaymentQr(slugKey, req.file);
     const tournament = loaded.tournament;
-    const settings = db.settingsFromClient({
-      ...tournament,
+    const settings = { ...(loaded.row.settings || {}) };
+    settings.payment = settingsUtil.mergePaymentSettings({
       payment: {
-        ...(tournament.payment || {}),
+        ...(settings.payment || {}),
         qrImageUrl,
         qrSource: "image"
       }
@@ -1570,9 +1631,13 @@ app.post("/api/admin/tournaments/:slug/payment-qr", requireSuperadmin, withUploa
       `UPDATE tournaments SET settings = $2::jsonb, updated_at = NOW() WHERE id = $1 RETURNING *`,
       [loaded.row.id, JSON.stringify(settings)]
     );
+    const sponsorRows = await db.query(
+      "SELECT * FROM sponsors WHERE tournament_id = $1 AND active = TRUE ORDER BY display_order, id",
+      [loaded.row.id]
+    );
     res.json({
       qrImageUrl,
-      tournament: db.toClient(updated.rows[0], db.sponsorsFromClient(tournament.sponsors))
+      tournament: db.toClient(updated.rows[0], sponsorRows.rows)
     });
   } catch (err) {
     if (req.file && req.file.path) fs.unlink(req.file.path, () => {});
@@ -1613,19 +1678,21 @@ app.post("/api/admin/tournaments/:slug/category-payment-qr", requireSuperadmin, 
       req.file
     );
     categories[categoryIndex] = { ...categories[categoryIndex], qrImageUrl };
-    const settings = db.settingsFromClient({
-      ...tournament,
-      categories
-    });
+    const settings = { ...(loaded.row.settings || {}) };
+    settings.categories = categories;
     const updated = await db.query(
       `UPDATE tournaments SET settings = $2::jsonb, updated_at = NOW() WHERE id = $1 RETURNING *`,
       [loaded.row.id, JSON.stringify(settings)]
+    );
+    const sponsorRows = await db.query(
+      "SELECT * FROM sponsors WHERE tournament_id = $1 AND active = TRUE ORDER BY display_order, id",
+      [loaded.row.id]
     );
     res.json({
       qrImageUrl,
       categoryIndex,
       categoryName,
-      tournament: db.toClient(updated.rows[0], db.sponsorsFromClient(tournament.sponsors))
+      tournament: db.toClient(updated.rows[0], sponsorRows.rows)
     });
   } catch (err) {
     if (req.file && req.file.path) fs.unlink(req.file.path, () => {});
@@ -1647,18 +1714,19 @@ app.post("/api/admin/tournaments/:slug/jersey-size-chart", requireSuperadmin, wi
     }
     const slugKey = adminTournamentSlug(req);
     const jerseySizeChartUrl = await photoStorage.saveJerseySizeChart(slugKey, req.file);
-    const tournament = loaded.tournament;
-    const settings = db.settingsFromClient({
-      ...tournament,
-      jerseySizeChartUrl
-    });
+    const settings = { ...(loaded.row.settings || {}) };
+    settings.jerseySizeChartUrl = jerseySizeChartUrl;
     const updated = await db.query(
       `UPDATE tournaments SET settings = $2::jsonb, updated_at = NOW() WHERE id = $1 RETURNING *`,
       [loaded.row.id, JSON.stringify(settings)]
     );
+    const sponsorRows = await db.query(
+      "SELECT * FROM sponsors WHERE tournament_id = $1 AND active = TRUE ORDER BY display_order, id",
+      [loaded.row.id]
+    );
     res.json({
       jerseySizeChartUrl,
-      tournament: db.toClient(updated.rows[0], db.sponsorsFromClient(tournament.sponsors))
+      tournament: db.toClient(updated.rows[0], sponsorRows.rows)
     });
   } catch (err) {
     if (req.file && req.file.path) fs.unlink(req.file.path, () => {});

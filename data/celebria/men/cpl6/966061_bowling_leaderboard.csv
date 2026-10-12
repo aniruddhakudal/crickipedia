@@ -1,0 +1,49 @@
+player_id,name,team_id,team_name,total_match,innings,total_wickets,balls,highest_wicket,economy,SR,maidens,avg,runs,bowling_style,overs,dot_balls
+822917,Lavin Raheja,6613946,TOP GUNS,5,5,7,54,3,6.33,7.71,0,8.14,57,Right-arm medium,9.0,35
+14298782,Manoj Wagh,6613942,TEAM SHOOTERS,7,7,6,42,2,8.86,7.00,0,10.33,62,Right-arm medium,7.0,29
+10745523,Kishor Wagh,6613936,GULLY BOYS,6,6,6,70,2,9.94,11.67,0,19.33,116,Right-arm medium,11.4,40
+19794211,Ballal Sanket,6613936,GULLY BOYS,6,6,5,66,2,3.82,13.20,3,8.4,42,Right-arm fast,11.0,50
+234632,Krushna Malpani,6613939,MAVERICKS,6,6,5,72,3,6.33,14.40,0,15.2,76,Right-arm medium,12.0,41
+10765294,Atharva M,6613942,TEAM SHOOTERS,7,7,4,84,2,4.07,21.00,1,14.25,57,Right-arm fast,14.0,64
+14299007,Abhay Patil,6613939,MAVERICKS,6,6,4,70,2,7.54,17.50,0,22,88,Right-arm fast,11.4,39
+16985185,Shree,6613938,JOKERS,4,4,4,45,1,7.60,11.25,0,14.25,57,Right-arm fast,7.3,26
+4962614,Siva Kohler,6613939,MAVERICKS,6,6,4,42,2,8.57,10.50,2,15,60,Right-arm medium,7.0,28
+10765311,Rohit Akhade,6613946,TOP GUNS,5,5,4,42,2,10.29,10.50,0,18,72,Right-arm medium,7.0,26
+10765297,Jagdeep,6613936,GULLY BOYS,6,6,4,42,2,11.57,10.50,1,20.25,81,Right-arm fast,7.0,23
+6608477,Abhishek Axhari,6613939,MAVERICKS,6,6,4,42,1,12.00,10.50,1,21,84,Right-arm fast,7.0,21
+29266041,Anvit Bhosale,6613939,MAVERICKS,6,5,4,30,2,13.00,7.50,0,16.25,65,Right-arm medium,5.0,14
+16898163,Drsuhas Dhekane,6613936,GULLY BOYS,6,6,4,36,2,14.50,9.00,0,21.75,87,Right-arm Leg Break,6.0,16
+19892409,Jounty,6613942,TEAM SHOOTERS,7,7,3,78,1,7.38,26.00,0,32,96,Right-arm fast,13.0,44
+10765317,Suhas Agawane,6613941,POC6,4,4,3,38,2,9.00,12.67,0,19,57,Right-arm medium,6.2,21
+1883604,Raman Toshniwal,6613936,GULLY BOYS,6,6,3,36,1,9.83,12.00,0,19.67,59,Right-arm fast,6.0,19
+4867029,Kishore Soni,6613942,TEAM SHOOTERS,7,7,3,60,1,11.80,20.00,0,39.33,118,Right-arm fast,10.0,34
+20788786,Bhushan Ladda,6613942,TEAM SHOOTERS,7,6,3,36,2,16.50,12.00,0,33,99,Right-arm fast,6.0,15
+10619512,Tanishq Wagh,6613946,TOP GUNS,5,5,2,55,2,6.11,27.50,1,28,56,Right-arm medium,9.1,40
+3604165,Aniruddha Kudal,6613941,POC6,4,4,2,30,1,7.00,15.00,0,17.5,35,Right-arm fast,5.0,21
+20206025,Yogesh Angulwar Amdocs,6613946,TOP GUNS,5,5,2,30,1,7.80,15.00,0,19.5,39,Right-arm medium,5.0,22
+16898156,Aniket Wadkar,6613939,MAVERICKS,6,6,2,36,1,8.17,18.00,0,24.5,49,Left-arm medium,6.0,24
+10745512,Onkar,6613938,JOKERS,4,4,2,24,1,8.50,12.00,0,17,34,Right-arm medium,4.0,18
+10765307,Sagar Shelar,6613938,JOKERS,4,4,2,48,1,11.88,24.00,0,47.5,95,Right-arm fast,8.0,26
+29273782,Parth Wagh,6613936,GULLY BOYS,6,2,1,12,1,6.50,12.00,0,13,13,Right-arm medium,2.0,9
+14298575,Manoj Upadhyay,6613941,POC6,4,4,1,43,1,6.70,43.00,0,48,48,Right-arm medium,7.1,30
+10765268,Akshay Upare,6613941,POC6,4,3,1,18,1,7.67,18.00,0,23,23,Right-arm medium,3.0,12
+10765292,Ashish Makwana,6613946,TOP GUNS,5,5,1,30,1,9.00,30.00,0,45,45,Right-arm fast,5.0,18
+10765284,Chandrakant Vipat,6613946,TOP GUNS,5,5,1,30,1,9.20,30.00,0,46,46,Right-arm fast,5.0,17
+20273947,Yogesh Rane,6613938,JOKERS,4,3,1,18,1,9.33,18.00,0,28,28,Right-arm medium,3.0,12
+16845639,Saurabh Mantri,6613936,GULLY BOYS,6,6,1,42,1,10.29,42.00,0,72,72,Right-arm fast,7.0,25
+29595933,Vijaykumar Tonape,6613942,TEAM SHOOTERS,7,6,1,36,1,11.17,36.00,0,67,67,Right-arm medium,6.0,19
+14299002,Pritam Pashankar,6613942,TEAM SHOOTERS,7,4,1,24,1,13.50,24.00,0,54,54,Left-arm medium,4.0,13
+10765325,Amit Kesharkar,6613938,JOKERS,4,4,1,24,1,13.75,24.00,0,55,55,Right-arm medium,4.0,13
+1669464,Abhishek Satam,6613938,JOKERS,4,1,1,6,1,15.00,6.00,0,15,15,Right-arm medium,1.0,2
+17653956,Arham Lunawat,6613938,JOKERS,4,3,1,18,1,15.67,18.00,0,47,47,Right-arm medium,3.0,8
+16889668,Digesh Panchal,6613946,TOP GUNS,5,1,0,6,0,2.00,0.00,0,0,2,Right-arm medium,1.0,5
+14019875,Ashish Naik,6613941,POC6,4,2,0,12,0,4.00,0.00,0,0,8,Right-arm Leg Break,2.0,9
+24517164,Hemant Chaudhari,6613939,MAVERICKS,6,2,0,12,0,6.00,0.00,0,0,12,Right-arm medium,2.0,6
+10765262,Pratik Zagade,6613941,POC6,4,2,0,12,0,10.00,0.00,0,0,20,Right-arm fast,2.0,7
+26751992,Saurabh Thakur,6613941,POC6,4,1,0,6,0,10.00,0.00,0,0,10,Right-arm medium,1.0,2
+16890310,Pritesh Sail,6613941,POC6,4,4,0,24,0,15.25,0.00,0,0,61,Right-arm medium,4.0,9
+10765116,Aditya Agrawal,6613939,MAVERICKS,6,1,0,6,0,24.00,0.00,0,0,24,Right-arm fast,1.0,2
+10765288,Dilip Achari,6613936,GULLY BOYS,6,0,,,,0.00,0.00,0,0,0,Right-arm fast,0.0,0
+14298851,Vinay Satam,6613938,JOKERS,4,0,,,,0.00,0.00,0,0,0,Right-arm medium,0.0,0
+27287816,Saravanan R Subbiah,6613942,TEAM SHOOTERS,7,0,,,,0.00,0.00,0,0,0,Right-arm medium,0.0,0
+29269509,Adwait Bhosale,6613946,TOP GUNS,5,0,,,,0.00,0.00,0,0,0,-,0.0,0

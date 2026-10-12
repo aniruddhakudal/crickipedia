@@ -8,3 +8,6 @@ data/*
 !data/srpl/
 !data/srpl/**
 data/srpl/_generated/
+!data/celebria/
+!data/celebria/**
+data/celebria/_generated/

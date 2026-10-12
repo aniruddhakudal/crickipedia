@@ -1,0 +1,32 @@
+player_id,name,team_id,team_name,total_match,innings,total_wickets,balls,highest_wicket,economy,SR,maidens,avg,runs,bowling_style,overs,dot_balls
+10765292,Ashish Makwana,1753540,Celebria C1,4,4,5,42,2,8.57,8.40,0,12,60,Right-arm fast,7.0,16
+10765129,Sachin Kulkarni,1753535,Celebria A,3,3,4,36,2,4.00,9.00,0,6,24,Right-arm fast,6.0,15
+10765248,Shivraj Magadum,1753538,Celebria B,5,5,4,60,2,5.80,15.00,0,14.5,58,Right-arm fast,10.0,28
+10765325,Amit Kesharkar,1753541,Celebria C2-C3,4,4,4,33,3,6.91,8.25,0,9.5,38,Right-arm medium,5.3,17
+10765307,Sagar Shelar,1753541,Celebria C2-C3,4,4,3,48,3,3.25,16.00,0,8.67,26,Right-arm fast,8.0,27
+10765294,Atharv M,1753540,Celebria C1,4,4,3,48,2,3.88,16.00,1,10.33,31,Right-arm fast,8.0,27
+10765297,Jagdeep,1753540,Celebria C1,4,4,3,48,2,5.38,16.00,0,14.33,43,Right-arm fast,8.0,20
+1494410,Abhishek Upare,1753535,Celebria A,1,1,2,12,2,1.00,6.00,1,1,2,Right-arm Leg Break,2.0,10
+10765205,Nilesh Shirsat,1753535,Celebria A,3,1,2,12,2,3.50,6.00,0,3.5,7,Right-arm medium,2.0,7
+10745523,Kishor Wagh,1753538,Celebria B,5,5,2,60,2,3.70,30.00,2,18.5,37,Right-arm medium,10.0,32
+10765311,Rohit Akhade,1753541,Celebria C2-C3,4,3,2,24,2,4.25,12.00,0,8.5,17,Right-arm medium,4.0,11
+10765317,Suhas Agawane,1753541,Celebria C2-C3,4,3,2,24,1,5.00,12.00,0,10,20,Right-arm medium,4.0,12
+10745512,Onkar,1753535,Celebria A,3,3,2,30,2,6.20,15.00,0,15.5,31,Right-arm medium,5.0,14
+3604165,Aniruddha Kudal,1753538,Celebria B,5,5,1,60,1,4.20,60.00,0,42,42,Right-arm fast,10.0,28
+10814344,Dinesh,1753541,Celebria C2-C3,4,4,1,42,1,4.29,42.00,0,30,30,Right-arm medium,7.0,21
+10765116,Aditya Agrawal,1753535,Celebria A,3,3,1,30,1,5.20,30.00,0,26,26,Right-arm fast,5.0,12
+4962614,Siva Kohler,1753538,Celebria B,5,5,1,60,1,7.10,60.00,0,71,71,Right-arm medium,10.0,28
+10765268,Akshay Upare,1753538,Celebria B,3,1,0,12,0,5.00,0.00,0,0,10,Right-arm medium,2.0,5
+10765284,Chandrakant Vipat,1753540,Celebria C1,4,4,0,48,0,5.12,0.00,0,0,41,Right-arm fast,8.0,24
+10765338,Omkar Bhalgat,1753541,Celebria C2-C3,2,2,0,18,0,5.67,0.00,0,0,17,Right-arm medium,3.0,9
+10765212,Ramchandra Patil,1753535,Celebria A,3,2,0,24,0,8.25,0.00,0,0,33,Right-arm fast,4.0,10
+10765302,Vijay Darkonde,1753540,Celebria C1,4,1,0,6,0,18.00,0.00,0,0,18,Right-arm medium,1.0,0
+10765288,Dilip Achari,1753540,Celebria C1,4,0,,,,0.00,0.00,0,0,0,Right-arm fast,0.0,0
+10765262,Pratik Zagade,1753538,Celebria B,3,0,,,,0.00,0.00,0,0,0,Right-arm fast,0.0,0
+10765261,Aditya Akmar,1753538,Celebria B,5,0,,,,0.00,0.00,0,0,0,Right-arm fast,0.0,0
+10765220,Shree Atharva Patil,1753535,Celebria A,3,0,,,,0.00,0.00,0,0,0,Right-arm fast,0.0,0
+10765333,Pranav Shende,1753541,Celebria C2-C3,1,0,,,,0.00,0.00,0,0,0,-,0.0,0
+10813952,Abhishek Achari,1753540,Celebria C1,4,0,,,,0.00,0.00,0,0,0,None,0.0,0
+10814023,Ayush M,1753538,Celebria B,5,0,,,,0.00,0.00,0,0,0,Right-arm fast,0.0,0
+10619512,Tanishq Wagh,1753535,Celebria A,4,0,,,,0.00,0.00,0,0,0,Right-arm medium,0.0,0
+10814350,Arya K,1753541,Celebria C2-C3,4,0,,,,0.00,0.00,0,0,0,Right-arm fast,0.0,0

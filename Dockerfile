@@ -6,6 +6,7 @@ COPY server ./server
 COPY schema.sql ./
 COPY index.html register.html admin.html stats.html stats.js players.html players.js player.html player.js app.js cricket-theme.css ./
 COPY data/srpl ./data/srpl
+COPY data/celebria ./data/celebria
 RUN mkdir -p uploads data
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0

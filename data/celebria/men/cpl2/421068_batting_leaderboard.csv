@@ -1,0 +1,34 @@
+player_id,name,team_id,team_name,total_match,innings,total_runs,highest_run,average,not_out,strike_rate,ball_faced,batting_hand,4s,6s,50s,100s
+1494410,Abhishek Upare,2571237,Crusaders,5,5,150,58,37.50,1,108.70,138,RHB,3,12,1,0
+14019875,Ashish,2571204,Kondhana Warriors,4,4,64,23,16.00,0,114.29,56,RHB,4,7,0,0
+10765311,Rohit Akhade,2571204,Kondhana Warriors,4,4,52,24,13.00,0,94.55,55,RHB,1,3,0,0
+14298575,Celebria Cricket Manoj Upadhyay,2571237,Crusaders,5,4,52,26,13.00,0,118.18,44,RHB,3,5,0,0
+10765294,Atharv M,2571206,Snipers,4,4,47,22,11.75,0,114.63,41,RHB,3,3,0,0
+14299007,Abhay Patil,2571207,Titans,3,3,45,36,22.50,1,112.50,40,RHB,2,4,0,0
+10814344,Dinesh,2571206,Snipers,4,4,44,16,14.67,1,73.33,60,RHB,1,4,0,0
+10765307,Sagar Shelar,2571206,Snipers,4,4,36,31,9.00,0,109.09,33,RHB,1,4,0,0
+822917,Lavin Raheja,2571204,Kondhana Warriors,4,3,34,25,34.00,2,130.77,26,RHB,1,3,0,0
+10619512,Tanishq Wagh,2571206,Snipers,4,3,25,14,12.50,1,156.25,16,RHB,1,2,0,0
+1883604,Raman Toshniwal,2571204,Kondhana Warriors,4,2,24,22,24.00,1,120.00,20,RHB,1,2,0,0
+10745512,Onkar,2571237,Crusaders,5,4,24,19,6.00,0,85.71,28,RHB,1,2,0,0
+14298782,Manoj Wagh,2571237,Crusaders,5,4,23,18,5.75,0,109.52,21,RHB,2,1,0,0
+10765220,Shree,2571207,Titans,3,2,21,15,21.00,1,131.25,16,RHB,0,2,0,0
+4962614,Siva Kohler,2571206,Snipers,4,3,19,15,9.50,1,135.71,14,RHB,1,1,0,0
+10765116,Aditya Agrawal,2571237,Crusaders,5,2,18,16,9.00,0,138.46,13,RHB,0,2,0,0
+14298851,Vinay Satam,2571204,Kondhana Warriors,4,1,17,17,-,1,106.25,16,RHB,0,1,0,0
+10765284,Chandrakant Vipat,2571207,Titans,3,2,16,9,8.00,0,66.67,24,RHB,1,0,0,0
+14298870,Tanishq Paithankar,2571204,Kondhana Warriors,4,4,16,9,4.00,0,72.73,22,RHB,1,1,0,0
+3604165,Aniruddha Kudal,2571207,Titans,3,3,13,10,4.33,0,59.09,22,RHB,0,1,0,0
+14299002,Pritam Pashankar,2571207,Titans,3,1,12,12,-,1,300.00,4,LHB,0,2,0,0
+10765292,Ashish Makwana,2571207,Titans,3,3,10,8,3.33,0,45.45,22,RHB,1,0,0,0
+10765288,Dilip Achari,2571237,Crusaders,5,2,4,4,4.00,1,200.00,2,RHB,1,0,0,0
+10745523,Kishor Wagh,2571207,Titans,3,3,3,2,1.00,0,27.27,11,RHB,0,0,0,0
+10765212,Ramchandra Patil,2571204,Kondhana Warriors,4,1,1,1,1.00,0,50.00,2,RHB,0,0,0,0
+10765317,Suhas Agawane,2571206,Snipers,4,1,1,1,1.00,0,33.33,3,LHB,0,0,0,0
+10765297,Jagdeep,2571206,Snipers,4,1,1,1,-,1,14.29,7,RHB,0,0,0,0
+4963493,Prasad,2571206,Snipers,4,2,1,1,0.50,0,7.69,13,RHB,0,0,0,0
+10814350,Arya K,2571237,Crusaders,5,2,1,1,1.00,1,20.00,5,RHB,0,0,0,0
+10765325,Amit Kesharkar,2571237,Crusaders,5,3,1,1,0.50,1,20.00,5,RHB,0,0,0,0
+10765262,Pratik Zagade,2571207,Titans,3,1,0,0,-,0,0.00,1,RHB,0,0,0,0
+14298878,Abhishek Achari,2571204,Kondhana Warriors,4,1,0,0,-,0,0.00,1,RHB,0,0,0,0
+14298775,Non Striker,2571206,Snipers,8,16,0,0,-,15,0.00,2,RHB,0,0,0,0

@@ -148,21 +148,53 @@ function parseLegacySlug(slug) {
   return { tournamentSlug: text || "tournament", seasonSlug: "season" };
 }
 
+function normalizeStatsLeagueId(raw) {
+  return String(raw || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 function normalizeLeaderboardStats(raw) {
   if (!raw || raw.enabled === false) {
-    return { enabled: false, provider: "srpl", gender: "men", edition: "" };
+    return { enabled: false, provider: "srpl", gender: "men", edition: "", leagueId: "" };
   }
   const edition = String(raw.edition || "")
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9-]+/g, "-")
     .replace(/^-+|-+$/g, "");
+  const leagueId = normalizeStatsLeagueId(raw.leagueId || raw.statsLeagueId);
   return {
     enabled: Boolean(edition),
     provider: "srpl",
     gender: raw.gender === "women" ? "women" : "men",
-    edition
+    edition,
+    leagueId
   };
+}
+
+async function listStatsLeagueSeasons(leagueId) {
+  const id = normalizeStatsLeagueId(leagueId);
+  if (!id) return { leagueId: "", seasons: [] };
+  const tournaments = await listTournamentsClient();
+  const seasons = tournaments
+    .map((t) => {
+      const lb = normalizeLeaderboardStats(t.leaderboardStats);
+      if (lb.leagueId !== id || !lb.edition) return null;
+      return {
+        edition: lb.edition,
+        gender: lb.gender,
+        label: t.name,
+        tournamentSlug: t.tournamentSlug,
+        seasonSlug: t.seasonSlug,
+        slug: t.slug
+      };
+    })
+    .filter(Boolean);
+  seasons.sort((a, b) => a.label.localeCompare(b.label));
+  return { leagueId: id, seasons };
 }
 
 function toClient(row, sponsors) {
@@ -615,5 +647,7 @@ module.exports = {
   updateTournamentFromAdmin,
   sponsorsFromClient,
   loadTournamentRow,
-  dateOnly
+  dateOnly,
+  normalizeLeaderboardStats,
+  listStatsLeagueSeasons
 };

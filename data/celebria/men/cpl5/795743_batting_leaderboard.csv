@@ -1,0 +1,51 @@
+player_id,name,team_id,team_name,total_match,innings,total_runs,highest_run,average,not_out,strike_rate,ball_faced,batting_hand,4s,6s,50s,100s
+4867029,Kishore Soni,5312103,Mighty Bulls,7,7,260,84,65.00,3,206.35,126,RHB,2,37,2,0
+1494410,Abhishek Upare,5310051,Yoddha,6,6,258,107,64.50,2,172.00,150,RHB,4,29,1,1
+234632,Krushna Malpani,5312103,Mighty Bulls,7,7,171,54,24.43,0,137.90,124,RHB,4,18,1,0
+16845639,Vedanta Saurabh Mantri,5312082,Power Hitters,6,5,127,39,63.50,3,144.32,88,RHB,3,15,0,0
+3604165,Aniruddha Kudal,5312021,Stormbreakers,5,5,110,44,-,5,130.95,84,RHB,0,14,0,0
+822917,Lavin Raheja,5312103,Mighty Bulls,7,7,101,58,14.43,0,117.44,86,RHB,3,10,1,0
+10765294,Atharva M,5312082,Power Hitters,6,5,86,45,28.67,2,172.00,50,RHB,3,8,0,0
+10765268,Akshay Upare,5312082,Power Hitters,6,5,79,33,19.75,1,127.42,62,RHB,1,9,0,0
+14298851,Vinay Satam,5312108,Fiercey Tigers,4,4,76,35,25.33,1,140.74,54,RHB,1,10,0,0
+20206025,Yogesh Angulwar Amdocs,5310051,Yoddha,6,5,68,34,22.67,2,144.68,47,RHB,2,9,0,0
+10745523,Kishor Wagh,5312108,Fiercey Tigers,4,4,57,22,14.25,0,150.00,38,RHB,2,7,0,0
+10745512,Onkar,5312082,Power Hitters,6,3,56,43,28.00,1,164.71,34,RHB,2,7,0,0
+20273947,Yogesh Rane,5312021,Stormbreakers,5,5,56,22,14.00,1,151.35,37,RHB,3,6,0,0
+22282685,Prathamesh Upare,5310051,Yoddha,6,6,55,20,11.00,1,91.67,60,RHB,4,4,0,0
+14019875,Ashish Naik,5312098,Phoenix Fury,4,4,52,25,13.00,0,92.86,56,RHB,1,6,0,0
+234634,Shubham Chougule,5312082,Power Hitters,6,4,51,21,17.00,1,242.86,21,RHB,1,7,0,0
+4962614,Siva Kohler,5312098,Phoenix Fury,4,3,42,42,21.00,1,155.56,27,RHB,0,6,0,0
+20788786,Bhushan Ladda,5312098,Phoenix Fury,4,4,37,26,9.25,0,127.59,29,RHB,3,4,0,0
+10765307,Sagar Shelar,5312108,Fiercey Tigers,4,4,34,23,8.50,0,66.67,51,RHB,0,3,0,0
+10765116,Aditya Agrawal,5312021,Stormbreakers,5,3,33,24,11.00,0,100.00,33,RHB,0,4,0,0
+14299007,Abhay Patil,5310051,Yoddha,6,5,33,14,11.00,2,84.62,39,RHB,0,3,0,0
+1420452,Pavan Dayama,5310051,Yoddha,6,4,32,19,8.00,0,152.38,21,RHB,1,4,0,0
+19794211,Ballal Sanket,5312021,Stormbreakers,5,5,27,13,9.00,2,64.29,42,RHB,1,2,0,0
+10765325,Amit Kesharkar,5312098,Phoenix Fury,4,3,25,10,25.00,2,178.57,14,RHB,2,1,0,0
+16898156,Aniket Wadkar,5312098,Phoenix Fury,4,3,23,15,11.50,1,164.29,14,LHB,1,2,0,0
+1883604,Raman Toshniwal,5312098,Phoenix Fury,4,4,23,15,5.75,0,76.67,30,RHB,1,2,0,0
+14298782,Manoj Wagh,5312108,Fiercey Tigers,4,3,19,16,6.33,0,118.75,16,RHB,0,2,0,0
+10765311,Rohit Akhade,5312103,Mighty Bulls,7,7,18,7,3.60,2,72.00,25,RHB,2,1,0,0
+16888722,Amar Toshniwal,5312108,Fiercey Tigers,4,2,17,17,17.00,1,121.43,14,RHB,3,0,0,0
+24517235,Sachin Dhekane,5312108,Fiercey Tigers,4,4,15,14,7.50,2,78.95,19,-,1,1,0,0
+16889668,Digesh Panchal,5312103,Mighty Bulls,7,4,15,9,5.00,1,75.00,20,RHB,1,1,0,0
+10765317,Suhas Agawane,5312021,Stormbreakers,5,2,14,11,7.00,0,77.78,18,LHB,1,1,0,0
+10765288,Dilip Achari,5310051,Yoddha,6,2,14,13,-,2,233.33,6,RHB,0,1,0,0
+16898071,Shripad,5312021,Stormbreakers,5,1,10,10,10.00,0,166.67,6,RHB,1,1,0,0
+10814023,Ayush M,5312082,Power Hitters,6,1,10,10,-,1,111.11,9,RHB,0,1,0,0
+10765284,Chandrakant Vipat,5312108,Fiercey Tigers,4,2,8,8,4.00,0,114.29,7,RHB,0,1,0,0
+16890310,Pritesh Sail,5312082,Power Hitters,6,3,8,7,4.00,1,88.89,9,RHB,0,1,0,0
+14299002,Pritam Pashankar,5312098,Phoenix Fury,4,2,7,7,7.00,1,58.33,12,LHB,1,0,0,0
+10765297,Jagdeep,5312021,Stormbreakers,5,2,6,6,-,2,75.00,8,RHB,0,1,0,0
+10814344,Dinesh,5312021,Stormbreakers,5,3,6,5,2.00,0,33.33,18,RHB,0,0,0,0
+10765292,Ashish Makwana,5312098,Phoenix Fury,4,3,3,3,1.00,0,25.00,12,RHB,0,0,0,0
+16898163,Drsuhas Dhekane,5312108,Fiercey Tigers,4,3,2,2,1.00,1,22.22,9,RHB,0,0,0,0
+10619512,Tanishq Wagh,5310051,Yoddha,6,1,1,1,-,1,20.00,5,RHB,0,0,0,0
+16917863,Raju Dhale,5310051,Yoddha,6,2,1,1,1.00,1,33.33,3,RHB,0,0,0,0
+17653956,Arham Lunawat,5312082,Power Hitters,6,1,0,0,-,0,0.00,2,RHB,0,0,0,0
+24517164,Hemant Chaudhari,5312103,Mighty Bulls,7,2,0,0,-,1,0.00,2,RHB,0,0,0,0
+1669464,Abhishek Satam,5312103,Mighty Bulls,7,2,0,0,-,0,0.00,3,RHB,0,0,0,0
+14298878,Abhishek Achari,5312103,Mighty Bulls,6,3,0,0,-,3,0.00,3,RHB,0,0,0,0
+14298775,Non Striker,5312098,Phoenix Fury,16,5,0,0,-,5,0,0,RHB,0,0,0,0
+24517183,Vijay Ladda,5312103,Mighty Bulls,3,0,0,0,-,0,0,0,-,0,0,0,0

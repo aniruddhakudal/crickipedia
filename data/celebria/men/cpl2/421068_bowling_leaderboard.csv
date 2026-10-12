@@ -1,0 +1,34 @@
+player_id,name,team_id,team_name,total_match,innings,total_wickets,balls,highest_wicket,economy,SR,maidens,avg,runs,bowling_style,overs,dot_balls
+14298575,Celebria Cricket Manoj Upadhyay,2571237,Crusaders,5,5,8,60,3,5.60,7.50,0,7,56,Right-arm medium,10.0,40
+10745512,Onkar,2571237,Crusaders,5,5,5,60,2,5.40,12.00,0,10.8,54,Right-arm medium,10.0,46
+10765311,Rohit Akhade,2571204,Kondhana Warriors,4,4,5,48,2,6.12,9.60,0,9.8,49,Right-arm medium,8.0,28
+10765307,Sagar Shelar,2571206,Snipers,4,4,5,48,2,6.25,9.60,0,10,50,Right-arm fast,8.0,27
+14019875,Ashish,2571204,Kondhana Warriors,4,3,5,20,2,8.40,4.00,0,5.6,28,Right-arm Leg Break,3.2,9
+10619512,Tanishq Wagh,2571206,Snipers,4,4,4,36,2,5.17,9.00,1,7.75,31,Right-arm medium,6.0,25
+10814344,Dinesh,2571206,Snipers,4,3,4,18,3,7.33,4.50,0,5.5,22,Right-arm medium,3.0,10
+10765284,Chandrakant Vipat,2571207,Titans,3,3,3,36,3,3.83,12.00,1,7.67,23,Right-arm fast,6.0,25
+10814350,Arya K,2571237,Crusaders,5,3,3,20,2,4.80,6.67,0,5.33,16,Right-arm fast,3.2,12
+1494410,Abhishek Upare,2571237,Crusaders,5,5,3,54,1,5.56,18.00,0,16.67,50,Right-arm Leg Break,9.0,31
+10765116,Aditya Agrawal,2571237,Crusaders,5,4,3,47,2,6.51,15.67,0,17,51,Right-arm fast,7.5,29
+4963493,Prasad,2571206,Snipers,4,4,3,42,1,7.00,14.00,0,16.33,49,Right-arm fast,7.0,20
+14298870,Tanishq Paithankar,2571204,Kondhana Warriors,4,4,3,47,1,7.15,15.67,0,18.67,56,Right-arm fast,7.5,24
+3604165,Aniruddha Kudal,2571207,Titans,3,3,3,24,2,7.25,8.00,0,9.67,29,Right-arm fast,4.0,13
+10765294,Atharv M,2571206,Snipers,4,4,2,48,1,2.50,24.00,1,10,20,Right-arm fast,8.0,38
+10765292,Ashish Makwana,2571207,Titans,3,3,2,35,1,7.37,17.50,0,21.5,43,Right-arm fast,5.5,17
+10745523,Kishor Wagh,2571207,Titans,3,3,2,30,1,9.00,15.00,0,22.5,45,Right-arm medium,5.0,20
+14298878,Abhishek Achari,2571204,Kondhana Warriors,4,2,2,12,2,9.50,6.00,0,9.5,19,Right-arm medium,2.0,6
+822917,Lavin Raheja,2571204,Kondhana Warriors,4,4,2,36,2,10.50,18.00,0,31.5,63,Right-arm medium,6.0,18
+1883604,Raman Toshniwal,2571204,Kondhana Warriors,4,1,2,12,2,14.00,6.00,0,14,28,Right-arm fast,2.0,6
+10765317,Suhas Agawane,2571206,Snipers,4,1,1,6,1,3.00,6.00,0,3,3,Right-arm medium,1.0,4
+10765212,Ramchandra Patil,2571204,Kondhana Warriors,4,2,1,18,1,14.33,18.00,0,43,43,Right-arm fast,3.0,9
+10765325,Amit Kesharkar,2571237,Crusaders,5,2,0,12,0,9.50,0.00,0,0,19,Right-arm medium,2.0,4
+10765297,Jagdeep,2571206,Snipers,4,1,0,6,0,11.00,0.00,0,0,11,Right-arm fast,1.0,3
+14299007,Abhay Patil,2571207,Titans,3,1,0,1,0,24.00,0.00,0,0,4,Right-arm fast,0.1,0
+10765262,Pratik Zagade,2571207,Titans,3,0,,,,0.00,0.00,0,0,0,Right-arm fast,0.0,0
+10765220,Shree,2571207,Titans,3,0,,,,0.00,0.00,0,0,0,Right-arm fast,0.0,0
+10765288,Dilip Achari,2571237,Crusaders,5,0,,,,0.00,0.00,0,0,0,Right-arm fast,0.0,0
+4962614,Siva Kohler,2571206,Snipers,4,0,,,,0.00,0.00,0,0,0,Right-arm medium,0.0,0
+14298775,Non Striker,2571206,Snipers,8,0,,,,0.00,0.00,0,0,0,Right-arm fast,0.0,0
+14298782,Manoj Wagh,2571237,Crusaders,5,0,,,,0.00,0.00,0,0,0,Right-arm medium,0.0,0
+14298851,Vinay Satam,2571204,Kondhana Warriors,4,0,,,,0.00,0.00,0,0,0,Right-arm medium,0.0,0
+14299002,Pritam Pashankar,2571207,Titans,3,0,,,,0.00,0.00,0,0,0,Left-arm medium,0.0,0

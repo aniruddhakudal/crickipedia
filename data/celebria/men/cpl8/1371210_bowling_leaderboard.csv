@@ -1,0 +1,50 @@
+player_id,name,team_id,team_name,total_match,innings,total_wickets,balls,highest_wicket,economy,SR,maidens,avg,runs,bowling_style,overs,dot_balls
+234634,Shubham Chougule,9263420,ACES,8,8,7,96,2,5.25,13.71,2,12,84,Right-arm fast,16.0,66
+1494410,Abhishek Upare,9263437,ELITE EAGLES,7,7,6,78,2,6.77,13.00,1,14.67,88,Right-arm Leg Break,13.0,50
+10765311,Rohit Akhade,9263420,ACES,8,8,6,66,2,10.73,11.00,0,19.67,118,Right-arm medium,11.0,41
+20788786,Bhushan Ladda,9263466,TITANS,5,5,5,36,2,6.50,7.20,1,7.8,39,Right-arm fast,6.0,22
+10765307,Sagar Shelar,9263485,CHAMPIONS,6,6,5,66,2,7.82,13.20,0,17.2,86,Right-arm fast,11.0,46
+19892409,Jonty K,9263448,VANAR SENA,5,5,5,48,2,9.00,9.60,0,14.4,72,Right-arm fast,8.0,27
+16898071,Shripad K,9263420,ACES,8,8,5,48,1,9.00,9.60,0,14.4,72,Right-arm Off Break,8.0,31
+2642724,Piyush Singh,9263466,TITANS,5,5,5,53,2,9.06,10.60,0,16,80,-,8.5,31
+10765294,Atharva M,9263420,ACES,8,8,4,96,2,5.62,24.00,2,22.5,90,Right-arm fast,16.0,65
+234632,Krushna Malpani,9263448,VANAR SENA,5,5,4,60,2,6.50,15.00,1,16.25,65,Right-arm medium,10.0,38
+10765297,Jagdeep Deogade,9263485,CHAMPIONS,6,5,4,30,2,6.60,7.50,0,8.25,33,Right-arm fast,5.0,21
+10765116,Aditya Agrawal,9263395,KINGS SWAG,7,6,4,48,1,6.88,12.00,0,13.75,55,Right-arm fast,8.0,33
+20273947,Yogesh Rane,9263395,KINGS SWAG,7,4,4,24,2,7.00,6.00,0,7,28,Right-arm medium,4.0,15
+32365258,Atharva Patil,9263395,KINGS SWAG,7,7,4,84,2,8.07,21.00,0,28.25,113,Right-arm fast,14.0,52
+19794211,Ballal Sanket,9263466,TITANS,5,5,4,54,1,8.89,13.50,0,20,80,Right-arm fast,9.0,34
+10765268,Akshay Upare,9263437,ELITE EAGLES,7,7,4,42,1,9.00,10.50,0,15.75,63,Right-arm medium,7.0,24
+10619512,Tanishq Wagh,9263485,CHAMPIONS,6,6,4,54,2,9.78,13.50,0,22,88,Right-arm medium,9.0,35
+14019875,Ashish Naik,9263437,ELITE EAGLES,7,7,4,66,1,9.91,16.50,0,27.25,109,Right-arm Leg Break,11.0,41
+26751992,Saurabh Thakur,9263437,ELITE EAGLES,7,6,4,36,2,11.50,9.00,0,17.25,69,Right-arm medium,6.0,17
+3604165,Aniruddha Kudal,9263420,ACES,8,5,4,30,2,13.60,7.50,0,17,68,Right-arm fast,5.0,16
+10765317,Suhas Agawane,9263395,KINGS SWAG,7,6,4,36,2,17.83,9.00,0,26.75,107,Right-arm medium,6.0,14
+13221867,Akash Patil,9263395,KINGS SWAG,7,7,3,83,2,5.71,27.67,1,26.33,79,Right-arm fast,13.5,52
+10745512,Onkar,9263437,ELITE EAGLES,7,7,3,72,2,10.42,24.00,0,41.67,125,Right-arm medium,12.0,36
+32766099,Suhas Kale 702,9263485,CHAMPIONS,6,6,2,36,1,8.17,18.00,0,24.5,49,Right-arm fast,6.0,21
+14298575,Manoj Upadhyay,9263485,CHAMPIONS,6,6,2,66,1,9.18,33.00,0,50.5,101,Right-arm medium,11.0,38
+10765262,Pratik Zagade,9263448,VANAR SENA,5,5,2,29,1,10.76,14.50,0,26,52,Right-arm fast,4.5,16
+17653956,Arham Lunawat,9263420,ACES,8,7,2,42,1,10.86,21.00,0,38,76,Right-arm medium,7.0,22
+14298851,Vinay Satam,9263437,ELITE EAGLES,7,4,2,21,1,11.14,10.50,0,19.5,39,Right-arm medium,3.3,11
+4962614,Siva Varigala (vvs),9263448,VANAR SENA,5,4,2,24,1,12.00,12.00,0,24,48,Right-arm medium,4.0,13
+1883604,Raman Toshniwal,9263485,CHAMPIONS,6,3,1,18,1,5.33,18.00,0,16,16,Right-arm fast,3.0,14
+32388597,Tanmay,9263448,VANAR SENA,5,2,1,12,1,7.50,12.00,0,15,15,Right-arm medium,2.0,10
+822917,Lavin Raheja,9263448,VANAR SENA,5,5,1,42,1,8.43,42.00,1,59,59,Right-arm medium,7.0,27
+14298782,Manoj Wagh,9263485,CHAMPIONS,6,3,1,18,1,8.67,18.00,0,26,26,Right-arm medium,3.0,10
+10765261,Aditya Akmar,9263395,KINGS SWAG,7,7,1,48,1,10.50,48.00,0,84,84,Right-arm fast,8.0,24
+16890310,Pritesh Sail,9263420,ACES,8,5,1,30,1,10.60,30.00,0,53,53,Right-arm medium,5.0,13
+1669464,Abhishek Satam,9263437,ELITE EAGLES,7,5,1,26,1,12.69,26.00,0,55,55,Right-arm medium,4.2,12
+10745523,Kishor Wagh,9263466,TITANS,5,5,1,27,1,13.11,27.00,0,59,59,Right-arm medium,4.3,13
+16888722,Amar Toshniwal,9263485,CHAMPIONS,6,2,1,12,1,19.50,12.00,0,39,39,Right-arm medium,2.0,4
+10765292,Ashish Makwana,9263466,TITANS,5,3,1,18,1,19.67,18.00,0,59,59,Right-arm fast,3.0,7
+10765325,Amit Kesharkar,9263448,VANAR SENA,5,2,0,12,0,4.50,0.00,0,0,9,Right-arm medium,2.0,8
+14906098,Tushar Tonape,9263466,TITANS,5,3,0,18,0,6.67,0.00,0,0,20,Right-arm medium,3.0,9
+27287816,Saravanan R Subbiah,9263466,TITANS,5,1,0,6,0,7.00,0.00,0,0,7,Right-arm medium,1.0,3
+16889668,Digesh Panchal,9263448,VANAR SENA,5,1,0,6,0,8.00,0.00,0,0,8,Right-arm medium,1.0,3
+14299002,Pritam Pashankar,9263466,TITANS,5,2,0,12,0,10.50,0.00,0,0,21,Left-arm medium,2.0,6
+10765288,Dilip Achari,9263437,ELITE EAGLES,7,1,0,1,0,12.00,0.00,0,0,2,Right-arm fast,0.1,0
+10814023,Ayush M,9263395,KINGS SWAG,7,2,0,12,0,12.50,0.00,0,0,25,Right-arm fast,2.0,6
+4867029,Kishore Soni,9263395,KINGS SWAG,7,4,0,24,0,15.75,0.00,0,0,63,Right-arm fast,4.0,13
+16898163,Drsuhas Dhekane,9263420,ACES,8,2,0,12,0,24.50,0.00,0,0,49,Right-arm Leg Break,2.0,4
+14298775,Non Striker,9263420,ACES,15,0,,,,0.00,0.00,0,0,0,Right-arm fast,0.0,0

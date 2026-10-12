@@ -1019,8 +1019,16 @@ html[data-ui-theme="dark"] .cricket-ui .aside-card .btn.stats-open:hover{
     suppressPayPanels = !isReturning;
     document.getElementById("successTitle").textContent = isReturning ? "Welcome back" : "Registration complete";
     if (manual && !isReturning && skipSuccessPaymentQr) {
-      document.getElementById("successText").textContent =
-        "You’re registered. Upload your payment receipt below if required; otherwise you’re all set until the organizer confirms payment.";
+      if (record.verificationStatus === "SUBMITTED") {
+        document.getElementById("successText").textContent =
+          "You’re registered. Your payment receipt is with the organizer for verification.";
+      } else if (record.verificationStatus === "REJECTED") {
+        document.getElementById("successText").textContent =
+          "Your receipt was declined. Upload a new receipt below to continue.";
+      } else {
+        document.getElementById("successText").textContent =
+          "You’re registered. Upload your payment receipt below if you have not already.";
+      }
     } else {
       document.getElementById("successText").textContent = manual
         ? "Your spot will be confirmed once the admin verifies your payment."
@@ -1292,21 +1300,26 @@ html[data-ui-theme="dark"] .cricket-ui .aside-card .btn.stats-open:hover{
       C.clearDraft(tournament);
       document.getElementById("successEmoji").textContent = "✅";
       var record = result.record;
+      var receiptOnForm = paymentCfg && paymentCfg.mode === "manual_qr" && (receiptFile || receiptUpi);
+      if (receiptOnForm) {
+        submitBtn.textContent = "Uploading receipt…";
+        try {
+          record = await C.api.uploadReceipt(tournament, record.id, receiptFile, receiptUpi);
+        } catch (receiptErr) {
+          currentRecord = result.record;
+          skipSuccessPaymentQr = true;
+          showExisting(result.record, false);
+          updatePayUi(result.record);
+          document.getElementById("receiptStatus").textContent =
+            receiptErr.message || "Could not upload receipt. Try again below.";
+          document.getElementById("manualPayBox").scrollIntoView({ behavior: "smooth", block: "nearest" });
+          return;
+        }
+      }
       currentRecord = record;
       skipSuccessPaymentQr = true;
       showExisting(record, false);
       updatePayUi(record);
-      submitBtn.disabled = false;
-      submitBtn.textContent = submitLabel;
-      if (paymentCfg && paymentCfg.mode === "manual_qr" && (receiptFile || receiptUpi)) {
-        C.api.uploadReceipt(tournament, record.id, receiptFile, receiptUpi).then(function (updated) {
-          currentRecord = updated;
-          updatePayUi(updated);
-          applySuccessMessage(updated, false);
-        }).catch(function (receiptErr) {
-          showFormError(receiptErr.message || "Registered, but receipt upload failed. Submit it on the next screen.");
-        });
-      }
       if (photoFile && !record.photoUrl) {
         sendPhoto(record, photoFile).then(function (updated) {
           currentRecord = updated;

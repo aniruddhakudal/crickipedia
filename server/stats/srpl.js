@@ -7,8 +7,36 @@ const GENDERS = ["men", "women"];
 const TOP_N = 12;
 const CHART_SCHEMA_VERSION = "4";
 
-const SRPL_ROOT = path.join(__dirname, "..", "..", "data", "srpl");
-const GENERATED_ROOT = path.join(SRPL_ROOT, "_generated");
+const STATS_DATA_ROOT = path.join(__dirname, "..", "..", "data");
+const DATA_STORES = ["srpl", "celebria"];
+const SRPL_ROOT = path.join(STATS_DATA_ROOT, "srpl");
+
+function normalizeDataStore(value) {
+  const key = String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return DATA_STORES.includes(key) ? key : "srpl";
+}
+
+function storeRoot(store) {
+  return path.join(STATS_DATA_ROOT, normalizeDataStore(store));
+}
+
+function generatedRoot(store) {
+  return path.join(storeRoot(store), "_generated");
+}
+
+function detectStoreFromCsvPath(csvPath) {
+  const parts = path.normalize(csvPath).split(path.sep);
+  const dataIdx = parts.lastIndexOf("data");
+  if (dataIdx >= 0 && dataIdx + 1 < parts.length) {
+    const name = parts[dataIdx + 1];
+    if (DATA_STORES.includes(name)) return name;
+  }
+  return "srpl";
+}
 
 const BOARD_FILE_RE = /^(\d+)_(batting|bowling|fielding|mvp)_leaderboard\.csv$/i;
 
@@ -115,16 +143,16 @@ function hashContent(bufferOrString) {
   return crypto.createHash("sha256").update(bufferOrString).digest("hex").slice(0, 12);
 }
 
-function csvDir(gender, edition) {
-  return path.join(SRPL_ROOT, gender, edition);
+function csvDir(store, gender, edition) {
+  return path.join(storeRoot(store), gender, edition);
 }
 
-function bundlePath(gender, edition, board) {
-  return path.join(GENERATED_ROOT, gender, edition, `${board}.json`);
+function bundlePath(store, gender, edition, board) {
+  return path.join(generatedRoot(store), gender, edition, `${board}.json`);
 }
 
-function findCsvFile(gender, edition, board) {
-  const dir = csvDir(gender, edition);
+function findCsvFileInStore(store, gender, edition, board) {
+  const dir = csvDir(store, gender, edition);
   if (!fs.existsSync(dir)) return null;
   const files = fs.readdirSync(dir);
   const match = files.find((name) => {
@@ -134,11 +162,26 @@ function findCsvFile(gender, edition, board) {
   return match ? path.join(dir, match) : null;
 }
 
-function listCsvSources() {
+function findCsvFile(gender, edition, board, preferredStore) {
+  const g = slugKey(gender, "gender");
+  const e = slugKey(edition, "edition");
+  const b = slugKey(board, "board");
+  if (preferredStore) {
+    return findCsvFileInStore(normalizeDataStore(preferredStore), g, e, b);
+  }
+  for (const store of DATA_STORES) {
+    const hit = findCsvFileInStore(store, g, e, b);
+    if (hit) return hit;
+  }
+  return null;
+}
+
+function listCsvSourcesForStore(store) {
   const out = [];
-  if (!fs.existsSync(SRPL_ROOT)) return out;
+  const root = storeRoot(store);
+  if (!fs.existsSync(root)) return out;
   for (const gender of GENDERS) {
-    const genderDir = path.join(SRPL_ROOT, gender);
+    const genderDir = path.join(root, gender);
     if (!fs.existsSync(genderDir)) continue;
     for (const edition of fs.readdirSync(genderDir)) {
       if (edition.startsWith("_") || edition.startsWith(".")) continue;
@@ -148,6 +191,7 @@ function listCsvSources() {
         const m = BOARD_FILE_RE.exec(file);
         if (!m) continue;
         out.push({
+          store: normalizeDataStore(store),
           gender,
           edition,
           board: m[2].toLowerCase(),
@@ -158,6 +202,14 @@ function listCsvSources() {
       }
     }
   }
+  return out;
+}
+
+function listCsvSources() {
+  const out = [];
+  DATA_STORES.forEach((store) => {
+    out.push(...listCsvSourcesForStore(store));
+  });
   return out;
 }
 
@@ -413,7 +465,7 @@ function compactTable(board, rows) {
   return [];
 }
 
-function buildBundleFromCsv(gender, edition, board, csvPath) {
+function buildBundleFromCsv(gender, edition, board, csvPath, store) {
   const raw = fs.readFileSync(csvPath, "utf8");
   const parsed = parseCsv(raw);
   validateHeaders(board, parsed.headers);
@@ -429,10 +481,12 @@ function buildBundleFromCsv(gender, edition, board, csvPath) {
   } else if (board === "fielding") {
     table.sort((a, b) => (b.dismissals || 0) - (a.dismissals || 0));
   }
+  const dataStore = normalizeDataStore(store || detectStoreFromCsvPath(csvPath));
   return {
     v,
     chartSchema: CHART_SCHEMA_VERSION,
     updatedAt,
+    store: dataStore,
     gender,
     edition,
     board,
@@ -450,24 +504,30 @@ function bundleIsStale(bundle) {
 }
 
 function writeBundle(bundle) {
-  const outPath = bundlePath(bundle.gender, bundle.edition, bundle.board);
+  const store = normalizeDataStore(bundle.store);
+  const outPath = bundlePath(store, bundle.gender, bundle.edition, bundle.board);
   ensureDir(path.dirname(outPath));
   fs.writeFileSync(outPath, JSON.stringify(bundle), "utf8");
   return outPath;
 }
 
-function rebuildBoard(gender, edition, board) {
+function removeGeneratedBundle(store, gender, edition, board) {
+  const outPath = bundlePath(store, gender, edition, board);
+  if (fs.existsSync(outPath)) fs.unlinkSync(outPath);
+}
+
+function rebuildBoard(gender, edition, board, preferredStore) {
   const g = slugKey(gender, "gender");
   const e = slugKey(edition, "edition");
   const b = slugKey(board, "board");
   if (!BOARDS.includes(b)) throw new Error("Unknown board type");
-  const csvPath = findCsvFile(g, e, b);
+  const csvPath = findCsvFile(g, e, b, preferredStore);
   if (!csvPath) {
-    const outPath = bundlePath(g, e, b);
-    if (fs.existsSync(outPath)) fs.unlinkSync(outPath);
+    DATA_STORES.forEach((store) => removeGeneratedBundle(store, g, e, b));
     return null;
   }
-  const bundle = buildBundleFromCsv(g, e, b, csvPath);
+  const store = normalizeDataStore(preferredStore || detectStoreFromCsvPath(csvPath));
+  const bundle = buildBundleFromCsv(g, e, b, csvPath, store);
   writeBundle(bundle);
   return bundle;
 }
@@ -477,25 +537,31 @@ function rebuildAll() {
   const rebuilt = [];
   for (const source of sources) {
     try {
-      const bundle = rebuildBoard(source.gender, source.edition, source.board);
+      const bundle = rebuildBoard(source.gender, source.edition, source.board, source.store);
       if (bundle) rebuilt.push(bundle);
     } catch (err) {
-      console.error(`SRPL stats rebuild failed for ${source.filePath}:`, err.message);
+      console.error(`Stats rebuild failed for ${source.filePath}:`, err.message);
     }
   }
   return rebuilt;
 }
 
-function readBundle(gender, edition, board) {
+function readBundle(gender, edition, board, preferredStore) {
   const g = slugKey(gender, "gender");
   const e = slugKey(edition, "edition");
   const b = slugKey(board, "board");
-  const outPath = bundlePath(g, e, b);
+  const csvPath = findCsvFile(g, e, b, preferredStore);
+  if (!csvPath) {
+    DATA_STORES.forEach((store) => removeGeneratedBundle(store, g, e, b));
+    return null;
+  }
+  const store = normalizeDataStore(preferredStore || detectStoreFromCsvPath(csvPath));
+  const outPath = bundlePath(store, g, e, b);
   if (fs.existsSync(outPath)) {
     const bundle = JSON.parse(fs.readFileSync(outPath, "utf8"));
     if (!bundleIsStale(bundle)) return bundle;
   }
-  return rebuildBoard(g, e, b);
+  return rebuildBoard(g, e, b, store);
 }
 
 function getManifest() {
@@ -505,7 +571,7 @@ function getManifest() {
     let rowCount = 0;
     let bundle = null;
     try {
-      bundle = readBundle(source.gender, source.edition, source.board);
+      bundle = readBundle(source.gender, source.edition, source.board, source.store);
     } catch (_) {
       bundle = null;
     }
@@ -520,6 +586,7 @@ function getManifest() {
       updatedAt = stat.mtime.toISOString();
     }
     return {
+      store: source.store,
       gender: source.gender,
       edition: source.edition,
       board: source.board,
@@ -567,14 +634,15 @@ function inferTournamentIdFromFilename(name) {
   return m ? m[1] : null;
 }
 
-function saveCsvUpload({ gender, edition, board, buffer, originalName, tournamentId }) {
+function saveCsvUpload({ gender, edition, board, buffer, originalName, tournamentId, dataStore }) {
   const g = slugKey(gender, "gender");
   const e = slugKey(edition, "edition");
   const b = slugKey(board, "board");
+  const store = normalizeDataStore(dataStore);
   validateCsvUpload(b, buffer);
-  const dir = csvDir(g, e);
+  const dir = csvDir(store, g, e);
   ensureDir(dir);
-  const existing = findCsvFile(g, e, b);
+  const existing = findCsvFileInStore(store, g, e, b);
   let id = String(tournamentId || "").trim().replace(/\D/g, "");
   if (!id) id = inferTournamentIdFromFilename(originalName);
   if (!id && existing) {
@@ -588,16 +656,16 @@ function saveCsvUpload({ gender, edition, board, buffer, originalName, tournamen
     fs.unlinkSync(existing);
   }
   fs.writeFileSync(dest, buffer);
-  const bundle = buildBundleFromCsv(g, e, b, dest);
+  const bundle = buildBundleFromCsv(g, e, b, dest, store);
   writeBundle(bundle);
   return { fileName, bundle };
 }
 
-function loadBoardRows(gender, edition, board) {
+function loadBoardRows(gender, edition, board, preferredStore) {
   const g = slugKey(gender, "gender");
   const e = slugKey(edition, "edition");
   const b = slugKey(board, "board");
-  const csvPath = findCsvFile(g, e, b);
+  const csvPath = findCsvFile(g, e, b, preferredStore);
   if (!csvPath) return [];
   const parsed = parseCsv(fs.readFileSync(csvPath, "utf8"));
   return parsed.rows;
@@ -705,6 +773,207 @@ function profileSectionFromMvp(row) {
   };
 }
 
+function addNumField(agg, row, field) {
+  const total = (num(agg[field]) || 0) + (num(row[field]) || 0);
+  agg[field] = total === 0 ? agg[field] || "" : String(total);
+}
+
+function maxNumField(agg, row, field) {
+  const a = num(agg[field]);
+  const b = num(row[field]);
+  if (b == null) return;
+  if (a == null || b > a) agg[field] = row[field];
+}
+
+function pickNameTeam(agg, row, valueField) {
+  const a = num(agg[valueField]) || 0;
+  const b = num(row[valueField]) || 0;
+  if (b >= a) {
+    if (row.name) agg.name = row.name;
+    if (row.team_name) agg.team_name = row.team_name;
+  }
+}
+
+function mergeBattingRows(rowSets) {
+  const byId = new Map();
+  rowSets.forEach((rows) => {
+    rows.forEach((row) => {
+      const id = String(row.player_id || "").trim();
+      if (!id) return;
+      let agg = byId.get(id);
+      if (!agg) {
+        byId.set(id, { ...row, player_id: id });
+        return;
+      }
+      [
+        "total_match",
+        "innings",
+        "total_runs",
+        "ball_faced",
+        "4s",
+        "6s",
+        "not_out",
+        "50s",
+        "100s"
+      ].forEach((field) => addNumField(agg, row, field));
+      maxNumField(agg, row, "highest_run");
+      pickNameTeam(agg, row, "total_runs");
+      const runs = num(agg.total_runs) || 0;
+      const balls = num(agg.ball_faced) || 0;
+      const innings = num(agg.innings) || 0;
+      const notOut = num(agg.not_out) || 0;
+      const dismissals = innings - notOut;
+      agg.strike_rate = balls > 0 ? String(roundStat((runs / balls) * 100)) : agg.strike_rate || "";
+      agg.average = dismissals > 0 ? String(roundStat(runs / dismissals)) : agg.average || "";
+    });
+  });
+  return [...byId.values()];
+}
+
+function mergeBowlingRows(rowSets) {
+  const byId = new Map();
+  rowSets.forEach((rows) => {
+    rows.forEach((row) => {
+      const id = String(row.player_id || "").trim();
+      if (!id) return;
+      let agg = byId.get(id);
+      if (!agg) {
+        byId.set(id, { ...row, player_id: id });
+        return;
+      }
+      [
+        "total_match",
+        "innings",
+        "total_wickets",
+        "balls",
+        "maidens",
+        "dot_balls",
+        "runs"
+      ].forEach((field) => addNumField(agg, row, field));
+      addNumField(agg, row, "overs");
+      maxNumField(agg, row, "highest_wicket");
+      pickNameTeam(agg, row, "total_wickets");
+      const runsConceded = num(agg.runs) || 0;
+      const overs = num(agg.overs) || 0;
+      agg.economy = overs > 0 ? String(roundStat(runsConceded / overs)) : agg.economy || "";
+    });
+  });
+  return [...byId.values()];
+}
+
+function mergeFieldingRows(rowSets) {
+  const byId = new Map();
+  rowSets.forEach((rows) => {
+    rows.forEach((row) => {
+      const id = String(row.player_id || "").trim();
+      if (!id) return;
+      let agg = byId.get(id);
+      if (!agg) {
+        byId.set(id, { ...row, player_id: id });
+        return;
+      }
+      [
+        "total_match",
+        "catches",
+        "caught_behind",
+        "run_outs",
+        "assist_run_outs",
+        "stumpings",
+        "caught_and_bowl",
+        "total_catches",
+        "total_dismissal"
+      ].forEach((field) => addNumField(agg, row, field));
+      pickNameTeam(agg, row, "total_dismissal");
+    });
+  });
+  return [...byId.values()];
+}
+
+function mergeMvpRows(rowSets) {
+  const byName = new Map();
+  rowSets.forEach((rows) => {
+    rows.forEach((row) => {
+      const key = normalizePlayerName(row["Player Name"]);
+      if (!key) return;
+      let agg = byName.get(key);
+      if (!agg) {
+        byName.set(key, { ...row });
+        return;
+      }
+      ["Matches", "Batting", "Bowling", "Fielding", "Total"].forEach((field) => addNumField(agg, row, field));
+      const total = num(agg.Total) || 0;
+      const rowTotal = num(row.Total) || 0;
+      if (rowTotal >= total) {
+        agg["Player Name"] = row["Player Name"];
+        agg["Team Name"] = row["Team Name"];
+      }
+    });
+  });
+  return [...byName.values()];
+}
+
+function mergeRowsForBoard(board, rowSets) {
+  if (board === "batting") return mergeBattingRows(rowSets);
+  if (board === "bowling") return mergeBowlingRows(rowSets);
+  if (board === "fielding") return mergeFieldingRows(rowSets);
+  if (board === "mvp") return mergeMvpRows(rowSets);
+  return [];
+}
+
+function sortMergedTable(board, table) {
+  const copy = table.slice();
+  if (board === "mvp") {
+    copy.sort((a, b) => (b.total || 0) - (a.total || 0));
+  } else if (board === "batting") {
+    copy.sort((a, b) => (b.runs || 0) - (a.runs || 0));
+  } else if (board === "bowling") {
+    copy.sort((a, b) => (b.wickets || 0) - (a.wickets || 0));
+  } else if (board === "fielding") {
+    copy.sort((a, b) => (b.dismissals || 0) - (a.dismissals || 0));
+  }
+  return copy;
+}
+
+function readMergedBundle(gender, editions, board) {
+  const g = slugKey(gender, "gender");
+  const b = slugKey(board, "board");
+  const list = [...new Set(editions.map((e) => slugKey(e, "edition")))];
+  if (!list.length) throw new Error("At least one edition required");
+  const rowSets = list.map((e) => loadBoardRows(g, e, b)).filter((rows) => rows.length);
+  if (!rowSets.length) return null;
+  const rows = mergeRowsForBoard(b, rowSets);
+  const editionKey = list.join("+");
+  const v = hashContent(`${g}|${editionKey}|${b}|${rows.length}|${CHART_SCHEMA_VERSION}`);
+  let table = compactTable(b, rows);
+  table = sortMergedTable(b, table);
+  return {
+    v,
+    chartSchema: CHART_SCHEMA_VERSION,
+    updatedAt: new Date().toISOString(),
+    gender: g,
+    edition: editionKey,
+    editions: list,
+    merged: true,
+    board: b,
+    rowCount: rows.length,
+    sourceFile: "merged",
+    table,
+    charts: buildCharts(b, rows)
+  };
+}
+
+function listPlayersMerged(gender, editions) {
+  const g = slugKey(gender, "gender");
+  const list = [...new Set(editions.map((e) => slugKey(e, "edition")))];
+  const byId = new Map();
+  for (const e of list) {
+    listPlayers(g, e).forEach((p) => {
+      if (!byId.has(p.playerId)) byId.set(p.playerId, p);
+    });
+  }
+  return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name));
+}
+
 function getPlayerProfile(gender, edition, playerId) {
   const g = slugKey(gender, "gender");
   const e = slugKey(edition, "edition");
@@ -761,7 +1030,10 @@ function sendJsonWithCache(res, payload, version) {
 module.exports = {
   BOARDS,
   GENDERS,
+  DATA_STORES,
   SRPL_ROOT,
+  STATS_DATA_ROOT,
+  normalizeDataStore,
   getManifest,
   readBundle,
   rebuildAll,
@@ -771,5 +1043,7 @@ module.exports = {
   sendJsonWithCache,
   slugKey,
   listPlayers,
+  listPlayersMerged,
+  readMergedBundle,
   getPlayerProfile
 };

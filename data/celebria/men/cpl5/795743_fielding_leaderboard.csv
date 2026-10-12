@@ -1,0 +1,51 @@
+player_id,name,team_id,team_name,total_match,catches,caught_behind,run_outs,assist_run_outs,stumpings,caught_and_bowl,total_catches,total_dismissal
+234634,Shubham Chougule,5312082,Power Hitters,6,1,0,2,0,1,2,3,6
+234632,Krushna Malpani,5312103,Mighty Bulls,7,0,3,3,0,0,0,3,6
+14299007,Abhay Patil,5310051,Yoddha,6,1,2,1,1,1,0,3,5
+10765294,Atharva M,5312082,Power Hitters,6,1,0,3,1,0,1,2,5
+3604165,Aniruddha Kudal,5312021,Stormbreakers,5,2,1,1,0,0,0,3,4
+822917,Lavin Raheja,5312103,Mighty Bulls,7,0,0,2,0,0,2,2,4
+24517235,Sachin Dhekane,5312108,Fiercey Tigers,4,3,0,0,0,0,0,3,3
+10765116,Aditya Agrawal,5312021,Stormbreakers,5,0,0,2,0,1,0,0,3
+10619512,Tanishq Wagh,5310051,Yoddha,6,2,0,1,0,0,0,2,3
+14019875,Ashish Naik,5312098,Phoenix Fury,4,1,0,1,0,0,0,1,2
+16898071,Shripad,5312021,Stormbreakers,5,0,0,2,0,0,0,0,2
+1420452,Pavan Dayama,5310051,Yoddha,6,2,0,0,1,0,0,2,2
+22282685,Prathamesh Upare,5310051,Yoddha,6,0,0,2,0,0,0,0,2
+20206025,Yogesh Angulwar Amdocs,5310051,Yoddha,6,2,0,0,0,0,0,2,2
+17653956,Arham Lunawat,5312082,Power Hitters,6,0,0,2,0,0,0,0,2
+4867029,Kishore Soni,5312103,Mighty Bulls,7,1,0,0,1,0,1,2,2
+16898156,Aniket Wadkar,5312098,Phoenix Fury,4,0,0,1,0,0,0,0,1
+4962614,Siva Kohler,5312098,Phoenix Fury,4,0,0,0,1,0,1,1,1
+10765317,Suhas Agawane,5312021,Stormbreakers,5,1,0,0,1,0,0,1,1
+10814344,Dinesh,5312021,Stormbreakers,5,1,0,0,0,0,0,1,1
+16890310,Pritesh Sail,5312082,Power Hitters,6,0,0,1,0,0,0,0,1
+10765268,Akshay Upare,5312082,Power Hitters,6,1,0,0,0,0,0,1,1
+14298878,Abhishek Achari,5312103,Mighty Bulls,6,1,0,0,1,0,0,1,1
+16917863,Raju Dhale,5310051,Yoddha,6,1,0,0,0,0,0,1,1
+10814023,Ayush M,5312082,Power Hitters,6,1,0,0,0,0,0,1,1
+10745512,Onkar,5312082,Power Hitters,6,1,0,0,1,0,0,1,1
+16889668,Digesh Panchal,5312103,Mighty Bulls,7,1,0,0,0,0,0,1,1
+10765311,Rohit Akhade,5312103,Mighty Bulls,7,1,0,0,0,0,0,1,1
+1669464,Abhishek Satam,5312103,Mighty Bulls,7,0,0,1,0,0,0,0,1
+24517183,Vijay Ladda,5312103,Mighty Bulls,3,0,0,0,0,0,0,0,0
+10745523,Kishor Wagh,5312108,Fiercey Tigers,4,0,0,0,0,0,0,0,0
+20788786,Bhushan Ladda,5312098,Phoenix Fury,4,0,0,0,0,0,0,0,0
+16898163,Drsuhas Dhekane,5312108,Fiercey Tigers,4,0,0,0,0,0,0,0,0
+1883604,Raman Toshniwal,5312098,Phoenix Fury,4,0,0,0,0,0,0,0,0
+10765292,Ashish Makwana,5312098,Phoenix Fury,4,0,0,0,0,0,0,0,0
+16888722,Amar Toshniwal,5312108,Fiercey Tigers,4,0,0,0,0,0,0,0,0
+14299002,Pritam Pashankar,5312098,Phoenix Fury,4,0,0,0,0,0,0,0,0
+14298851,Vinay Satam,5312108,Fiercey Tigers,4,0,0,0,0,0,0,0,0
+14298782,Manoj Wagh,5312108,Fiercey Tigers,4,0,0,0,0,0,0,0,0
+10765284,Chandrakant Vipat,5312108,Fiercey Tigers,4,0,0,0,0,0,0,0,0
+10765325,Amit Kesharkar,5312098,Phoenix Fury,4,0,0,0,0,0,0,0,0
+10765307,Sagar Shelar,5312108,Fiercey Tigers,4,0,0,0,0,0,0,0,0
+19794211,Ballal Sanket,5312021,Stormbreakers,5,0,0,0,1,0,0,0,0
+20273947,Yogesh Rane,5312021,Stormbreakers,5,0,0,0,0,0,0,0,0
+10765297,Jagdeep,5312021,Stormbreakers,5,0,0,0,0,0,0,0,0
+16845639,Vedanta Saurabh Mantri,5312082,Power Hitters,6,0,0,0,0,0,0,0,0
+1494410,Abhishek Upare,5310051,Yoddha,6,0,0,0,0,0,0,0,0
+10765288,Dilip Achari,5310051,Yoddha,6,0,0,0,0,0,0,0,0
+24517164,Hemant Chaudhari,5312103,Mighty Bulls,7,0,0,0,0,0,0,0,0
+14298775,Non Striker,5312098,Phoenix Fury,16,0,0,0,0,0,0,0,0

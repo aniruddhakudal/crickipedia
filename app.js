@@ -629,16 +629,21 @@
     return path;
   }
 
+  function normalizeStatsLeagueId(raw) {
+    return slugify(String(raw || ""));
+  }
+
   function normalizeLeaderboardStats(raw) {
     if (!raw || raw.enabled === false) {
-      return { enabled: false, provider: "srpl", gender: "men", edition: "" };
+      return { enabled: false, provider: "srpl", gender: "men", edition: "", leagueId: "" };
     }
     var edition = slugify(String(raw.edition || ""));
     return {
       enabled: Boolean(edition),
       provider: "srpl",
       gender: raw.gender === "women" ? "women" : "men",
-      edition: edition
+      edition: edition,
+      leagueId: normalizeStatsLeagueId(raw.leagueId || raw.statsLeagueId)
     };
   }
 
@@ -656,6 +661,34 @@
       params.set("t", keys.slug);
     }
     return "/stats.html?" + params.toString();
+  }
+
+  function tournamentContextFromQuery() {
+    var tournament = queryParam("tournament");
+    var season = queryParam("season");
+    var slug = queryParam("t");
+    if (tournament && season) {
+      return { tournamentSlug: tournament, seasonSlug: season };
+    }
+    if (slug) return { slug: slug };
+    return null;
+  }
+
+  function scopedLeaderboardStats(tournament) {
+    if (!tournament) return null;
+    var lb = normalizeLeaderboardStats(tournament.leaderboardStats);
+    if (!lb.enabled || !lb.edition) return null;
+    return lb;
+  }
+
+  function fetchTournamentForQueryContext() {
+    var ctx = tournamentContextFromQuery();
+    if (!ctx) return Promise.resolve(null);
+    return api.config(ctx).then(function (data) {
+      return data.tournament || null;
+    }).catch(function () {
+      return null;
+    });
   }
 
   function publicPathUrl(tournament) {
@@ -990,6 +1023,24 @@
     statsManifest: function () {
       return request("/api/stats/srpl/manifest");
     },
+    statsLeague: function (leagueId) {
+      return request("/api/stats/league/" + encodeURIComponent(leagueId));
+    },
+    statsMergedBundle: function (gender, editions, board) {
+      var params = new URLSearchParams();
+      params.set("editions", editions.join(","));
+      return request(
+        "/api/stats/srpl/" + encodeURIComponent(gender) + "/merged/" + encodeURIComponent(board) +
+        "?" + params.toString()
+      );
+    },
+    statsMergedPlayers: function (gender, editions) {
+      var params = new URLSearchParams();
+      params.set("editions", editions.join(","));
+      return request(
+        "/api/stats/srpl/" + encodeURIComponent(gender) + "/merged/players?" + params.toString()
+      );
+    },
     statsBundle: function (gender, edition, board, version) {
       var url =
         "/api/stats/srpl/" + encodeURIComponent(gender) + "/" +
@@ -1096,6 +1147,9 @@
     publicUrl: publicUrl,
     publicPathUrl: publicPathUrl,
     normalizeLeaderboardStats: normalizeLeaderboardStats,
+    tournamentContextFromQuery: tournamentContextFromQuery,
+    scopedLeaderboardStats: scopedLeaderboardStats,
+    fetchTournamentForQueryContext: fetchTournamentForQueryContext,
     tournamentStatsUrl: tournamentStatsUrl,
     playerProfileUrl: function (gender, edition, playerId, extraParams) {
       return api.playerProfileUrl(gender, edition, playerId, extraParams);
