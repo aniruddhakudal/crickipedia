@@ -89,6 +89,31 @@ CREATE TABLE IF NOT EXISTS sponsors (
 );
 
 CREATE INDEX IF NOT EXISTS idx_players_whatsapp ON players(whatsapp_number);
+CREATE TABLE IF NOT EXISTS ledger_entries (
+  id BIGSERIAL PRIMARY KEY,
+  tournament_id BIGINT NOT NULL REFERENCES tournaments(id) ON DELETE CASCADE,
+  entry_type VARCHAR(10) NOT NULL CHECK (entry_type IN ('credit', 'debit')),
+  source VARCHAR(20) NOT NULL CHECK (source IN ('registration', 'manual', 'registration_reversal')),
+  registration_id BIGINT REFERENCES registrations(id) ON DELETE SET NULL,
+  amount NUMERIC(10,2) NOT NULL CHECK (amount > 0),
+  description TEXT NOT NULL,
+  occurred_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  attachment_url TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  created_by_admin_id BIGINT
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_ledger_registration_credit
+  ON ledger_entries (tournament_id, registration_id)
+  WHERE source = 'registration' AND registration_id IS NOT NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_ledger_registration_reversal
+  ON ledger_entries (tournament_id, registration_id)
+  WHERE source = 'registration_reversal' AND registration_id IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_ledger_tournament ON ledger_entries(tournament_id);
+CREATE INDEX IF NOT EXISTS idx_ledger_occurred ON ledger_entries(tournament_id, occurred_at DESC);
+
 CREATE INDEX IF NOT EXISTS idx_registrations_tournament ON registrations(tournament_id);
 CREATE INDEX IF NOT EXISTS idx_registrations_status ON registrations(status);
 CREATE INDEX IF NOT EXISTS idx_payments_status ON payments(payment_status);

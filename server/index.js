@@ -13,6 +13,7 @@ const notifications = require("./notifications");
 const whatsapp = require("./whatsapp");
 const admins = require("./admins");
 const srplStats = require("./stats/srpl");
+const ledger = require("./ledger");
 
 const PORT = Number(process.env.PORT || 3000);
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || "admin";
@@ -56,6 +57,63 @@ function withUpload(fieldName) {
       next();
     });
   };
+}
+
+function withUploadFields(fieldDefs) {
+  return function uploadMiddleware(req, res, next) {
+    upload.fields(fieldDefs)(req, res, function (err) {
+      if (err) {
+        const message = err.code === "LIMIT_FILE_SIZE"
+          ? "Image must be 5 MB or smaller"
+          : (err.message || "Upload failed");
+        res.status(400).json({ error: message });
+        return;
+      }
+      next();
+    });
+  };
+}
+
+function firstUploadedFile(req, fieldName) {
+  const list = req.files && req.files[fieldName];
+  return list && list[0] ? list[0] : null;
+}
+
+async function deleteRegistrationForTournament(tournamentId, registrationNumber) {
+  await db.query(
+    "DELETE FROM registrations WHERE tournament_id = $1 AND registration_number = $2",
+    [tournamentId, registrationNumber]
+  );
+}
+
+async function persistPlayerPhotoForPhone(phone, file) {
+  const playerRow = await db.query("SELECT id FROM players WHERE whatsapp_number = $1", [phone]);
+  if (!playerRow.rows[0]) {
+    throw new Error("Player record missing after registration");
+  }
+  const photoUrl = await photoStorage.savePlayerPhoto(playerRow.rows[0].id, file);
+  await db.query("UPDATE players SET photo_url = $2, updated_at = NOW() WHERE id = $1", [
+    playerRow.rows[0].id,
+    photoUrl
+  ]);
+  return photoUrl;
+}
+
+async function withUploadRetry(fn, attempts) {
+  let lastErr;
+  for (let i = 0; i < attempts; i += 1) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastErr = err;
+      if (i < attempts - 1) {
+        await new Promise((resolve) => {
+          setTimeout(resolve, 350 * (i + 1));
+        });
+      }
+    }
+  }
+  throw lastErr;
 }
 
 const statsCsvUpload = multer({
@@ -391,6 +449,7 @@ app.use("/uploads", express.static(uploadDir));
 const siteRoot = path.join(__dirname, "..");
 const publicPathReserved = new Set([
   "api", "uploads", "admin.html", "index.html", "register.html", "stats.html", "stats.js",
+  "balancesheet.html", "balancesheet.js",
   "players.html", "players.js", "player.html", "player.js",
   "app.js", "cricket-theme.css", "favicon.ico"
 ]);
@@ -679,6 +738,7 @@ async function markRegistrationPaid(slug, registrationNumber, gateway, paymentId
   const row = await findRegistrationPayment(slug, registrationNumber);
   if (!row) return null;
   if (row.payment_status === "PAID" || row.registration_status === "PAID") {
+    await ledger.ensureRegistrationCredit(db.query, slug, row.registration_id);
     return findRegistration(slug, registrationNumber);
   }
   await db.query(
@@ -690,6 +750,7 @@ async function markRegistrationPaid(slug, registrationNumber, gateway, paymentId
     [row.registration_id, gateway || "RAZORPAY", paymentId || null, orderId || null]
   );
   await db.query("UPDATE registrations SET status = 'PAID' WHERE id = $1", [row.registration_id]);
+  await ledger.ensureRegistrationCredit(db.query, slug, row.registration_id);
   return findRegistration(slug, registrationNumber);
 }
 
@@ -1005,7 +1066,81 @@ mountTournamentRoute("get", "/roster", async (req, res) => {
   }
 });
 
-mountTournamentRoute("post", "/register", upload.single("photo"), async (req, res) => {
+async function sendLedgerEntryAttachment(res, tournamentId, entryId) {
+  const row = await ledger.fetchEntryWithContext(db.query, tournamentId, entryId);
+  if (!row) {
+    res.status(404).end();
+    return;
+  }
+  const url = ledger.resolveAttachmentUrl(row);
+  if (!url) {
+    res.status(404).json({ error: "No attachment for this entry" });
+    return;
+  }
+  const file = await photoStorage.streamPaymentQr(url);
+  if (!file) {
+    res.status(404).end();
+    return;
+  }
+  res.setHeader("Content-Type", file.contentType);
+  res.setHeader("Cache-Control", "public, max-age=300");
+  res.send(file.buffer);
+}
+
+mountTournamentRoute("get", "/ledger", async (req, res) => {
+  try {
+    const loaded = await loadTournamentFromParams(req.params);
+    if (!loaded) {
+      res.status(404).json({ error: "Tournament not found" });
+      return;
+    }
+    if (loaded.tournament.status === "DRAFT" && req.query.preview !== "1") {
+      res.status(404).json({ error: "Not found" });
+      return;
+    }
+    const rows = await ledger.listEntries(db.query, loaded.row.id);
+    const summary = await ledger.summarize(db.query, loaded.row.id);
+    res.json({
+      tournament: {
+        name: loaded.tournament.name,
+        slug: loaded.row.slug,
+        tournamentSlug: loaded.row.tournament_slug,
+        seasonSlug: loaded.row.season_slug
+      },
+      summary,
+      entries: rows.map((row) => ledger.entryToPublic(row))
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+mountTournamentRoute("get", "/ledger/:entryId/attachment", async (req, res) => {
+  try {
+    const loaded = await loadTournamentFromParams(req.params);
+    if (!loaded) {
+      res.status(404).json({ error: "Tournament not found" });
+      return;
+    }
+    const entryId = Number(req.params.entryId);
+    if (!Number.isFinite(entryId)) {
+      res.status(400).json({ error: "Invalid entry" });
+      return;
+    }
+    await sendLedgerEntryAttachment(res, loaded.row.id, entryId);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+mountTournamentRoute(
+  "post",
+  "/register",
+  withUploadFields([
+    { name: "photo", maxCount: 1 },
+    { name: "receipt", maxCount: 1 }
+  ]),
+  async (req, res) => {
   try {
     const preview = req.query.preview === "1" || req.body.preview === true;
     const loaded = await db.loadTournamentFromParams(req.params, { sponsors: false });
@@ -1065,7 +1200,24 @@ mountTournamentRoute("post", "/register", upload.single("photo"), async (req, re
     const instagram = req.body.instagram || null;
     const registrationNumber = nextRegId(loaded.tournament);
     const payMode = tournamentPaymentMode(loaded.tournament);
-    const verificationStatus = payMode === "manual_qr" ? "AWAITING_RECEIPT" : "";
+    const photoFile = firstUploadedFile(req, "photo");
+    const receiptFile = firstUploadedFile(req, "receipt");
+    const upiRef = String(req.body.upiRef || req.body.receiptUpi || "").trim();
+    let verificationStatus = payMode === "manual_qr" ? "AWAITING_RECEIPT" : "";
+
+    if (payMode === "manual_qr") {
+      const paymentSettings = settingsUtil.mergePaymentSettings(loaded.tournament);
+      const allowImage = paymentSettings.receiptImage !== "hidden";
+      const allowUpi = paymentSettings.receiptUpiRef !== "hidden";
+      if (paymentSettings.receiptImage === "required" && allowImage && !receiptFile) {
+        res.status(400).json({ error: "Payment receipt image is required" });
+        return;
+      }
+      if (paymentSettings.receiptUpiRef === "required" && allowUpi && !upiRef) {
+        res.status(400).json({ error: "UPI transaction ID is required" });
+        return;
+      }
+    }
 
     const priorReg = await findActiveRegistrationByPhone(slug, phone, category);
     if (priorReg) {
@@ -1079,7 +1231,7 @@ mountTournamentRoute("post", "/register", upload.single("photo"), async (req, re
       [phone]
     );
     const storedPhotoUrl = playerPhotoRow.rows[0] ? playerPhotoRow.rows[0].photo_url || "" : "";
-    if (photoMode === "required" && !storedPhotoUrl && !req.file) {
+    if (photoMode === "required" && !storedPhotoUrl && !photoFile) {
       res.status(400).json({ error: "Profile photo is required" });
       return;
     }
@@ -1159,6 +1311,7 @@ mountTournamentRoute("post", "/register", upload.single("photo"), async (req, re
       return {
         duplicate: false,
         registeredAt: registration.rows[0].registered_at,
+        registrationId: registration.rows[0].id,
         photoUrl
       };
     });
@@ -1168,16 +1321,55 @@ mountTournamentRoute("post", "/register", upload.single("photo"), async (req, re
       return;
     }
 
+    const tournamentId = loaded.row.id;
     let finalPhotoUrl = saved.photoUrl;
-    if (req.file) {
-      const playerRow = await db.query("SELECT id FROM players WHERE whatsapp_number = $1", [phone]);
-      if (playerRow.rows[0]) {
-        finalPhotoUrl = await photoStorage.savePlayerPhoto(playerRow.rows[0].id, req.file);
-        await db.query("UPDATE players SET photo_url = $2, updated_at = NOW() WHERE id = $1", [
-          playerRow.rows[0].id,
-          finalPhotoUrl
-        ]);
+    try {
+      if (photoFile) {
+        finalPhotoUrl = await withUploadRetry(
+          () => persistPlayerPhotoForPhone(phone, photoFile),
+          3
+        );
       }
+      if (photoMode === "required" && !finalPhotoUrl) {
+        throw new Error("Profile photo could not be saved");
+      }
+
+      if (payMode === "manual_qr") {
+        const paymentSettings = settingsUtil.mergePaymentSettings(loaded.tournament);
+        const allowImage = paymentSettings.receiptImage !== "hidden";
+        const allowUpi = paymentSettings.receiptUpiRef !== "hidden";
+        const hasReceiptPayload = (receiptFile && allowImage) || (upiRef && allowUpi);
+        if (hasReceiptPayload) {
+          let receiptUrl = null;
+          if (receiptFile && allowImage) {
+            receiptUrl = await withUploadRetry(
+              () => photoStorage.saveReceipt(saved.registrationId, receiptFile),
+              3
+            );
+          }
+          await db.query(
+            `UPDATE payments
+             SET receipt_url = COALESCE($2, receipt_url),
+                 receipt_upi_ref = CASE WHEN $3::text IS NOT NULL AND $3 <> '' THEN $3 ELSE receipt_upi_ref END,
+                 verification_status = 'SUBMITTED',
+                 reject_reason = NULL,
+                 gateway = 'MANUAL_QR'
+             WHERE registration_id = $1`,
+            [saved.registrationId, receiptUrl, allowUpi ? upiRef : null]
+          );
+          await db.query(
+            "UPDATE registrations SET status = 'RECEIPT_SUBMITTED' WHERE id = $1",
+            [saved.registrationId]
+          );
+          verificationStatus = "SUBMITTED";
+        }
+      }
+    } catch (postErr) {
+      await deleteRegistrationForTournament(tournamentId, registrationNumber);
+      res.status(500).json({
+        error: postErr.message || "Registration could not be completed. Please try again."
+      });
+      return;
     }
 
     const record = db.buildRegistrationClient({
@@ -1213,7 +1405,8 @@ mountTournamentRoute("post", "/register", upload.single("photo"), async (req, re
     }
     res.status(500).json({ error: err.message });
   }
-});
+  }
+);
 
 mountTournamentRoute("post", "/registrations/:id/photo", upload.single("photo"), async (req, res) => {
   try {
@@ -1882,6 +2075,147 @@ app.get("/api/admin/tournaments/:slug/registrations/:id/receipt-image", requireA
   }
 });
 
+app.get("/api/admin/tournaments/:slug/ledger", requireSuperadmin, async (req, res) => {
+  try {
+    const loaded = await db.loadTournament(req.params.slug);
+    if (!loaded) {
+      res.status(404).json({ error: "Tournament not found" });
+      return;
+    }
+    const rows = await ledger.listEntries(db.query, loaded.row.id);
+    const summary = await ledger.summarize(db.query, loaded.row.id);
+    res.json({
+      summary,
+      entries: rows.map((row) => ledger.entryToAdmin(row))
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post(
+  "/api/admin/tournaments/:slug/ledger/sync-registrations",
+  requireSuperadmin,
+  async (req, res) => {
+    try {
+      const loaded = await db.loadTournament(req.params.slug);
+      if (!loaded) {
+        res.status(404).json({ error: "Tournament not found" });
+        return;
+      }
+      const added = await ledger.syncPaidRegistrations(db.query, loaded.row.id);
+      const rows = await ledger.listEntries(db.query, loaded.row.id);
+      const summary = await ledger.summarize(db.query, loaded.row.id);
+      res.json({
+        added,
+        summary,
+        entries: rows.map((row) => ledger.entryToAdmin(row))
+      });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+app.post(
+  "/api/admin/tournaments/:slug/ledger",
+  requireSuperadmin,
+  withUpload("attachment"),
+  async (req, res) => {
+    try {
+      const loaded = await db.loadTournament(req.params.slug);
+      if (!loaded) {
+        res.status(404).json({ error: "Tournament not found" });
+        return;
+      }
+      const adminId = req.session.admin && req.session.admin.id;
+      const entryId = await ledger.addManualEntry(db.query, loaded.row.id, adminId, {
+        entryType: req.body.entryType,
+        amount: req.body.amount,
+        description: req.body.description,
+        occurredAt: req.body.occurredAt
+      }, req.file || null);
+      const row = await ledger.fetchEntryWithContext(db.query, loaded.row.id, entryId);
+      res.status(201).json({ entry: ledger.entryToAdmin(row) });
+    } catch (err) {
+      res.status(400).json({ error: err.message });
+    }
+  }
+);
+
+app.patch(
+  "/api/admin/tournaments/:slug/ledger/:entryId",
+  requireSuperadmin,
+  withUpload("attachment"),
+  async (req, res) => {
+    try {
+      const loaded = await db.loadTournament(req.params.slug);
+      if (!loaded) {
+        res.status(404).json({ error: "Tournament not found" });
+        return;
+      }
+      const entryId = Number(req.params.entryId);
+      if (!Number.isFinite(entryId)) {
+        res.status(400).json({ error: "Invalid entry" });
+        return;
+      }
+      await ledger.updateManualEntry(
+        db.query,
+        loaded.row.id,
+        entryId,
+        {
+          entryType: req.body.entryType,
+          amount: req.body.amount,
+          description: req.body.description,
+          occurredAt: req.body.occurredAt
+        },
+        req.file || null
+      );
+      const row = await ledger.fetchEntryWithContext(db.query, loaded.row.id, entryId);
+      res.json({ entry: ledger.entryToAdmin(row) });
+    } catch (err) {
+      res.status(400).json({ error: err.message });
+    }
+  }
+);
+
+app.delete("/api/admin/tournaments/:slug/ledger/:entryId", requireSuperadmin, async (req, res) => {
+  try {
+    const loaded = await db.loadTournament(req.params.slug);
+    if (!loaded) {
+      res.status(404).json({ error: "Tournament not found" });
+      return;
+    }
+    const entryId = Number(req.params.entryId);
+    if (!Number.isFinite(entryId)) {
+      res.status(400).json({ error: "Invalid entry" });
+      return;
+    }
+    await ledger.deleteManualEntry(db.query, loaded.row.id, entryId);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.get("/api/admin/tournaments/:slug/ledger/:entryId/attachment", requireSuperadmin, async (req, res) => {
+  try {
+    const loaded = await db.loadTournament(req.params.slug);
+    if (!loaded) {
+      res.status(404).json({ error: "Tournament not found" });
+      return;
+    }
+    const entryId = Number(req.params.entryId);
+    if (!Number.isFinite(entryId)) {
+      res.status(400).json({ error: "Invalid entry" });
+      return;
+    }
+    await sendLedgerEntryAttachment(res, loaded.row.id, entryId);
+  } catch (err) {
+    res.status(500).end();
+  }
+});
+
 app.get("/api/admin/tournaments/:slug/registrations", requireAdmin, requireTournamentAccess, async (req, res) => {
   try {
     const loaded = await db.loadTournament(req.params.slug);
@@ -1909,6 +2243,96 @@ app.get("/api/admin/tournaments/:slug/registrations", requireAdmin, requireTourn
     res.status(500).json({ error: err.message });
   }
 });
+
+async function applySubmittedReceipt(registrationId, receiptFile, upiRef) {
+  let receiptUrl = null;
+  if (receiptFile) {
+    receiptUrl = await photoStorage.saveReceipt(registrationId, receiptFile);
+  }
+  await db.query(
+    `UPDATE payments
+     SET receipt_url = COALESCE($2, receipt_url),
+         receipt_upi_ref = CASE WHEN $3::text IS NOT NULL AND $3 <> '' THEN $3 ELSE receipt_upi_ref END,
+         verification_status = 'SUBMITTED',
+         reject_reason = NULL,
+         gateway = COALESCE(NULLIF(gateway, ''), 'MANUAL_QR')
+     WHERE registration_id = $1`,
+    [registrationId, receiptUrl, upiRef || null]
+  );
+  await db.query(
+    "UPDATE registrations SET status = 'RECEIPT_SUBMITTED' WHERE id = $1",
+    [registrationId]
+  );
+}
+
+app.post(
+  "/api/admin/tournaments/:slug/registrations/:id/receipt",
+  requireAdmin,
+  requireTournamentAccess,
+  withUpload("receipt"),
+  async (req, res) => {
+    try {
+      const registrationNumber = String(req.params.id || "").trim();
+      const row = await findRegistrationPayment(req.params.slug, registrationNumber);
+      if (!row) {
+        if (req.file && req.file.path) fs.unlink(req.file.path, () => {});
+        res.status(404).json({ error: "Registration not found" });
+        return;
+      }
+      if (row.payment_status === "PAID" || row.registration_status === "PAID") {
+        if (req.file && req.file.path) fs.unlink(req.file.path, () => {});
+        res.status(400).json({ error: "Registration is already confirmed" });
+        return;
+      }
+      const upiRef = String(req.body.upiRef || req.body.upi_ref || "").trim();
+      if (!req.file && !upiRef) {
+        res.status(400).json({ error: "Choose a receipt image or enter a UPI reference" });
+        return;
+      }
+      await applySubmittedReceipt(row.registration_id, req.file || null, upiRef);
+      res.json({ record: await findRegistration(req.params.slug, registrationNumber) });
+    } catch (err) {
+      res.status(400).json({ error: err.message });
+    }
+  }
+);
+
+app.post(
+  "/api/admin/tournaments/:slug/registrations/:id/photo",
+  requireAdmin,
+  requireTournamentAccess,
+  withUpload("photo"),
+  async (req, res) => {
+    try {
+      if (!req.file) {
+        res.status(400).json({ error: "Choose a photo" });
+        return;
+      }
+      const registrationNumber = String(req.params.id || "").trim();
+      const found = await db.query(
+        `SELECT p.id
+         FROM registrations r
+         JOIN tournaments t ON t.id = r.tournament_id
+         JOIN players p ON p.id = r.player_id
+         WHERE t.slug = $1 AND r.registration_number = $2`,
+        [req.params.slug, registrationNumber]
+      );
+      if (!found.rows[0]) {
+        if (req.file.path) fs.unlink(req.file.path, () => {});
+        res.status(404).json({ error: "Registration not found" });
+        return;
+      }
+      const photoUrl = await photoStorage.savePlayerPhoto(found.rows[0].id, req.file);
+      await db.query("UPDATE players SET photo_url = $2, updated_at = NOW() WHERE id = $1", [
+        found.rows[0].id,
+        photoUrl
+      ]);
+      res.json({ record: await findRegistration(req.params.slug, registrationNumber), photoUrl });
+    } catch (err) {
+      res.status(400).json({ error: err.message });
+    }
+  }
+);
 
 app.post("/api/admin/tournaments/:slug/registrations/:id/approve", requireAdmin, requireTournamentAccess, async (req, res) => {
   try {
@@ -1972,16 +2396,21 @@ app.delete("/api/admin/tournaments/:slug/registrations/:id", requireSuperadmin, 
       res.status(404).json({ error: "Tournament not found" });
       return;
     }
-    const deleted = await db.query(
-      `DELETE FROM registrations r
-       WHERE r.tournament_id = $1 AND r.registration_number = $2
-       RETURNING r.id`,
+    const found = await db.query(
+      `SELECT r.id
+       FROM registrations r
+       WHERE r.tournament_id = $1 AND r.registration_number = $2`,
       [loaded.row.id, registrationId]
     );
-    if (!deleted.rows[0]) {
+    if (!found.rows[0]) {
       res.status(404).json({ error: "Registration not found" });
       return;
     }
+    await ledger.reverseRegistrationCredit(db.query, loaded.row.id, found.rows[0].id);
+    await db.query(
+      "DELETE FROM registrations WHERE tournament_id = $1 AND registration_number = $2",
+      [loaded.row.id, registrationId]
+    );
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -1995,6 +2424,7 @@ app.delete("/api/admin/tournaments/:slug/registrations", requireSuperadmin, asyn
       res.status(404).json({ error: "Tournament not found" });
       return;
     }
+    await ledger.reverseAllPaidRegistrations(db.query, loaded.row.id);
     await db.query("DELETE FROM registrations WHERE tournament_id = $1", [loaded.row.id]);
     res.json({ ok: true });
   } catch (err) {

@@ -130,6 +130,7 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
   <div class="tabs">
     <button class="btn tab on superadmin-only" type="button" data-tab="customize" id="tabCustomize">Customize</button>
     <button class="btn tab" type="button" data-tab="players" id="tabPlayers">Players</button>
+    <button class="btn tab superadmin-only" type="button" data-tab="ledger" id="tabLedger">Balance Sheet</button>
     <button class="btn tab superadmin-only" type="button" data-tab="srplstats" id="tabSrplStats">Season stats (CSVs)</button>
     <span class="muted" id="roleBadge" style="margin-left:auto;font-size:13px;font-weight:700"></span>
   </div>
@@ -350,6 +351,44 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
     </div>
   </section>
 
+  <section id="ledger" class="hidden superadmin-only">
+    <div class="stats">
+      <div class="stat">Credits<b id="ledgerCredits">₹0</b></div>
+      <div class="stat">Expenses<b id="ledgerDebits">₹0</b></div>
+      <div class="stat">Balance<b id="ledgerBalance">₹0</b></div>
+    </div>
+    <div class="panel">
+      <div class="actions" style="margin-top:0">
+        <a class="btn ghost" id="ledgerPublicLink" href="/balancesheet.html" target="_blank" rel="noopener">Open public page</a>
+        <button class="btn ghost" type="button" id="ledgerSyncBtn">Sync confirmed registrations</button>
+      </div>
+      <h2 style="margin-top:12px">Add credit or expense</h2>
+      <p class="muted">Manual entries for sponsors, refunds, ground rent, etc. Registration fees are credited automatically when you confirm a player.</p>
+      <div class="grid2" style="margin-top:12px">
+        <label>Type
+          <select id="ledgerEntryType">
+            <option value="credit">Credit (income)</option>
+            <option value="debit">Debit (expense)</option>
+          </select>
+        </label>
+        <label>Amount (₹)<input id="ledgerAmount" type="number" min="1" step="1" placeholder="500"></label>
+        <label style="grid-column:1/-1">Description<input id="ledgerDescription" placeholder="e.g. Sponsor — ABC Corp"></label>
+        <label>Date<input id="ledgerDate" type="date"></label>
+        <label>Receipt / bill (optional)<input id="ledgerFile" type="file" accept="image/*"></label>
+      </div>
+      <button class="btn" type="button" id="ledgerAddBtn" style="margin-top:14px">Add entry</button>
+      <h2 style="margin-top:24px">Ledger entries</h2>
+      <div style="overflow:auto;margin-top:10px">
+        <table>
+          <thead>
+            <tr><th>Date</th><th>Description</th><th>Type</th><th>Amount</th><th>File</th><th></th></tr>
+          </thead>
+          <tbody id="ledgerRows"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
   <section id="srplstats" class="hidden superadmin-only">
     <div class="panel">
       <h2 style="margin-top:0">League leaderboard CSVs</h2>
@@ -418,7 +457,7 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
         <button class="btn danger superadmin-only" type="button" id="clearBtn">Clear this tournament's players</button>
       </div>
       <h2>Registered players</h2>
-      <p class="muted">Browse by category. Open receipts and approve or decline payments when a receipt is submitted.</p>
+      <p class="muted">Browse by category. Upload missing receipts or photos, then approve or decline when status is Pending verification.</p>
       <div class="admin-cat-tabs" id="adminPlayerTabs" role="tablist"></div>
       <div style="overflow:auto">
         <table>
@@ -442,6 +481,26 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
     <div class="actions">
       <button class="btn" type="button" id="createBtn">Create</button>
       <button class="btn ghost" type="button" id="cancelCreate">Cancel</button>
+    </div>
+  </div>
+</div>
+<div class="modal-bg" id="adminUploadModal" role="dialog" aria-modal="true" aria-labelledby="adminUploadTitle" style="display:none">
+  <div class="modal">
+    <h3 style="margin-top:0" id="adminUploadTitle">Upload receipt &amp; photo</h3>
+    <p class="muted" id="adminUploadMeta" style="margin:0 0 12px"></p>
+    <label style="display:grid;gap:6px;margin-bottom:12px">Payment receipt (image)
+      <input type="file" id="adminUploadReceipt" accept="image/*">
+    </label>
+    <label style="display:grid;gap:6px;margin-bottom:12px">UPI transaction ID (optional)
+      <input type="text" id="adminUploadUpi" placeholder="e.g. 123456789012" maxlength="120">
+    </label>
+    <label style="display:grid;gap:6px;margin-bottom:16px">Profile photo
+      <input type="file" id="adminUploadPhoto" accept="image/*">
+    </label>
+    <p class="muted" style="margin:0 0 12px;font-size:12px">Saving a receipt marks the player as <strong>Pending verification</strong> (same as when they upload on the registration page).</p>
+    <div class="actions">
+      <button class="btn" type="button" id="adminUploadSave">Save</button>
+      <button class="btn ghost" type="button" id="adminUploadCancel">Cancel</button>
     </div>
   </div>
 </div>
@@ -507,9 +566,60 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
     });
     document.getElementById("customize").classList.toggle("hidden", name !== "customize");
     document.getElementById("players").classList.toggle("hidden", name !== "players");
+    document.getElementById("ledger").classList.toggle("hidden", name !== "ledger");
     document.getElementById("srplstats").classList.toggle("hidden", name !== "srplstats");
     if (name === "players") renderPlayers();
+    if (name === "ledger") renderLedgerAdmin();
     if (name === "srplstats") renderSrplManifest();
+  }
+
+  var ledgerAdminRows = [];
+
+  function renderLedgerAdmin() {
+    if (!current || !current.slug) {
+      document.getElementById("ledgerRows").innerHTML =
+        '<tr><td colspan="6" class="muted">Save a tournament first.</td></tr>';
+      return;
+    }
+    var pub = C.tournamentLedgerUrl(current);
+    var link = document.getElementById("ledgerPublicLink");
+    if (pub) link.href = pub;
+    C.api.adminLedger(current.slug).then(function (data) {
+      ledgerAdminRows = data.entries || [];
+      var s = data.summary || {};
+      document.getElementById("ledgerCredits").textContent = C.formatMoney(s.credits);
+      document.getElementById("ledgerDebits").textContent = C.formatMoney(s.debits);
+      document.getElementById("ledgerBalance").textContent = C.formatMoney(s.balance);
+      var body = document.getElementById("ledgerRows");
+      if (!ledgerAdminRows.length) {
+        body.innerHTML = '<tr><td colspan="6" class="muted">No entries yet. Confirm registrations or add manual lines.</td></tr>';
+        return;
+      }
+      body.innerHTML = ledgerAdminRows.map(function (row) {
+        var fileCell = "";
+        if (row.hasAttachment) {
+          var src = C.api.adminLedgerAttachmentUrl(current.slug, row.id);
+          fileCell = '<a href="' + C.escapeHtml(src) + '" target="_blank" rel="noopener">View</a>';
+        } else {
+          fileCell = '<span class="muted">—</span>';
+        }
+        var actions = row.editable
+          ? '<button type="button" class="btn danger ghost" data-ledger-del="' + C.escapeHtml(row.id) + '">Delete</button>'
+          : '<span class="muted">Auto</span>';
+        var typeLabel = row.type === "debit" ? "Expense" : "Credit";
+        var sign = row.type === "debit" ? "−" : "+";
+        return "<tr>" +
+          "<td>" + C.escapeHtml(C.formatPrettyDate(row.occurredAt)) + "</td>" +
+          "<td>" + C.escapeHtml(row.description) + "</td>" +
+          "<td>" + typeLabel + "</td>" +
+          "<td>" + sign + " " + C.escapeHtml(C.formatMoney(row.amount)) + "</td>" +
+          "<td>" + fileCell + "</td>" +
+          "<td>" + actions + "</td>" +
+          "</tr>";
+      }).join("");
+    }).catch(function (err) {
+      toast(err.message || "Could not load ledger");
+    });
   }
 
   function renderSrplManifestTable(datasets) {
@@ -1117,7 +1227,25 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
     if (row.paymentStatus === "PAID") return "Confirmed";
     if (row.verificationStatus === "SUBMITTED") return "Pending verification";
     if (row.verificationStatus === "REJECTED") return "Payment declined";
+    if (row.verificationStatus === "AWAITING_RECEIPT") return "Awaiting payment";
     return "Reserved";
+  }
+
+  var adminUploadRegId = "";
+
+  function openAdminUploadModal(row) {
+    adminUploadRegId = row.id;
+    document.getElementById("adminUploadTitle").textContent = "Upload for " + (row.name || "player");
+    document.getElementById("adminUploadMeta").textContent = row.id + " · " + (row.phone || "");
+    document.getElementById("adminUploadReceipt").value = "";
+    document.getElementById("adminUploadPhoto").value = "";
+    document.getElementById("adminUploadUpi").value = row.receiptUpiRef || "";
+    document.getElementById("adminUploadModal").style.display = "flex";
+  }
+
+  function closeAdminUploadModal() {
+    adminUploadRegId = "";
+    document.getElementById("adminUploadModal").style.display = "none";
   }
 
   function adminPlayerInitials(name) {
@@ -1211,11 +1339,18 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
           '<button class="btn" type="button" data-approve="' + C.escapeHtml(row.id) + '">Approve</button> ' +
           '<button class="btn ghost" type="button" data-reject="' + C.escapeHtml(row.id) + '">Decline</button>';
       } else if (!paid && row.verificationStatus === "REJECTED") {
-        actions = '<span class="muted">Awaiting resubmit</span>';
+        actions =
+          '<span class="muted">Declined</span> ' +
+          '<button class="btn ghost" type="button" data-upload-reg="' + C.escapeHtml(row.id) + '">Upload receipt / photo</button>';
       } else if (paid) {
         actions = '<span class="muted">—</span>';
       } else {
-        actions = '<span class="muted">No receipt yet</span>';
+        actions =
+          '<button class="btn ghost" type="button" data-upload-reg="' + C.escapeHtml(row.id) + '">Upload receipt / photo</button>';
+      }
+      if (!paid && row.verificationStatus === "SUBMITTED") {
+        actions +=
+          ' <button class="btn ghost" type="button" data-upload-reg="' + C.escapeHtml(row.id) + '">Replace files</button>';
       }
       if (isSuperadmin()) {
         actions += ' <button class="btn danger ghost" type="button" data-delete-reg="' + C.escapeHtml(row.id) + '">Delete</button>';
@@ -1263,6 +1398,38 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
     renderAdminPlayerTable();
   });
 
+  document.getElementById("adminUploadCancel").addEventListener("click", closeAdminUploadModal);
+  document.getElementById("adminUploadModal").addEventListener("click", function (event) {
+    if (event.target.id === "adminUploadModal") closeAdminUploadModal();
+  });
+  document.getElementById("adminUploadSave").addEventListener("click", async function () {
+    if (!adminUploadRegId || !current || !current.slug) return;
+    var receiptFile = document.getElementById("adminUploadReceipt").files[0];
+    var photoFile = document.getElementById("adminUploadPhoto").files[0];
+    var upiRef = document.getElementById("adminUploadUpi").value.trim();
+    if (!receiptFile && !photoFile && !upiRef) {
+      toast("Choose a receipt image, enter UPI reference, or add a photo.");
+      return;
+    }
+    var btn = document.getElementById("adminUploadSave");
+    btn.disabled = true;
+    try {
+      if (receiptFile || upiRef) {
+        await C.api.adminUploadReceipt(current.slug, adminUploadRegId, receiptFile, upiRef);
+      }
+      if (photoFile) {
+        await C.api.adminUploadPhoto(current.slug, adminUploadRegId, photoFile);
+      }
+      toast(receiptFile || upiRef ? "Saved — pending verification" : "Photo saved");
+      closeAdminUploadModal();
+      renderPlayers();
+    } catch (err) {
+      toast(err.message || "Upload failed");
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
   document.getElementById("closeReceiptModal").addEventListener("click", closeAdminReceiptModal);
   document.getElementById("receiptModal").addEventListener("click", function (event) {
     if (event.target.id === "receiptModal") closeAdminReceiptModal();
@@ -1290,6 +1457,12 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
       } catch (err) {
         toast(err.message || "Delete failed");
       }
+      return;
+    }
+    var uploadRegId = event.target.getAttribute("data-upload-reg");
+    if (uploadRegId) {
+      var uploadRow = adminPlayerRows.find(function (r) { return r.id === uploadRegId; });
+      if (uploadRow) openAdminUploadModal(uploadRow);
       return;
     }
     var approveId = event.target.getAttribute("data-approve");
@@ -1370,9 +1543,67 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
   document.querySelectorAll(".tab").forEach(function (tab) {
     tab.addEventListener("click", function () {
       if (tab.dataset.tab === "customize" && !isSuperadmin()) return;
+      if (tab.dataset.tab === "ledger" && !isSuperadmin()) return;
       if (tab.dataset.tab === "srplstats" && !isSuperadmin()) return;
       switchToTab(tab.dataset.tab);
     });
+  });
+
+  document.getElementById("ledgerAddBtn").addEventListener("click", async function () {
+    if (!current || !current.slug) return;
+    var amount = Number(document.getElementById("ledgerAmount").value);
+    var description = document.getElementById("ledgerDescription").value.trim();
+    var entryType = document.getElementById("ledgerEntryType").value;
+    var dateVal = document.getElementById("ledgerDate").value;
+    var file = document.getElementById("ledgerFile").files[0];
+    if (!Number.isFinite(amount) || amount <= 0) {
+      toast("Enter a valid amount");
+      return;
+    }
+    if (description.length < 2) {
+      toast("Description is required");
+      return;
+    }
+    var occurredAt = dateVal ? new Date(dateVal + "T12:00:00").toISOString() : "";
+    try {
+      await C.api.adminLedgerCreate(current.slug, {
+        entryType: entryType,
+        amount: amount,
+        description: description,
+        occurredAt: occurredAt
+      }, file);
+      document.getElementById("ledgerAmount").value = "";
+      document.getElementById("ledgerDescription").value = "";
+      document.getElementById("ledgerFile").value = "";
+      toast("Entry added");
+      renderLedgerAdmin();
+    } catch (err) {
+      toast(err.message || "Could not add entry");
+    }
+  });
+
+  document.getElementById("ledgerSyncBtn").addEventListener("click", async function () {
+    if (!current || !current.slug) return;
+    try {
+      var data = await C.api.adminLedgerSync(current.slug);
+      toast("Synced " + (data.added || 0) + " registration credit(s)");
+      renderLedgerAdmin();
+    } catch (err) {
+      toast(err.message || "Sync failed");
+    }
+  });
+
+  document.getElementById("ledgerRows").addEventListener("click", async function (event) {
+    var id = event.target.getAttribute("data-ledger-del");
+    if (!id || !current || !current.slug) return;
+    if (!confirm("Delete this manual ledger entry?")) return;
+    try {
+      await C.api.adminLedgerDelete(current.slug, id);
+      toast("Deleted");
+      renderLedgerAdmin();
+    } catch (err) {
+      toast(err.message || "Delete failed");
+    }
   });
 
   document.getElementById("srplUploadBtn").addEventListener("click", async function () {

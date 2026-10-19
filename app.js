@@ -249,7 +249,8 @@
 
   var PATH_RESERVED = {
     api: true, uploads: true, admin: true, "admin.html": true, "index.html": true, "register.html": true,
-    "stats.html": true, "stats.js": true, "players.html": true, "players.js": true,
+    "stats.html": true, "stats.js": true, "balancesheet.html": true, "balancesheet.js": true,
+    "players.html": true, "players.js": true,
     "player.html": true, "player.js": true, "app.js": true
   };
 
@@ -276,6 +277,9 @@
     if (!tournament) return { slug: "" };
     if (tournament.tournamentSlug && tournament.seasonSlug) {
       return { tournament: tournament.tournamentSlug, season: tournament.seasonSlug };
+    }
+    if (tournament.tournament && tournament.season) {
+      return { tournament: tournament.tournament, season: tournament.season };
     }
     if (typeof tournament === "string") return { slug: tournament };
     return { slug: tournament.slug || "" };
@@ -665,6 +669,28 @@
     return "/stats.html?" + params.toString();
   }
 
+  function tournamentLedgerUrl(tournament) {
+    if (!tournament) return null;
+    var params = new URLSearchParams();
+    var keys = tournamentKeys(tournament);
+    if (keys.tournament && keys.season) {
+      params.set("tournament", keys.tournament);
+      params.set("season", keys.season);
+    } else if (keys.slug) {
+      params.set("t", keys.slug);
+    } else {
+      return null;
+    }
+    return "/balancesheet.html?" + params.toString();
+  }
+
+  function formatMoney(amount, currency) {
+    var sym = currency || "₹";
+    var n = Number(amount);
+    if (!Number.isFinite(n)) return sym + "0";
+    return sym + n.toLocaleString("en-IN", { maximumFractionDigits: 2, minimumFractionDigits: 0 });
+  }
+
   function tournamentContextFromQuery() {
     var tournament = queryParam("tournament");
     var season = queryParam("season");
@@ -779,9 +805,12 @@
         return { categories: data.categories || [], players: data.players || [] };
       });
     },
-    register: function (ref, body, preview, photoFile) {
+    register: function (ref, body, preview, uploads) {
       var url = apiTournamentPath(ref) + "/register" + (preview ? "?preview=1" : "");
-      if (photoFile) {
+      var photoFile = uploads && (uploads.photo || uploads.photoFile);
+      var receiptFile = uploads && (uploads.receipt || uploads.receiptFile);
+      var receiptUpi = uploads && uploads.receiptUpi;
+      if (photoFile || receiptFile) {
         var fd = new FormData();
         Object.keys(body || {}).forEach(function (key) {
           var val = body[key];
@@ -793,8 +822,16 @@
           }
         });
         if (preview) fd.append("preview", "true");
-        fd.append("photo", photoFile);
+        if (receiptUpi) fd.append("receiptUpi", String(receiptUpi));
+        if (photoFile) fd.append("photo", photoFile);
+        if (receiptFile) fd.append("receipt", receiptFile);
         return request(url, { method: "POST", body: fd });
+      }
+      if (receiptUpi) {
+        return request(url, {
+          method: "POST",
+          body: Object.assign({}, body || {}, { receiptUpi: receiptUpi })
+        });
       }
       return request(url, { method: "POST", body: body });
     },
@@ -901,6 +938,23 @@
     },
     adminReceiptImageUrl: function (slug, registrationId) {
       return "/api/admin/tournaments/" + encodeURIComponent(slug) + "/registrations/" + encodeURIComponent(registrationId) + "/receipt-image";
+    },
+    adminUploadReceipt: function (slug, id, file, upiRef) {
+      var form = new FormData();
+      if (file) form.append("receipt", file);
+      if (upiRef) form.append("upiRef", upiRef);
+      return request(
+        "/api/admin/tournaments/" + encodeURIComponent(slug) + "/registrations/" + encodeURIComponent(id) + "/receipt",
+        { method: "POST", body: form }
+      ).then(function (data) { return data.record; });
+    },
+    adminUploadPhoto: function (slug, id, file) {
+      var form = new FormData();
+      form.append("photo", file);
+      return request(
+        "/api/admin/tournaments/" + encodeURIComponent(slug) + "/registrations/" + encodeURIComponent(id) + "/photo",
+        { method: "POST", body: form }
+      ).then(function (data) { return data.record; });
     },
     approveRegistration: function (slug, id) {
       return request("/api/admin/tournaments/" + encodeURIComponent(slug) + "/registrations/" + encodeURIComponent(id) + "/approve", {
@@ -1011,6 +1065,55 @@
       return request("/api/admin/tournaments/" + encodeURIComponent(slug) + "/registrations").then(function (data) {
         return data.registrations || [];
       });
+    },
+    ledger: function (ref) {
+      return request(apiTournamentPath(ref) + "/ledger");
+    },
+    ledgerAttachmentUrl: function (ref, entryId) {
+      return apiTournamentPath(ref) + "/ledger/" + encodeURIComponent(entryId) + "/attachment";
+    },
+    adminLedger: function (slug) {
+      return request("/api/admin/tournaments/" + encodeURIComponent(slug) + "/ledger");
+    },
+    adminLedgerSync: function (slug) {
+      return request("/api/admin/tournaments/" + encodeURIComponent(slug) + "/ledger/sync-registrations", {
+        method: "POST",
+        body: {}
+      });
+    },
+    adminLedgerCreate: function (slug, fields, file) {
+      var form = new FormData();
+      form.append("entryType", fields.entryType || "credit");
+      form.append("amount", String(fields.amount));
+      form.append("description", fields.description || "");
+      if (fields.occurredAt) form.append("occurredAt", fields.occurredAt);
+      if (file) form.append("attachment", file);
+      return request("/api/admin/tournaments/" + encodeURIComponent(slug) + "/ledger", {
+        method: "POST",
+        body: form
+      });
+    },
+    adminLedgerUpdate: function (slug, entryId, fields, file) {
+      var form = new FormData();
+      if (fields.entryType) form.append("entryType", fields.entryType);
+      if (fields.amount != null) form.append("amount", String(fields.amount));
+      if (fields.description) form.append("description", fields.description);
+      if (fields.occurredAt) form.append("occurredAt", fields.occurredAt);
+      if (file) form.append("attachment", file);
+      return request(
+        "/api/admin/tournaments/" + encodeURIComponent(slug) + "/ledger/" + encodeURIComponent(entryId),
+        { method: "PATCH", body: form }
+      );
+    },
+    adminLedgerDelete: function (slug, entryId) {
+      return request(
+        "/api/admin/tournaments/" + encodeURIComponent(slug) + "/ledger/" + encodeURIComponent(entryId),
+        { method: "DELETE" }
+      );
+    },
+    adminLedgerAttachmentUrl: function (slug, entryId) {
+      return "/api/admin/tournaments/" + encodeURIComponent(slug) + "/ledger/" +
+        encodeURIComponent(entryId) + "/attachment";
     },
     clearRegistrations: function (slug) {
       return request("/api/admin/tournaments/" + encodeURIComponent(slug) + "/registrations", { method: "DELETE" });
@@ -1168,6 +1271,8 @@
     scopedLeaderboardStats: scopedLeaderboardStats,
     fetchTournamentForQueryContext: fetchTournamentForQueryContext,
     tournamentStatsUrl: tournamentStatsUrl,
+    tournamentLedgerUrl: tournamentLedgerUrl,
+    formatMoney: formatMoney,
     playerProfileUrl: function (gender, edition, playerId, extraParams) {
       return api.playerProfileUrl(gender, edition, playerId, extraParams);
     },

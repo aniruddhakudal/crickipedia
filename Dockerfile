@@ -4,7 +4,7 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 COPY server ./server
 COPY schema.sql ./
-COPY index.html register.html admin.html stats.html stats.js players.html players.js player.html player.js app.js cricket-theme.css ./
+COPY index.html register.html admin.html stats.html stats.js balancesheet.html balancesheet.js players.html players.js player.html player.js app.js cricket-theme.css ./
 COPY data/shankeshwaram ./data/shankeshwaram
 COPY data/celebria ./data/celebria
 RUN mkdir -p uploads data

@@ -348,6 +348,7 @@ html[data-ui-theme="dark"] .cricket-ui .aside-card .btn.stats-open:hover{
         <div class="info-chip hidden" id="infoWa"><strong>Questions?</strong><a id="infoWaLink" href="https://wa.me/" target="_blank" rel="noopener" style="color:var(--green);font-weight:700;text-decoration:none">Message the desk</a></div>
       </div>
       <button type="button" class="btn roster-open" id="rosterOpenBtn">View registered players</button>
+      <a class="btn stats-open" id="ledgerLink" href="#">Balance Sheet</a>
       <a class="btn stats-open hidden" id="statsLink" href="#">View season stats</a>
       <a class="btn stats-open hidden" id="playersSearchLink" href="#">Search player stats</a>
     </div>
@@ -677,6 +678,8 @@ html[data-ui-theme="dark"] .cricket-ui .aside-card .btn.stats-open:hover{
   if (tournament.showPublicRoster === false) {
     document.getElementById("rosterOpenBtn").classList.add("hidden");
   }
+  var ledgerUrl = C.tournamentLedgerUrl(tournament);
+  if (ledgerUrl) document.getElementById("ledgerLink").href = ledgerUrl;
   var statsUrl = C.tournamentStatsUrl(tournament);
   var statsLink = document.getElementById("statsLink");
   var playersSearchLink = document.getElementById("playersSearchLink");
@@ -1231,11 +1234,21 @@ html[data-ui-theme="dark"] .cricket-ui .aside-card .btn.stats-open:hover{
     document.getElementById("formCard").classList.remove("hidden");
   }
 
-  function sendPhoto(record, file) {
+  function sendPhoto(record, file, attempt) {
     if (!record || !file) return Promise.resolve(record);
+    var tries = attempt || 0;
     return C.api.uploadPhoto(tournament, record.id, file).then(function (data) {
       return data.record || record;
-    }).catch(function () { return record; });
+    }).catch(function (err) {
+      if (tries < 2) {
+        return new Promise(function (resolve) {
+          setTimeout(resolve, 400 * (tries + 1));
+        }).then(function () {
+          return sendPhoto(record, file, tries + 1);
+        });
+      }
+      return Promise.reject(err);
+    });
   }
 
   function showFormError(message) {
@@ -1283,6 +1296,10 @@ html[data-ui-theme="dark"] .cricket-ui .aside-card .btn.stats-open:hover{
     submitBtn.disabled = true;
     submitBtn.textContent = "Registering…";
     try {
+      var uploadBundle = {};
+      if (photoFile) uploadBundle.photo = photoFile;
+      if (receiptFile) uploadBundle.receipt = receiptFile;
+      if (receiptUpi) uploadBundle.receiptUpi = receiptUpi;
       var result = await C.api.register(tournament, {
         name: val("name"),
         dob: val("dob"),
@@ -1296,12 +1313,12 @@ html[data-ui-theme="dark"] .cricket-ui .aside-card .btn.stats-open:hover{
         cricheroes: val("cricheroes"),
         instagram: val("instagram"),
         customFields: collectCustomFieldValues()
-      }, preview, photoFile || undefined);
+      }, preview, uploadBundle);
       C.clearDraft(tournament);
       document.getElementById("successEmoji").textContent = "✅";
       var record = result.record;
       var receiptOnForm = paymentCfg && paymentCfg.mode === "manual_qr" && (receiptFile || receiptUpi);
-      if (receiptOnForm) {
+      if (receiptOnForm && record.verificationStatus !== "SUBMITTED") {
         submitBtn.textContent = "Uploading receipt…";
         try {
           record = await C.api.uploadReceipt(tournament, record.id, receiptFile, receiptUpi);
@@ -1313,6 +1330,23 @@ html[data-ui-theme="dark"] .cricket-ui .aside-card .btn.stats-open:hover{
           document.getElementById("receiptStatus").textContent =
             receiptErr.message || "Could not upload receipt. Try again below.";
           document.getElementById("manualPayBox").scrollIntoView({ behavior: "smooth", block: "nearest" });
+          submitBtn.disabled = false;
+          submitBtn.textContent = submitLabel;
+          return;
+        }
+      }
+      if (photoFile && !record.photoUrl) {
+        submitBtn.textContent = "Saving photo…";
+        try {
+          record = await sendPhoto(record, photoFile);
+        } catch (photoErr) {
+          showFormError(photoErr.message || "Registration saved but photo upload failed. Use “View registration” and add your photo below.");
+          currentRecord = record;
+          skipSuccessPaymentQr = true;
+          showExisting(record, false);
+          updatePayUi(record);
+          submitBtn.disabled = false;
+          submitBtn.textContent = submitLabel;
           return;
         }
       }
@@ -1320,11 +1354,6 @@ html[data-ui-theme="dark"] .cricket-ui .aside-card .btn.stats-open:hover{
       skipSuccessPaymentQr = true;
       showExisting(record, false);
       updatePayUi(record);
-      if (photoFile && !record.photoUrl) {
-        sendPhoto(record, photoFile).then(function (updated) {
-          currentRecord = updated;
-        });
-      }
     } catch (err) {
       showFormError(err.message || "Could not save. Try again.");
       submitBtn.disabled = false;

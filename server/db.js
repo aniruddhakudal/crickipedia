@@ -413,6 +413,42 @@ async function migrate() {
      ON registrations (tournament_id, player_id, LOWER(TRIM(COALESCE(category, ''))))
      WHERE status <> 'RECEIPT_REJECTED'`
   );
+  await query(
+    `CREATE TABLE IF NOT EXISTS ledger_entries (
+      id BIGSERIAL PRIMARY KEY,
+      tournament_id BIGINT NOT NULL REFERENCES tournaments(id) ON DELETE CASCADE,
+      entry_type VARCHAR(10) NOT NULL CHECK (entry_type IN ('credit', 'debit')),
+      source VARCHAR(20) NOT NULL CHECK (source IN ('registration', 'manual')),
+      registration_id BIGINT REFERENCES registrations(id) ON DELETE SET NULL,
+      amount NUMERIC(10,2) NOT NULL CHECK (amount > 0),
+      description TEXT NOT NULL,
+      occurred_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      attachment_url TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      created_by_admin_id BIGINT
+    )`
+  );
+  await query(
+    `CREATE UNIQUE INDEX IF NOT EXISTS idx_ledger_registration_credit
+     ON ledger_entries (tournament_id, registration_id)
+     WHERE source = 'registration' AND registration_id IS NOT NULL`
+  );
+  await query(
+    "CREATE INDEX IF NOT EXISTS idx_ledger_tournament ON ledger_entries(tournament_id)"
+  );
+  await query(
+    "CREATE INDEX IF NOT EXISTS idx_ledger_occurred ON ledger_entries(tournament_id, occurred_at DESC)"
+  );
+  await query("ALTER TABLE ledger_entries DROP CONSTRAINT IF EXISTS ledger_entries_source_check");
+  await query(
+    `ALTER TABLE ledger_entries ADD CONSTRAINT ledger_entries_source_check
+     CHECK (source IN ('registration', 'manual', 'registration_reversal'))`
+  );
+  await query(
+    `CREATE UNIQUE INDEX IF NOT EXISTS idx_ledger_registration_reversal
+     ON ledger_entries (tournament_id, registration_id)
+     WHERE source = 'registration_reversal' AND registration_id IS NOT NULL`
+  );
   const admins = require("./admins");
   await admins.migrateAdminTables(query);
 }

@@ -141,6 +141,27 @@ async function saveSponsorLogo(slug, file) {
   return saveTournamentMedia(slug, file, `sponsor-${stamp}`);
 }
 
+async function saveLedgerAttachment(tournamentId, entryId, file) {
+  const supabase = getClient();
+  const ext = String((file.originalname || file.filename || ".jpg").split(".").pop() || "jpg")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "") || "jpg";
+  const pathName = `ledger/${tournamentId}/${entryId}/${Date.now()}.${ext}`;
+
+  if (!supabase) {
+    return `/uploads/${file.filename}`;
+  }
+
+  const body = file.buffer || require("fs").readFileSync(file.path);
+  const { error } = await supabase.storage.from(BUCKET).upload(pathName, body, {
+    contentType: file.mimetype || "image/jpeg",
+    upsert: true
+  });
+  if (error) throw new Error(error.message);
+  const { data } = supabase.storage.from(BUCKET).getPublicUrl(pathName);
+  return data.publicUrl;
+}
+
 async function saveReceipt(registrationId, file) {
   const supabase = getClient();
   const ext = String((file.originalname || file.filename || ".jpg").split(".").pop() || "jpg")
@@ -194,5 +215,6 @@ module.exports = {
   saveSponsorLogo,
   streamPaymentQr,
   saveReceipt,
+  saveLedgerAttachment,
   BUCKET
 };

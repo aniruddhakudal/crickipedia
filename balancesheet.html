@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Balance Sheet — Crickipedia</title>
+<script>(function(){try{var t=localStorage.getItem("crickipedia_ui_theme");document.documentElement.setAttribute("data-ui-theme",t==="dark"?"dark":"bright");}catch(e){}})();</script>
+<link rel="stylesheet" href="/cricket-theme.css">
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:"DM Sans",Inter,system-ui,sans-serif;color:var(--text,#0f1f17)}
+.wrap{max-width:960px;margin:0 auto;padding:20px 16px 48px}
+.page-toolbar{display:flex;justify-content:flex-end;margin-bottom:8px}
+.back{color:var(--green);font-weight:800;text-decoration:none}
+.back:hover{text-decoration:underline}
+.summary{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:12px;margin:20px 0}
+.summary-op{flex:0 0 auto;font-size:1.75rem;font-weight:800;line-height:1;color:var(--muted);padding:0 2px;user-select:none}
+.stat-card{flex:1 1 140px;max-width:220px;background:var(--surface,#fff);border:1px solid var(--line);border-radius:14px;padding:16px;text-align:center;box-shadow:var(--shadow)}
+.stat-card b{display:block;font-size:1.35rem;color:var(--green);margin-bottom:4px}
+.stat-card span{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.panel{background:var(--surface,#fff);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow);margin-bottom:16px}
+.muted{color:var(--muted);font-size:13px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:10px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.amount-credit{color:var(--green);font-weight:800}
+.amount-debit{color:#b52e2e;font-weight:800}
+.error{color:#b52e2e;font-weight:700}
+.hidden{display:none!important}
+button.receipt-link{border:0;background:none;padding:0;font:inherit;color:var(--green);font-weight:800;cursor:pointer;text-decoration:none}
+button.receipt-link:hover{text-decoration:underline}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
+.modal{background:var(--surface,#fff);border:1px solid var(--line);border-radius:16px;padding:18px 20px;max-width:min(560px,96vw);width:100%;box-shadow:var(--shadow)}
+.modal-receipt .receipt-modal-body{margin-top:12px;text-align:center;background:var(--input-bg,#f5f8f6);border-radius:12px;padding:12px;max-height:min(70vh,640px);overflow:auto}
+.modal-receipt .receipt-modal-body img{max-width:100%;max-height:min(65vh,600px);width:auto;height:auto;border-radius:8px}
+.modal-head{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.modal-head h3{margin:0;flex:1;font-size:1.05rem}
+</style>
+</head>
+<body class="cricket-ui">
+<div class="wrap">
+  <div class="page-toolbar">
+    <button type="button" class="ui-theme-toggle ui-theme-toggle--surface" data-ui-theme-toggle aria-label="Toggle theme">🌙 Dark</button>
+  </div>
+  <p><a class="back" id="backLink" href="/">← Back</a></p>
+  <h1 id="pageTitle">Balance Sheet</h1>
+  <p class="muted" id="subtitle">Total income and expenses for this tournament.</p>
+  <div class="summary">
+    <div class="stat-card"><b id="sumCredits">₹0</b><span>Total credits</span></div>
+    <div class="summary-op" aria-hidden="true">−</div>
+    <div class="stat-card"><b id="sumDebits">₹0</b><span>Total expenses</span></div>
+    <div class="summary-op" aria-hidden="true">=</div>
+    <div class="stat-card"><b id="sumBalance">₹0</b><span>Balance</span></div>
+  </div>
+  <div id="loadError" class="error hidden"></div>
+  <div class="panel">
+    <h2 style="margin-top:0;font-size:1.1rem">Ledger</h2>
+    <div style="overflow:auto">
+      <table>
+        <thead>
+          <tr><th>Date</th><th>Description</th><th>Type</th><th>Amount</th><th>Receipt</th></tr>
+        </thead>
+        <tbody id="ledgerBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<div class="modal-bg" id="attachmentModal" role="dialog" aria-modal="true" aria-labelledby="attachmentModalTitle">
+  <div class="modal modal-receipt">
+    <div class="modal-head">
+      <h3 id="attachmentModalTitle">Receipt</h3>
+      <button type="button" class="btn ghost" id="closeAttachmentModal">Close</button>
+    </div>
+    <p class="muted" id="attachmentModalMeta" style="margin:8px 0 0"></p>
+    <div class="receipt-modal-body">
+      <img id="attachmentModalImg" alt="Attachment">
+    </div>
+  </div>
+</div>
+<script src="/app.js"></script>
+<script src="/balancesheet.js"></script>
+</body>
+</html>
