@@ -96,11 +96,18 @@ Per tournament (Admin → **Payment method**):
 
 Messages fire on: new registration (reserved), Razorpay success (if enabled), admin approve (confirmed), admin decline (rejected).
 
+**Troubleshooting:** Registration still succeeds if WhatsApp fails; check the server log. Common fixes:
+
+1. **Phone number ID** — In [Meta Developers](https://developers.facebook.com/) → your app → **WhatsApp** → **API setup**, copy **Phone number ID** (not Business account ID) into `WHATSAPP_PHONE_NUMBER_ID`.
+2. **System user** — In Business settings → **Users** → **System users** → your user → **Add assets** → assign the **WhatsApp account** (and phone) with messaging access. Generate a **new** token and set `WHATSAPP_ACCESS_TOKEN`. Restart the server.
+3. **Verify** — While logged in as superadmin: `GET /api/admin/whatsapp-check` (JSON shows `displayPhoneNumber` when OK).
+4. **Local dev without WhatsApp** — Leave `WHATSAPP_ACCESS_TOKEN` or `WHATSAPP_PHONE_NUMBER_ID` empty; automatic messages are skipped.
+
 ## Tournament season stats (charts)
 
 - Stats are **per tournament**, not on the home page. Enable in Admin → **Customize** → **Season leaderboard stats** (stats league ID + division + data edition). Players see **View season stats** on that tournament’s registration page.
 - **Stats league ID** groups seasons for the stats page (e.g. `srpl` for all SRPL seasons, `celebria` for CPL and CGL). Same ID on multiple tournaments lets players pick one or more seasons—or **All seasons**—to combine leaderboards.
-- CSV data: `data/srpl/{gender}/{edition}/` and `data/celebria/{gender}/{edition}/` (CPL/CGL); JSON bundles in each store’s `_generated/` folder.
+- CSV data: `data/shankeshwaram/{gender}/{edition}/` (SRPL) and `data/celebria/{gender}/{edition}/` (CPL/CGL); JSON bundles in each store’s `_generated/` folder.
 - Superadmin: Admin → **Season stats (CSVs)** tab to upload CricHeroes CSVs.
 - API: `GET /api/stats/league/:leagueId`, `GET /api/stats/srpl/manifest`, `GET /api/stats/srpl/:gender/:edition/:board`, `GET /api/stats/srpl/:gender/merged/:board?editions=...`, merged players at `.../merged/players?editions=...`.
 - **Search players:** `/players.html?gender=men&edition=cpl11` — search by name, then open a profile.

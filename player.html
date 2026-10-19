@@ -19,6 +19,9 @@ body{margin:0;font-family:"DM Sans",Inter,system-ui,sans-serif;color:var(--text,
 .pick-row{display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin:16px 0}
 .pick-row label{font-size:12px;font-weight:800;display:grid;gap:4px;color:var(--muted)}
 .pick-row select{min-width:200px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);font:inherit;background:var(--input-bg,#fff)}
+.seasons-panel{background:var(--surface,#fff);border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin:0 0 16px}
+.check{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:700;cursor:pointer}
+.check input{width:16px;height:16px;accent-color:var(--green,#0b6b45)}
 .section{margin-bottom:18px}
 .section h2{margin:0 0 12px;font-size:1.05rem}
 .stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
@@ -36,6 +39,11 @@ body{margin:0;font-family:"DM Sans",Inter,system-ui,sans-serif;color:var(--text,
     <button type="button" class="ui-theme-toggle ui-theme-toggle--surface" data-ui-theme-toggle aria-label="Toggle theme">🌙 Dark</button>
   </div>
   <p><a class="back" id="backLink" href="/stats.html">← Back to stats</a></p>
+  <div id="playerSeasonsPanel" class="seasons-panel hidden">
+    <p style="margin:0 0 10px;font-size:13px;font-weight:800" id="playerSeasonsTitle">Seasons</p>
+    <p class="muted" style="margin:0 0 10px" id="playerSeasonsHint">Select one or more seasons to combine this player’s stats.</p>
+    <div id="playerSeasonChecks" style="display:flex;flex-wrap:wrap;gap:10px 18px"></div>
+  </div>
   <div id="pickPanel" class="pick-row hidden">
     <label>Player
       <select id="playerPick"></select>

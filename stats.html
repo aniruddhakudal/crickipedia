@@ -12,7 +12,8 @@ body{margin:0;font-family:"DM Sans",Inter,system-ui,sans-serif;color:var(--text,
 .stats-toolbar{display:flex;justify-content:flex-end;margin-bottom:8px}
 .wrap{max-width:1100px;margin:0 auto;padding:20px 16px 48px}
 .top{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between;margin-bottom:20px}
-.top h1{margin:0;font-size:1.6rem}
+.top h1{font-size:1.6rem}
+.top-copy{flex:1;min-width:min(100%,280px)}
 .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:end}
 label{font-size:12px;font-weight:800;display:grid;gap:4px;color:var(--muted,#5a6b64)}
 select{padding:10px 12px;border-radius:10px;border:1px solid var(--line,#d7e3dd);font:inherit;background:var(--input-bg,#fff);min-width:120px}
@@ -24,7 +25,8 @@ select{padding:10px 12px;border-radius:10px;border:1px solid var(--line,#d7e3dd)
 .chart-box{min-height:280px}
 .chart-box--pie .chart-canvas-wrap{height:300px}
 .chart-box h3{margin:0 0 8px;font-size:15px}
-.chart-canvas-wrap{position:relative;height:240px}
+.chart-canvas-wrap{position:relative;height:240px;min-height:280px}
+.chart-box:has(canvas){min-height:300px}
 .muted{color:var(--muted);font-size:13px}
 table{width:100%;border-collapse:collapse;font-size:14px}
 th,td{padding:10px 8px;border-bottom:1px solid var(--line);text-align:left}
@@ -46,10 +48,10 @@ a.back:hover{text-decoration:underline}
   </div>
   <p><a class="back" id="backLink" href="/">← Back</a></p>
   <div class="top">
-    <div>
+    <div class="top-copy">
       <h1 id="pageTitle">Season stats</h1>
       <p class="muted" id="subtitle">Leaderboards and charts for this tournament season.</p>
-      <p style="margin-top:12px"><a id="playersSearchLink" href="/players.html" style="color:var(--green);font-weight:800;text-decoration:none">Search player stats →</a></p>
+      <p class="top-link"><a id="playersSearchLink" href="/players.html">Search player stats →</a></p>
     </div>
     <div class="controls">
       <label>Division
@@ -62,7 +64,7 @@ a.back:hover{text-decoration:underline}
         <select id="edition"></select>
       </label>
     </div>
-    <div id="leagueSeasonsPanel" class="panel hidden" style="margin-top:0;margin-bottom:16px;padding:14px 18px">
+    <div id="leagueSeasonsPanel" class="panel league-seasons-panel hidden" style="margin-top:0;margin-bottom:16px;padding:14px 18px">
       <p style="margin:0 0 10px;font-size:13px;font-weight:800" id="leagueSeasonsTitle">Seasons in this league</p>
       <p class="muted" style="margin:0 0 10px" id="leagueSeasonsHint">Select one or more seasons to combine career stats within this league.</p>
       <div id="leagueSeasonChecks" style="display:flex;flex-wrap:wrap;gap:10px 18px"></div>

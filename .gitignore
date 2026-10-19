@@ -5,9 +5,9 @@ node_modules/
 uploads/*
 !uploads/.gitkeep
 data/*
-!data/srpl/
-!data/srpl/**
-data/srpl/_generated/
+!data/shankeshwaram/
+!data/shankeshwaram/**
+data/shankeshwaram/_generated/
 !data/celebria/
 !data/celebria/**
 data/celebria/_generated/

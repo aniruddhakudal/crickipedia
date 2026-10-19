@@ -107,6 +107,19 @@ app.get("/api/stats/srpl/manifest", (req, res) => {
 app.get("/api/stats/league/:leagueId", async (req, res) => {
   try {
     const data = await db.listStatsLeagueSeasons(req.params.leagueId);
+    const disk = srplStats.listDiskSeasonsForLeague(req.params.leagueId);
+    const byKey = new Map();
+    (data.seasons || []).forEach((s) => {
+      byKey.set(`${s.gender}:${s.edition}`, s);
+    });
+    disk.forEach((s) => {
+      const key = `${s.gender}:${s.edition}`;
+      if (!byKey.has(key)) byKey.set(key, s);
+    });
+    data.seasons = Array.from(byKey.values()).sort((a, b) => {
+      if (a.gender !== b.gender) return a.gender.localeCompare(b.gender);
+      return srplStats.compareEditionKeys(a.edition, b.edition);
+    });
     res.json(data);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -129,6 +142,31 @@ app.get("/api/stats/srpl/:gender/merged/players", (req, res) => {
       { players, gender: req.params.gender, editions },
       `players-merged-${req.params.gender}-${editions.join("+")}-${players.length}`
     );
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.get("/api/stats/srpl/:gender/merged/players/:playerId", (req, res) => {
+  try {
+    const editions = String(req.query.editions || "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (!editions.length) {
+      res.status(400).json({ error: "editions query is required" });
+      return;
+    }
+    const profile = srplStats.getPlayerProfileMerged(
+      req.params.gender,
+      editions,
+      req.params.playerId
+    );
+    if (!profile) {
+      res.status(404).json({ error: "Player not found" });
+      return;
+    }
+    srplStats.sendJsonWithCache(res, profile, profile.v);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -257,7 +295,7 @@ app.post("/api/admin/stats/srpl/rebuild", requireSuperadmin, (req, res) => {
 function hashManifestVersion(manifest) {
   const crypto = require("crypto");
   const payload = (manifest.datasets || [])
-    .map((d) => `${d.store || "srpl"}/${d.gender}/${d.edition}/${d.board}:${d.v}`)
+    .map((d) => `${d.store || "shankeshwaram"}/${d.gender}/${d.edition}/${d.board}:${d.v}`)
     .join("|");
   return crypto.createHash("sha256").update(payload).digest("hex").slice(0, 12);
 }
@@ -1427,6 +1465,15 @@ app.get("/api/admin/me", requireAdmin, async (req, res) => {
     res.json(await adminSessionMe(req.session.admin));
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/api/admin/whatsapp-check", requireSuperadmin, async (req, res) => {
+  try {
+    const result = await whatsapp.verifyCredentials();
+    res.status(result.ok ? 200 : 400).json(result);
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
   }
 });
 

@@ -8,8 +8,11 @@ const TOP_N = 12;
 const CHART_SCHEMA_VERSION = "4";
 
 const STATS_DATA_ROOT = path.join(__dirname, "..", "..", "data");
-const DATA_STORES = ["srpl", "celebria"];
-const SRPL_ROOT = path.join(STATS_DATA_ROOT, "srpl");
+const DEFAULT_DATA_STORE = "shankeshwaram";
+const DATA_STORES = ["shankeshwaram", "celebria"];
+/** @deprecated use DEFAULT_DATA_STORE; SRPL stats live under data/shankeshwaram */
+const LEGACY_STORE_ALIASES = { srpl: DEFAULT_DATA_STORE };
+const SRPL_ROOT = path.join(STATS_DATA_ROOT, DEFAULT_DATA_STORE);
 
 function normalizeDataStore(value) {
   const key = String(value || "")
@@ -17,7 +20,8 @@ function normalizeDataStore(value) {
     .toLowerCase()
     .replace(/[^a-z0-9-]+/g, "-")
     .replace(/^-+|-+$/g, "");
-  return DATA_STORES.includes(key) ? key : "srpl";
+  const resolved = LEGACY_STORE_ALIASES[key] || key;
+  return DATA_STORES.includes(resolved) ? resolved : DEFAULT_DATA_STORE;
 }
 
 function storeRoot(store) {
@@ -33,9 +37,10 @@ function detectStoreFromCsvPath(csvPath) {
   const dataIdx = parts.lastIndexOf("data");
   if (dataIdx >= 0 && dataIdx + 1 < parts.length) {
     const name = parts[dataIdx + 1];
+    if (LEGACY_STORE_ALIASES[name]) return LEGACY_STORE_ALIASES[name];
     if (DATA_STORES.includes(name)) return name;
   }
-  return "srpl";
+  return DEFAULT_DATA_STORE;
 }
 
 const BOARD_FILE_RE = /^(\d+)_(batting|bowling|fielding|mvp)_leaderboard\.csv$/i;
@@ -213,14 +218,105 @@ function listCsvSources() {
   return out;
 }
 
+function statsLeagueIdToStore(leagueId) {
+  const id = String(leagueId || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  if (id === "celebria") return "celebria";
+  if (id === "srpl" || id === "shankeshwaram") return DEFAULT_DATA_STORE;
+  return "";
+}
+
+function formatEditionLabel(edition) {
+  const e = String(edition || "");
+  const m = e.match(/^(cpl|cgl|srpl)(\d+)$/i);
+  if (m) return `${m[1].toUpperCase()} ${m[2]}`;
+  return e.toUpperCase();
+}
+
+function compareEditionKeys(a, b) {
+  const ma = String(a).match(/^(cpl|cgl|srpl)(\d+)$/i);
+  const mb = String(b).match(/^(cpl|cgl|srpl)(\d+)$/i);
+  if (ma && mb) {
+    const seriesOrder = { cpl: 0, cgl: 1, srpl: 0 };
+    const sa = seriesOrder[ma[1].toLowerCase()] ?? 2;
+    const sb = seriesOrder[mb[1].toLowerCase()] ?? 2;
+    if (sa !== sb) return sa - sb;
+    return Number(ma[2]) - Number(mb[2]);
+  }
+  return String(a).localeCompare(String(b));
+}
+
+/** All CSV season folders on disk for a stats league (CPL + CGL for celebria). */
+function listDiskSeasonsForLeague(leagueId) {
+  const store = statsLeagueIdToStore(leagueId);
+  if (!store) return [];
+  const seen = new Set();
+  const out = [];
+  for (const source of listCsvSourcesForStore(store)) {
+    const key = `${source.gender}:${source.edition}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({
+      edition: source.edition,
+      gender: source.gender,
+      label: formatEditionLabel(source.edition),
+      tournamentSlug: "",
+      seasonSlug: "",
+      slug: ""
+    });
+  }
+  out.sort((a, b) => {
+    if (a.gender !== b.gender) return a.gender.localeCompare(b.gender);
+    return compareEditionKeys(a.edition, b.edition);
+  });
+  return out;
+}
+
+function pickAlternateNameFromRow(row) {
+  for (const key of ["alternate_name", "alternate name", "nick_name", "nickname", "alias"]) {
+    const alt = String(row[key] || "").trim();
+    if (alt) return alt;
+  }
+  return "";
+}
+
+function playerChartLabel(row, nameKey) {
+  const key = nameKey || "name";
+  const name = String(row[key] || "").trim();
+  if (!name) return "—";
+  const alt = pickAlternateNameFromRow(row);
+  if (alt && alt.toLowerCase() !== name.toLowerCase()) {
+    return `${name} (${alt})`;
+  }
+  const variants = row._nameVariants;
+  if (variants && variants.size > 1) {
+    const primary = name;
+    const others = [...variants].filter((v) => v !== primary);
+    if (others.length) return `${primary} (${others.join(", ")})`;
+  }
+  return name;
+}
+
+function trackNameVariant(agg, row, nameKey) {
+  const key = nameKey || "name";
+  const name = String(row[key] || "").trim();
+  if (!name) return;
+  if (!agg._nameVariants) agg._nameVariants = new Set();
+  agg._nameVariants.add(name);
+}
+
 function topSeries(rows, labelKey, valueKey, options) {
   const opts = options || {};
   const limit = opts.limit != null ? opts.limit : TOP_N;
   const filter = opts.filter || (() => true);
   const desc = opts.desc !== false;
+  const isPlayer = labelKey === "name" || labelKey === "Player Name";
   const picked = rows
     .map((row) => ({
-      label: String(row[labelKey] || "").trim() || "—",
+      label: isPlayer ? playerChartLabel(row, labelKey) : String(row[labelKey] || "").trim() || "—",
       value: num(row[valueKey]),
       row
     }))
@@ -346,7 +442,7 @@ function buildCharts(board, rows) {
     const top = topSeries(rows, "Player Name", "Total");
     const topRows = rows
       .map((row) => ({
-        name: String(row["Player Name"] || "").trim(),
+        name: playerChartLabel(row, "Player Name"),
         total: num(row.Total),
         batting: num(row.Batting),
         bowling: num(row.Bowling),
@@ -421,7 +517,7 @@ function compactTable(board, rows) {
   if (board === "batting") {
     return rows.map((row) => ({
       playerId: String(row.player_id || "").trim(),
-      name: row.name,
+      name: playerChartLabel(row, "name"),
       team: row.team_name,
       matches: roundStat(row.total_match),
       runs: roundStat(row.total_runs),
@@ -433,7 +529,7 @@ function compactTable(board, rows) {
   if (board === "bowling") {
     return rows.map((row) => ({
       playerId: String(row.player_id || "").trim(),
-      name: row.name,
+      name: playerChartLabel(row, "name"),
       team: row.team_name,
       matches: roundStat(row.total_match),
       wickets: roundStat(row.total_wickets),
@@ -444,7 +540,7 @@ function compactTable(board, rows) {
   if (board === "fielding") {
     return rows.map((row) => ({
       playerId: String(row.player_id || "").trim(),
-      name: row.name,
+      name: playerChartLabel(row, "name"),
       team: row.team_name,
       matches: roundStat(row.total_match),
       dismissals: roundStat(row.total_dismissal),
@@ -453,7 +549,7 @@ function compactTable(board, rows) {
   }
   if (board === "mvp") {
     return rows.map((row) => ({
-      name: row["Player Name"],
+      name: playerChartLabel(row, "Player Name"),
       team: row["Team Name"],
       matches: roundStat(row.Matches),
       batting: roundStat(row.Batting),
@@ -802,9 +898,12 @@ function mergeBattingRows(rowSets) {
       if (!id) return;
       let agg = byId.get(id);
       if (!agg) {
-        byId.set(id, { ...row, player_id: id });
+        const first = { ...row, player_id: id };
+        trackNameVariant(first, row, "name");
+        byId.set(id, first);
         return;
       }
+      trackNameVariant(agg, row, "name");
       [
         "total_match",
         "innings",
@@ -838,9 +937,12 @@ function mergeBowlingRows(rowSets) {
       if (!id) return;
       let agg = byId.get(id);
       if (!agg) {
-        byId.set(id, { ...row, player_id: id });
+        const first = { ...row, player_id: id };
+        trackNameVariant(first, row, "name");
+        byId.set(id, first);
         return;
       }
+      trackNameVariant(agg, row, "name");
       [
         "total_match",
         "innings",
@@ -869,9 +971,12 @@ function mergeFieldingRows(rowSets) {
       if (!id) return;
       let agg = byId.get(id);
       if (!agg) {
-        byId.set(id, { ...row, player_id: id });
+        const first = { ...row, player_id: id };
+        trackNameVariant(first, row, "name");
+        byId.set(id, first);
         return;
       }
+      trackNameVariant(agg, row, "name");
       [
         "total_match",
         "catches",
@@ -1016,6 +1121,74 @@ function getPlayerProfile(gender, edition, playerId) {
   };
 }
 
+function getPlayerProfileMerged(gender, editions, playerId) {
+  const g = slugKey(gender, "gender");
+  const id = String(playerId || "").trim();
+  const list = [...new Set(editions.map((ed) => slugKey(ed, "edition")))];
+  if (!id) throw new Error("Player id required");
+  if (!list.length) throw new Error("At least one edition required");
+
+  const battingRows = [];
+  const bowlingRows = [];
+  const fieldingRows = [];
+  const mvpRows = [];
+
+  for (const e of list) {
+    const b = findRowByPlayerId(loadBoardRows(g, e, "batting"), id);
+    const w = findRowByPlayerId(loadBoardRows(g, e, "bowling"), id);
+    const f = findRowByPlayerId(loadBoardRows(g, e, "fielding"), id);
+    if (b) battingRows.push(b);
+    if (w) bowlingRows.push(w);
+    if (f) fieldingRows.push(f);
+  }
+
+  if (!battingRows.length && !bowlingRows.length && !fieldingRows.length) return null;
+
+  const mergedBatting = battingRows.length ? mergeBattingRows([battingRows])[0] : null;
+  const mergedBowling = bowlingRows.length ? mergeBowlingRows([bowlingRows])[0] : null;
+  const mergedFielding = fieldingRows.length ? mergeFieldingRows([fieldingRows])[0] : null;
+
+  const name = playerChartLabel(
+    mergedBatting || mergedBowling || mergedFielding || { name: "" },
+    "name"
+  );
+  const team = (mergedBatting && mergedBatting.team_name)
+    || (mergedBowling && mergedBowling.team_name)
+    || (mergedFielding && mergedFielding.team_name)
+    || "";
+
+  const nameKeys = new Set();
+  if (mergedBatting && mergedBatting._nameVariants) {
+    mergedBatting._nameVariants.forEach((n) => nameKeys.add(normalizePlayerName(n)));
+  } else if (name) {
+    nameKeys.add(normalizePlayerName(name));
+  }
+  for (const e of list) {
+    loadBoardRows(g, e, "mvp").forEach((row) => {
+      if (nameKeys.has(normalizePlayerName(row["Player Name"]))) mvpRows.push(row);
+    });
+  }
+  const mergedMvp = mvpRows.length ? mergeMvpRows([mvpRows])[0] : null;
+
+  const editionKey = list.join("+");
+  const v = hashContent(`${g}|${editionKey}|${id}|merged|${CHART_SCHEMA_VERSION}`);
+
+  return {
+    v,
+    playerId: id,
+    name,
+    team,
+    gender: g,
+    edition: editionKey,
+    editions: list,
+    merged: true,
+    batting: profileSectionFromBatting(mergedBatting),
+    bowling: profileSectionFromBowling(mergedBowling),
+    fielding: profileSectionFromFielding(mergedFielding),
+    mvp: profileSectionFromMvp(mergedMvp)
+  };
+}
+
 function sendJsonWithCache(res, payload, version) {
   const etag = `"${version || payload.v || hashContent(JSON.stringify(payload))}"`;
   if (res.req.headers["if-none-match"] === etag) {
@@ -1045,5 +1218,9 @@ module.exports = {
   listPlayers,
   listPlayersMerged,
   readMergedBundle,
-  getPlayerProfile
+  getPlayerProfile,
+  getPlayerProfileMerged,
+  statsLeagueIdToStore,
+  listDiskSeasonsForLeague,
+  compareEditionKeys
 };

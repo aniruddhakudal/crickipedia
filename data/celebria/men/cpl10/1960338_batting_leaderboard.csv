@@ -1,0 +1,55 @@
+player_id,name,team_id,team_name,total_match,innings,total_runs,highest_run,average,not_out,strike_rate,ball_faced,batting_hand,4s,6s,50s,100s
+26751992,Saurabh Thakur,10738094,BAJRANGI,6,6,191,67,38.20,1,203.19,94,RHB,2,25,2,0
+13221867,Akash Patil,13101638,Shriram Warriors,7,7,178,61,29.67,1,214.46,83,RHB,7,22,1,0
+32766099,Suhas Kale 702,13068100,Pirates Kraken Reckoning,6,6,165,56,41.25,2,217.11,76,RHB,5,22,2,0
+14019875,Ashish Naik,13068100,Pirates Kraken Reckoning,6,6,155,48,51.67,3,144.86,107,RHB,3,18,0,0
+3604165,Aniruddha Kudal,13101638,Shriram Warriors,7,7,148,46,37.00,3,180.49,82,RHB,2,20,0,0
+10619512,Tanishq Wagh,10738094,BAJRANGI,6,6,137,53,22.83,0,165.06,83,RHB,3,18,1,0
+234634,Shubham Chougule,13101638,Shriram Warriors,7,6,137,39,68.50,4,147.31,93,RHB,5,15,0,0
+10765307,Sagar Shelar,13068183,Kingmaker Boys,7,7,133,50,22.17,1,135.71,98,RHB,4,14,1,0
+16845639,Saurabh Mantri,13068183,Kingmaker Boys,7,7,127,66,42.33,4,167.11,76,RHB,3,15,1,0
+10234192,Pankaj Phopse,13101618,Super Kings,5,5,107,43,26.75,1,167.19,64,RHB,4,11,0,0
+234632,Krushna Malpani,13068183,Kingmaker Boys,7,7,98,34,19.60,2,116.67,84,RHB,1,10,0,0
+4867029,Kishore Soni,13101618,Super Kings,5,5,96,45,24.00,1,184.62,52,RHB,1,14,0,0
+10765294,Atharva M,13101618,Super Kings,5,5,89,41,22.25,1,171.15,52,RHB,5,9,0,0
+2642724,Piyush Singh,13068183,Kingmaker Boys,7,5,87,24,17.40,0,248.57,35,LHB,2,13,0,0
+10765268,Akshay Upare,13101618,Super Kings,5,5,80,47,16.00,0,173.91,46,RHB,1,12,0,0
+14299007,Abhay Patil,13068100,Pirates Kraken Reckoning,6,6,72,33,14.40,1,184.62,39,RHB,0,11,0,0
+48256444,Manoj Upadhyay,10738094,BAJRANGI,6,6,70,44,14.00,1,106.06,66,RHB,4,6,0,0
+16898163,Drsuhas Dhekane,13101652,Rule Breakers,5,5,68,48,17.00,1,165.85,41,RHB,2,8,0,0
+1883604,Raman Toshniwal,13101652,Rule Breakers,5,4,67,26,16.75,0,152.27,44,RHB,1,9,0,0
+10765116,Aditya Agrawal,13101652,Rule Breakers,5,5,67,57,22.33,2,231.03,29,RHB,2,9,1,0
+31092002,Shirsh S,13101638,Shriram Warriors,7,4,54,22,18.00,1,180.00,30,RHB,4,5,0,0
+822917,Lavin Raheja,13101652,Rule Breakers,5,5,49,23,12.25,1,113.95,43,RHB,1,5,0,0
+14298851,Vinay Satam,13101638,Shriram Warriors,7,3,46,26,46.00,2,117.95,39,RHB,0,7,0,0
+10745512,Onkar,10738094,BAJRANGI,6,5,42,18,42.00,4,175.00,24,RHB,2,3,0,0
+20788786,Bhushan Ladda,10738094,BAJRANGI,6,6,42,23,7.00,0,175.00,24,RHB,2,5,0,0
+4962614,Siva Varigala (vvs),13068183,Kingmaker Boys,7,3,39,34,39.00,2,125.81,31,RHB,1,3,0,0
+10765311,Rohit Akhade,13068183,Kingmaker Boys,7,5,38,29,19.00,3,146.15,26,RHB,1,3,0,0
+33388631,Abhishek Dayama,13101652,Rule Breakers,5,3,35,19,35.00,2,106.06,33,RHB,1,4,0,0
+16890310,Pritesh Sail,13068100,Pirates Kraken Reckoning,6,3,32,30,-,3,246.15,13,RHB,1,4,0,0
+19794211,Ballal Sanket,13068100,Pirates Kraken Reckoning,6,4,30,15,7.50,0,96.77,31,RHB,1,3,0,0
+20273947,Yogesh Rane,13068100,Pirates Kraken Reckoning,6,3,29,15,29.00,2,111.54,26,RHB,1,3,0,0
+32388597,Tanmay,10738094,BAJRANGI,6,5,29,16,14.50,3,181.25,16,RHB,2,3,0,0
+10765292,Ashish Makwana,13101652,Rule Breakers,5,2,17,13,-,2,58.62,29,RHB,1,1,0,0
+16889668,Digesh Panchal,13101652,Rule Breakers,5,3,16,8,8.00,1,114.29,14,RHB,0,2,0,0
+10765284,Chandrakant Vipat,13101638,Shriram Warriors,6,6,16,14,4.00,2,100.00,16,RHB,0,2,0,0
+14298782,Manoj Wagh,13101618,Super Kings,5,5,15,14,7.50,3,107.14,14,RHB,0,2,0,0
+10745523,Kishor Wagh,13101652,Rule Breakers,5,4,13,8,3.25,0,65.00,20,RHB,1,1,0,0
+10765261,Aditya Akmar,13101618,Super Kings,5,2,8,6,4.00,0,42.11,19,RHB,0,1,0,0
+10765325,Amit Kesharkar,13101638,Shriram Warriors,1,1,6,6,6.00,0,120.00,5,RHB,1,0,0,0
+33617016,Aarush Jagtap,13068100,Pirates Kraken Reckoning,6,1,6,6,-,1,600.00,1,LHB,0,1,0,0
+8497837,Pranesh Dixith,13101638,Shriram Warriors,7,1,6,6,-,1,200.00,3,RHB,0,1,0,0
+1669464,Abhishek Satam,13101638,Shriram Warriors,7,1,5,5,5.00,0,166.67,3,RHB,0,0,0,0
+10765288,Dilip Achari,13068183,Kingmaker Boys,7,2,3,3,-,2,60.00,5,RHB,0,0,0,0
+10765317,Suhas Agawane,13101618,Super Kings,5,1,2,2,-,1,200.00,1,LHB,0,0,0,0
+16868529,Akshay Kedar,10738094,BAJRANGI,1,1,1,1,1.00,0,12.50,8,RHB,0,0,0,0
+3606106,Akshay,10738094,BAJRANGI,5,1,1,1,1.00,0,20.00,5,RHB,0,0,0,0
+14298775,Non Striker,13101652,Rule Breakers,2,1,0,0,-,1,0,0,RHB,0,0,0,0
+49716009,Mayur Phopse,13068100,Pirates Kraken Reckoning,3,1,0,0,-,0,0.00,4,RHB,0,0,0,0
+16898071,Shripad K,10738094,BAJRANGI,4,1,0,0,-,1,0.00,1,RHB,0,0,0,0
+10814023,Ayush M,13101618,Super Kings,5,1,0,0,-,1,0.00,2,RHB,0,0,0,0
+10765297,Jagdeep Deogade,10738094,BAJRANGI,6,1,0,0,-,0,0.00,1,RHB,0,0,0,0
+10234356,Mayur Phopse,13068100,Pirates Kraken Reckoning,5,2,0,0,-,0,0.00,6,RHB,0,0,0,0
+14906098,Tushar Tonape,13068183,Kingmaker Boys,4,0,0,0,-,0,0,0,RHB,0,0,0,0
+25084230,Vijaykumar Tonape,13068183,Kingmaker Boys,6,0,0,0,-,0,0,0,RHB,0,0,0,0

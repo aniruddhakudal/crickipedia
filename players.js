@@ -64,13 +64,13 @@
   }
 
   function applyScopedControls() {
-    var controls = document.querySelector(".controls");
+    var scopedFilters = document.querySelectorAll(".scoped-filter");
     if (!isStatsScopedToTournament()) {
-      if (controls) controls.classList.remove("hidden");
+      scopedFilters.forEach(function (el) { el.classList.remove("hidden"); });
       return;
     }
     qs("gender").value = scopedStats.gender;
-    if (controls) controls.classList.add("hidden");
+    scopedFilters.forEach(function (el) { el.classList.add("hidden"); });
   }
 
   function fillEditionSelect() {
@@ -134,8 +134,7 @@
     if (editions.length > 1) extra.editions = editions.join(",");
     root.innerHTML = filtered.map(function (p) {
       var href = C.playerProfileUrl(gender, edition, p.playerId, extra);
-      return '<li><a href="' + C.escapeHtml(href) + '"><span>' + C.escapeHtml(p.name) +
-        '</span><span class="team">' + C.escapeHtml(p.team || "") + "</span></a></li>";
+      return '<li><a href="' + C.escapeHtml(href) + '">' + C.escapeHtml(p.name) + "</a></li>";
     }).join("");
   }
 

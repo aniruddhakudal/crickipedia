@@ -284,6 +284,44 @@ body.cricket-ui .ui-theme-toggle--surface:hover {
 .cricket-ui .top {
   background: var(--top-bar);
   color: var(--top-bar-text);
+  border-radius: 14px;
+  padding: 18px 20px;
+  box-sizing: border-box;
+}
+
+.cricket-ui .top h1,
+.cricket-ui .top h2 {
+  margin: 0 0 8px;
+  padding: 0;
+}
+
+.cricket-ui .top p {
+  margin: 0;
+  padding: 0;
+}
+
+.cricket-ui .top .muted {
+  color: rgba(255, 255, 255, 0.88);
+  opacity: 1;
+}
+
+html[data-ui-theme="dark"] .cricket-ui .top .muted {
+  color: rgba(238, 246, 252, 0.88);
+}
+
+.cricket-ui .top .top-link {
+  margin-top: 12px;
+}
+
+.cricket-ui .top .top-link a {
+  color: #fff;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.cricket-ui .top .top-link a:hover {
+  opacity: 0.92;
 }
 
 .cricket-ui .primary,

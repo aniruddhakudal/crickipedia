@@ -1,7 +1,19 @@
-const API_VERSION = process.env.WHATSAPP_API_VERSION || "v21.0";
+const API_VERSION = (process.env.WHATSAPP_API_VERSION || "v21.0").trim();
+
+function cleanEnv(value) {
+  return String(value || "").trim().replace(/^["']|["']$/g, "");
+}
+
+function accessToken() {
+  return cleanEnv(process.env.WHATSAPP_ACCESS_TOKEN);
+}
+
+function phoneNumberId() {
+  return cleanEnv(process.env.WHATSAPP_PHONE_NUMBER_ID);
+}
 
 function enabled() {
-  return Boolean(process.env.WHATSAPP_ACCESS_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID);
+  return Boolean(accessToken() && phoneNumberId());
 }
 
 function webhookVerifyToken() {
@@ -43,6 +55,43 @@ function normalizePhone(phone) {
   return digits;
 }
 
+function graphErrorMessage(data, fallback) {
+  const err = data && data.error;
+  if (!err) return fallback || "WhatsApp request failed";
+  let message = err.message || fallback || "WhatsApp request failed";
+  const code = err.code;
+  const sub = err.error_subcode;
+  if (code === 190 || /authentication/i.test(message)) {
+    message +=
+      " — Regenerate the system-user token in Meta Business Suite (Users → System users → Generate token) and restart the server.";
+  } else if (code === 100 && (sub === 33 || /does not exist|missing permissions/i.test(message))) {
+    message +=
+      " — Use the Phone number ID from WhatsApp → API setup, and assign that WhatsApp account to your system user (Business settings → Users → System users → Add assets).";
+  }
+  return message;
+}
+
+/** Lightweight check for Admin / deploy (does not send a message). */
+async function verifyCredentials() {
+  if (!enabled()) {
+    return { ok: false, configured: false, error: "WHATSAPP_ACCESS_TOKEN and WHATSAPP_PHONE_NUMBER_ID are not both set" };
+  }
+  const url = `https://graph.facebook.com/${API_VERSION}/${phoneNumberId()}?fields=display_phone_number,verified_name`;
+  const response = await fetch(url, {
+    headers: { Authorization: `Bearer ${accessToken()}` }
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    return { ok: false, configured: true, error: graphErrorMessage(data, "Could not access WhatsApp phone number") };
+  }
+  return {
+    ok: true,
+    configured: true,
+    displayPhoneNumber: data.display_phone_number || "",
+    verifiedName: data.verified_name || ""
+  };
+}
+
 async function sendTemplate(toPhone, templateName, languageCode, bodyParameters) {
   if (!enabled()) {
     return { ok: false, skipped: true, reason: "WhatsApp API not configured" };
@@ -55,11 +104,11 @@ async function sendTemplate(toPhone, templateName, languageCode, bodyParameters)
     type: "text",
     text: String(text == null ? "" : text).slice(0, 1024)
   }));
-  const url = `https://graph.facebook.com/${API_VERSION}/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
+  const url = `https://graph.facebook.com/${API_VERSION}/${phoneNumberId()}/messages`;
   const response = await fetch(url, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+      Authorization: `Bearer ${accessToken()}`,
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
@@ -77,8 +126,7 @@ async function sendTemplate(toPhone, templateName, languageCode, bodyParameters)
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    const message = data.error && data.error.message ? data.error.message : "WhatsApp send failed";
-    throw new Error(message);
+    throw new Error(graphErrorMessage(data, "WhatsApp send failed"));
   }
   return { ok: true, data };
 }
@@ -88,6 +136,7 @@ module.exports = {
   webhookConfigured,
   verifyWebhookSubscription,
   handleWebhookPayload,
+  verifyCredentials,
   sendTemplate,
   normalizePhone
 };

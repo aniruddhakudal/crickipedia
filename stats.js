@@ -23,7 +23,7 @@
 
   function manifestFingerprint(data) {
     return (data.datasets || []).map(function (d) {
-      return (d.store || "srpl") + "/" + d.gender + "/" + d.edition + "/" + d.board + ":" + d.v;
+      return (d.store || "shankeshwaram") + "/" + d.gender + "/" + d.edition + "/" + d.board + ":" + d.v;
     }).join("|");
   }
 
@@ -39,32 +39,245 @@
     return leagueSeasons.filter(function (s) { return s.gender === gender; });
   }
 
+  function formatEditionLabel(edition) {
+    var e = String(edition || "");
+    var m = e.match(/^(cpl|cgl|srpl)(\d+)$/i);
+    if (m) return m[1].toUpperCase() + " " + m[2];
+    return e.toUpperCase();
+  }
+
+  function compareEditionKeys(a, b) {
+    var ma = String(a).match(/^(cpl|cgl|srpl)(\d+)$/i);
+    var mb = String(b).match(/^(cpl|cgl|srpl)(\d+)$/i);
+    if (ma && mb) {
+      var seriesOrder = { cpl: 0, cgl: 1, srpl: 0 };
+      var sa = seriesOrder[ma[1].toLowerCase()] != null ? seriesOrder[ma[1].toLowerCase()] : 2;
+      var sb = seriesOrder[mb[1].toLowerCase()] != null ? seriesOrder[mb[1].toLowerCase()] : 2;
+      if (sa !== sb) return sa - sb;
+      return Number(ma[2]) - Number(mb[2]);
+    }
+    return String(a).localeCompare(String(b));
+  }
+
+  function sortSeasonEntries(seasons) {
+    return seasons.slice().sort(function (a, b) {
+      if (a.gender !== b.gender) return a.gender.localeCompare(b.gender);
+      return compareEditionKeys(a.edition, b.edition);
+    });
+  }
+
+  function groupSeasonsForDisplay(seasons) {
+    var cpl = [];
+    var cgl = [];
+    var other = [];
+    seasons.forEach(function (s) {
+      if (/^cpl\d+$/i.test(s.edition)) cpl.push(s);
+      else if (/^cgl\d+$/i.test(s.edition)) cgl.push(s);
+      else other.push(s);
+    });
+    cpl.sort(function (a, b) { return compareEditionKeys(a.edition, b.edition); });
+    cgl.sort(function (a, b) { return compareEditionKeys(a.edition, b.edition); });
+    other.sort(function (a, b) { return compareEditionKeys(a.edition, b.edition); });
+    return { cpl: cpl, cgl: cgl, other: other };
+  }
+
+  function seasonCheckboxHtml(s, initialSet) {
+    var checked = initialSet[s.edition] ? " checked" : "";
+    var label = formatEditionLabel(s.edition);
+    return '<label class="check"><input type="checkbox" data-edition="' + C.escapeHtml(s.edition) + '"' +
+      checked + "> <span>" + C.escapeHtml(label) + "</span></label>";
+  }
+
+  function mergeLeagueSeasonsFromManifest() {
+    if (!scopedStats || !scopedStats.leagueId || !manifest) return;
+    var leagueId = scopedStats.leagueId;
+    var fromDb = {};
+    leagueSeasons.forEach(function (s) {
+      fromDb[s.gender + ":" + s.edition] = s;
+    });
+    var merged = [];
+    ["men", "women"].forEach(function (gender) {
+      editionsForLeague(gender, leagueId).forEach(function (edition) {
+        var key = gender + ":" + edition;
+        if (fromDb[key]) {
+          merged.push({
+            edition: fromDb[key].edition,
+            gender: fromDb[key].gender,
+            label: formatEditionLabel(edition),
+            registrationName: fromDb[key].label,
+            tournamentSlug: fromDb[key].tournamentSlug,
+            seasonSlug: fromDb[key].seasonSlug,
+            slug: fromDb[key].slug
+          });
+        } else {
+          merged.push({
+            edition: edition,
+            gender: gender,
+            label: formatEditionLabel(edition),
+            tournamentSlug: "",
+            seasonSlug: "",
+            slug: ""
+          });
+        }
+      });
+    });
+    leagueSeasons = sortSeasonEntries(merged);
+  }
+
+  function updateLeagueSubtitle() {
+    var sub = qs("subtitle");
+    if (!sub || !hasStatsLeague()) return;
+    var picked = getSelectedEditions();
+    if (picked.length > 1) {
+      sub.textContent = "Combined career stats across " + picked.length + " seasons: " + picked.join(", ") + ".";
+    } else if (picked.length === 1) {
+      sub.textContent = "Single season “" + picked[0] + "”. Tick more seasons below to combine leaderboards.";
+    } else {
+      sub.textContent = "Pick one or more seasons below to view or combine stats.";
+    }
+  }
+
+  function isInvalidEditionParam(edition) {
+    if (!edition || !scopedStats) return false;
+    var leagueId = scopedStats.leagueId || "";
+    return Boolean(leagueId && edition === leagueId);
+  }
+
+  function sanitizeEditionList(list) {
+    return (list || []).filter(function (e) {
+      return e && !isInvalidEditionParam(e);
+    });
+  }
+
+  function tournamentEditionFromLeagueList() {
+    var tournament = C.queryParam("tournament");
+    var season = C.queryParam("season");
+    if (!tournament || !season || !leagueSeasons.length) return "";
+    for (var i = 0; i < leagueSeasons.length; i++) {
+      var s = leagueSeasons[i];
+      if (s.tournamentSlug === tournament && s.seasonSlug === season) return s.edition || "";
+    }
+    return "";
+  }
+
+  function resolveConfiguredEdition() {
+    if (!scopedStats) return "";
+    var leagueId = scopedStats.leagueId || "";
+    var gender = scopedStats.gender;
+    var edition = scopedStats.edition || "";
+    if (isInvalidEditionParam(edition)) {
+      edition = tournamentEditionFromLeagueList();
+    }
+    if (edition && editionHasAnyData(gender, edition, leagueId)) return edition;
+    var fromList = tournamentEditionFromLeagueList();
+    if (fromList && editionHasAnyData(gender, fromList, leagueId)) return fromList;
+    return edition;
+  }
+
+  function reconcileScopedEdition() {
+    if (!scopedStats) return;
+    var fixed = resolveConfiguredEdition();
+    if (fixed) scopedStats.edition = fixed;
+  }
+
   function parseEditionsFromUrl() {
     var multi = C.queryParam("editions");
     if (multi) {
-      return multi.split(",").map(function (s) { return s.trim(); }).filter(Boolean);
+      return sanitizeEditionList(multi.split(",").map(function (s) { return s.trim(); }).filter(Boolean));
     }
     var single = C.queryParam("edition");
-    return single ? [single] : [];
+    return single ? sanitizeEditionList([single]) : [];
   }
 
   function getSelectedEditions() {
     if (hasStatsLeague()) {
       var panel = qs("leagueSeasonChecks");
-      if (!panel) return scopedStats.edition ? [scopedStats.edition] : [];
+      var fallback = resolveConfiguredEdition();
+      if (!panel) return fallback ? [fallback] : [];
       var picked = [];
       panel.querySelectorAll("input[data-edition]:checked").forEach(function (input) {
         picked.push(input.getAttribute("data-edition"));
       });
-      return picked.length ? picked : (scopedStats.edition ? [scopedStats.edition] : []);
+      picked = sanitizeEditionList(picked);
+      return picked.length ? picked : (fallback ? [fallback] : []);
     }
     var ed = qs("edition").value;
+    if (isInvalidEditionParam(ed)) ed = resolveConfiguredEdition();
     return ed ? [ed] : [];
   }
 
   function editionsForGender(gender) {
     if (!manifest || !manifest.editions || !manifest.editions[gender]) return [];
     return Object.keys(manifest.editions[gender]).sort();
+  }
+
+  function dataStoreForLeagueId(leagueId) {
+    var id = String(leagueId || "").toLowerCase();
+    if (id === "celebria") return "celebria";
+    if (id === "srpl" || id === "shankeshwaram") return "shankeshwaram";
+    return "";
+  }
+
+  function editionsForLeague(gender, leagueId) {
+    var store = dataStoreForLeagueId(leagueId);
+    if (!store || !manifest || !manifest.datasets) return editionsForGender(gender);
+    var set = {};
+    manifest.datasets.forEach(function (d) {
+      if (d.gender === gender && d.store === store) set[d.edition] = true;
+    });
+    return Object.keys(set).sort(compareEditionKeys);
+  }
+
+  function editionHasAnyData(gender, edition, leagueId) {
+    if (!edition) return false;
+    var store = dataStoreForLeagueId(leagueId);
+    if (store && manifest && manifest.datasets) {
+      return manifest.datasets.some(function (d) {
+        return d.gender === gender && d.edition === edition && d.store === store;
+      });
+    }
+    return editionsForGender(gender).indexOf(edition) >= 0;
+  }
+
+  function showEditionConfigError(message) {
+    var el = qs("loadError");
+    if (!el) return;
+    el.textContent = message;
+    el.classList.remove("hidden");
+    destroyCharts();
+    qs("chartGrid").innerHTML = '<p class="muted">' + C.escapeHtml(message) + "</p>";
+    qs("tableHead").innerHTML = "";
+    qs("tableBody").innerHTML = "";
+    qs("freshness").textContent = "";
+  }
+
+  function validateScopedEdition() {
+    reconcileScopedEdition();
+    if (!scopedStats || !scopedStats.edition) return;
+    var gender = scopedStats.gender;
+    var edition = resolveConfiguredEdition();
+    var leagueId = scopedStats.leagueId || "";
+    if (editionHasAnyData(gender, edition, leagueId)) {
+      qs("loadError").classList.add("hidden");
+      return;
+    }
+    var available = leagueId ? editionsForLeague(gender, leagueId) : editionsForGender(gender);
+    var listText = available.length ? available.join(", ") : "(none on this server)";
+    var example = leagueId === "celebria" ? "cpl9" : (leagueId === "srpl" ? "srpl2" : (available[0] || "cpl1"));
+    if (leagueId && edition === leagueId) {
+      showEditionConfigError(
+        "Data edition is set to \"" + edition + "\", which is the stats league ID—not a CSV folder. " +
+        "In Admin → Customize for this tournament: Stats league ID = \"" + leagueId + "\"; Data edition = a folder " +
+        "under data/" + (dataStoreForLeagueId(leagueId) || leagueId) + "/" + gender + "/ (e.g. " + example + "). " +
+        "Folders on this server for that league: " + listText + "."
+      );
+      return;
+    }
+    showEditionConfigError(
+      "No leaderboard CSVs for data edition \"" + edition + "\" (" + gender + "). " +
+      "Update Admin → Customize → Data edition, or upload CSVs for that folder. " +
+      (leagueId ? "For league \"" + leagueId + "\": " : "Available: ") + listText + "."
+    );
   }
 
   function boardsForSelection(gender, editions) {
@@ -128,6 +341,7 @@
     if (currentBoard) params.set("board", currentBoard);
     history.replaceState(null, "", "?" + params.toString());
     updatePlayersSearchLink();
+    updateLeagueSubtitle();
   }
 
   function renderLeagueSeasonChecks(initialEditions) {
@@ -142,17 +356,42 @@
     }
     panel.classList.remove("hidden");
     var title = qs("leagueSeasonsTitle");
-    if (title) title.textContent = "Seasons in league “" + scopedStats.leagueId + "”";
+    var leagueId = scopedStats.leagueId || "";
+    if (title) {
+      title.textContent = leagueId === "celebria"
+        ? "CPL & CGL seasons (celebria)"
+        : "Seasons in league “" + leagueId + "”";
+    }
+    var hint = qs("leagueSeasonsHint");
+    if (hint && leagueId === "celebria") {
+      hint.textContent = "Celebria includes Celebria Premier League (CPL) and Celebria Ganpati League (CGL). Select any mix to view or combine.";
+    }
     var initialSet = {};
-    (initialEditions && initialEditions.length ? initialEditions : [scopedStats.edition]).forEach(function (e) {
+    var fromUrl = sanitizeEditionList(initialEditions || []);
+    var seedEditions;
+    if (fromUrl.length) {
+      seedEditions = fromUrl.slice().sort(compareEditionKeys);
+    } else {
+      seedEditions = seasons.map(function (s) { return s.edition; });
+    }
+    seedEditions.forEach(function (e) {
       initialSet[e] = true;
     });
     var html = '<label class="check"><input type="checkbox" data-select-all> <span>All seasons</span></label>';
-    seasons.forEach(function (s) {
-      var checked = initialSet[s.edition] ? " checked" : "";
-      html += '<label class="check"><input type="checkbox" data-edition="' + C.escapeHtml(s.edition) + '"' +
-        checked + "> <span>" + C.escapeHtml(s.label) + " (" + C.escapeHtml(s.edition) + ")</span></label>";
-    });
+    if (leagueId === "celebria") {
+      var groups = groupSeasonsForDisplay(seasons);
+      if (groups.cpl.length) {
+        html += '<span class="muted" style="font-size:12px;font-weight:800;width:100%;margin-top:6px">CPL</span>';
+        groups.cpl.forEach(function (s) { html += seasonCheckboxHtml(s, initialSet); });
+      }
+      if (groups.cgl.length) {
+        html += '<span class="muted" style="font-size:12px;font-weight:800;width:100%;margin-top:6px">CGL</span>';
+        groups.cgl.forEach(function (s) { html += seasonCheckboxHtml(s, initialSet); });
+      }
+      groups.other.forEach(function (s) { html += seasonCheckboxHtml(s, initialSet); });
+    } else {
+      seasons.forEach(function (s) { html += seasonCheckboxHtml(s, initialSet); });
+    }
     box.innerHTML = html;
     var allInput = box.querySelector("[data-select-all]");
     function syncAll() {
@@ -180,6 +419,7 @@
       });
     });
     syncAll();
+    updateLeagueSubtitle();
   }
 
   function applyScopedControls() {
@@ -191,10 +431,7 @@
       if (editionLabel) editionLabel.classList.add("hidden");
       qs("gender").value = scopedStats.gender;
       if (genderSelect) genderSelect.disabled = true;
-      var sub = qs("subtitle");
-      if (sub) {
-        sub.textContent = "Pick one or more seasons in this league to view or combine stats.";
-      }
+      updateLeagueSubtitle();
       return;
     }
     if (editionLabel) editionLabel.classList.remove("hidden");
@@ -230,8 +467,15 @@
       back.textContent = "← Crickipedia home";
     }
     if (tournament && tournament.name) {
-      qs("pageTitle").textContent = tournament.name + " — stats";
-      document.title = tournament.name + " stats — Crickipedia";
+      var leagueId = scopedStats && scopedStats.leagueId;
+      if (leagueId) {
+        var leagueLabel = leagueId.charAt(0).toUpperCase() + leagueId.slice(1) + " league";
+        qs("pageTitle").textContent = leagueLabel;
+        document.title = leagueLabel + " — Crickipedia";
+      } else {
+        qs("pageTitle").textContent = tournament.name + " — stats";
+        document.title = tournament.name + " stats — Crickipedia";
+      }
     }
     applyScopedControls();
   }
@@ -421,10 +665,11 @@
           chartInstances.push(chart);
           return;
         }
+        var chartLabels = (spec.labels || []).slice();
         var chart = new window.Chart(ctx, {
           type: "bar",
           data: {
-            labels: spec.labels,
+            labels: chartLabels,
             datasets: [{
               label: spec.unit || "",
               data: (spec.values || []).map(function (v) { return C.roundStatNumber(v); }),
@@ -436,12 +681,18 @@
             indexAxis: "y",
             responsive: true,
             maintainAspectRatio: false,
+            layout: { padding: { left: 4, right: 8 } },
             plugins: {
               legend: { display: false },
               tooltip: {
                 callbacks: {
+                  title: function (items) {
+                    var i = items[0] && items[0].dataIndex;
+                    return i != null && chartLabels[i] ? chartLabels[i] : "";
+                  },
                   label: function (ctx) {
-                    return statTooltipLabel(ctx.label, ctx.parsed.x, spec.unit);
+                    var suffix = spec.unit ? " " + spec.unit : "";
+                    return C.formatStat(ctx.parsed.x) + suffix;
                   }
                 }
               }
@@ -450,6 +701,22 @@
               x: {
                 beginAtZero: true,
                 ticks: { callback: statAxisTick }
+              },
+              y: {
+                ticks: {
+                  autoSkip: false,
+                  font: { size: 11 },
+                  callback: function (_value, index) {
+                    var line = chartLabels[index];
+                    if (!line) return "";
+                    var paren = line.match(/^(.+?)\s+(\([^)]+\))\s*$/);
+                    if (paren) return [paren[1], paren[2]];
+                    return line;
+                  }
+                },
+                afterFit: function (scale) {
+                  scale.width = Math.max(scale.width, 148);
+                }
               }
             }
           }
@@ -581,11 +848,15 @@
       return d.gender === gender && d.edition === edition && d.board === board;
     });
     if (!entry) {
-      destroyCharts();
-      qs("chartGrid").innerHTML = '<p class="muted">No CSV uploaded for this board yet.</p>';
-      qs("tableHead").innerHTML = "";
-      qs("tableBody").innerHTML = "";
-      qs("freshness").textContent = "";
+      if (isStatsScopedToTournament() && scopedStats.edition === edition) {
+        validateScopedEdition();
+      } else {
+        destroyCharts();
+        qs("chartGrid").innerHTML = '<p class="muted">No CSV uploaded for this board yet.</p>';
+        qs("tableHead").innerHTML = "";
+        qs("tableBody").innerHTML = "";
+        qs("freshness").textContent = "";
+      }
       return Promise.resolve();
     }
     var cachedSingle = bundleCache[key];
@@ -612,6 +883,7 @@
     var changed = nextVersion !== manifestVersion;
     manifest = data;
     manifestVersion = nextVersion;
+    mergeLeagueSeasonsFromManifest();
     fillEditionSelect();
     renderBoardTabs();
     if (initial) {
@@ -634,10 +906,14 @@
       applyScopedControls();
       if (hasStatsLeague()) renderLeagueSeasonChecks(urlEditions.length ? urlEditions : null);
       renderBoardTabs();
+      if (isStatsScopedToTournament()) validateScopedEdition();
     }
     if (changed || initial) {
       bundleCache = {};
-      loadBoard(true);
+      if (!isStatsScopedToTournament() ||
+          editionHasAnyData(scopedStats.gender, resolveConfiguredEdition(), scopedStats.leagueId)) {
+        loadBoard(true);
+      }
     }
     syncUrl();
   }
@@ -671,7 +947,7 @@
   });
 
   C.initUiThemeToggle();
-  C.fetchTournamentForQueryContext().then(function (tournament) {
+  C.fetchTournamentForQueryContext({ noCache: true }).then(function (tournament) {
     scopedStats = C.scopedLeaderboardStats(tournament);
     initTournamentContext(tournament);
     if (C.tournamentContextFromQuery() && tournament && !scopedStats) {
@@ -682,6 +958,7 @@
     if (scopedStats && scopedStats.leagueId) {
       return C.api.statsLeague(scopedStats.leagueId).then(function (data) {
         leagueSeasons = data.seasons || [];
+        reconcileScopedEdition();
         return refreshManifest(true);
       });
     }

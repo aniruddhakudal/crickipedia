@@ -652,7 +652,9 @@
     if (!ls.enabled) return null;
     var params = new URLSearchParams();
     params.set("gender", ls.gender);
-    params.set("edition", ls.edition);
+    if (!ls.leagueId) {
+      params.set("edition", ls.edition);
+    }
     var keys = tournamentKeys(tournament);
     if (keys.tournament && keys.season) {
       params.set("tournament", keys.tournament);
@@ -681,10 +683,13 @@
     return lb;
   }
 
-  function fetchTournamentForQueryContext() {
+  function fetchTournamentForQueryContext(options) {
     var ctx = tournamentContextFromQuery();
     if (!ctx) return Promise.resolve(null);
-    return api.config(ctx).then(function (data) {
+    var noCache = options && options.noCache;
+    var path = apiTournamentPath(ctx) + "/config";
+    var fetchOpts = noCache ? { cache: "no-store" } : {};
+    return request(path, fetchOpts).then(function (data) {
       return data.tournament || null;
     }).catch(function () {
       return null;
@@ -1065,10 +1070,22 @@
         "/players/" + encodeURIComponent(playerId)
       );
     },
+    statsPlayerMerged: function (gender, editions, playerId) {
+      var params = new URLSearchParams();
+      params.set("editions", editions.join(","));
+      return request(
+        "/api/stats/srpl/" + encodeURIComponent(gender) + "/merged/players/" +
+        encodeURIComponent(playerId) + "?" + params.toString()
+      );
+    },
     playerProfileUrl: function (gender, edition, playerId, extraParams) {
       var params = new URLSearchParams();
       params.set("gender", gender);
-      params.set("edition", edition);
+      if (extraParams && extraParams.editions) {
+        params.set("editions", extraParams.editions);
+      } else {
+        params.set("edition", edition);
+      }
       params.set("player", String(playerId));
       if (extraParams) {
         Object.keys(extraParams).forEach(function (key) {

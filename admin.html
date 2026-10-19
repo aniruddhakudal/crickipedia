@@ -274,7 +274,7 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
       </div>
       <div class="section">
         <h3>Season leaderboard stats</h3>
-        <p class="muted">Shows a stats link on this tournament&apos;s registration page only (not on the Crickipedia home page). Uses CSV data uploaded under Admin → Season stats (CSVs). Set a <strong>unique data edition</strong> for this tournament (e.g. <code>cpl11</code>)—do not reuse another league&apos;s folder (e.g. <code>srpl2</code>).</p>
+        <p class="muted">Shows a stats link on this tournament&apos;s registration page only. <strong>Stats league ID</strong> is the group name (<code>celebria</code> or <code>srpl</code>). <strong>Data edition</strong> is the CSV folder name (<code>cpl9</code>, <code>srpl2</code>)—never the same as the league ID.</p>
         <label class="check"><input id="statsEnabled" type="checkbox"> Show season stats on registration page</label>
         <div class="grid3" style="margin-top:12px">
           <label>Stats league ID<input id="statsLeagueId" placeholder="e.g. srpl, celebria" maxlength="32"></label>
@@ -284,9 +284,9 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
               <option value="women">Women</option>
             </select>
           </label>
-          <label>Data edition (folder name)<input id="statsEdition" placeholder="e.g. cpl11" maxlength="32"></label>
+          <label>Data edition (CSV folder, not league ID)<input id="statsEdition" placeholder="e.g. cpl9 for CPL" maxlength="32"></label>
         </div>
-        <p class="muted" style="margin-top:8px">Tournaments with the same <strong>Stats league ID</strong> can compare or combine seasons on the stats page (e.g. all SRPL seasons use <code>srpl</code>; CPL and CGL both use <code>celebria</code>).</p>
+        <p class="muted" style="margin-top:8px">Tournaments with the same <strong>Stats league ID</strong> can compare or combine seasons on the stats page (e.g. SRPL → <code>srpl</code>; CPL and CGL folders both live under <code>celebria</code> and appear together on the stats page).</p>
       </div>
       <div class="section">
         <h3>Registration categories &amp; entry fees</h3>
@@ -357,7 +357,7 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
       <div class="grid4" style="margin-top:14px">
         <label>Data folder
           <select id="srplDataStore">
-            <option value="srpl">data/srpl</option>
+            <option value="shankeshwaram">data/shankeshwaram</option>
             <option value="celebria">data/celebria</option>
           </select>
         </label>
@@ -517,11 +517,11 @@ th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size
     if (!tbody) return;
     var rows = datasets || [];
     if (!rows.length) {
-      tbody.innerHTML = '<tr><td colspan="8" class="muted">No CSV files yet. Upload a leaderboard or add files under data/srpl/ or data/celebria/ on the server.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" class="muted">No CSV files yet. Upload a leaderboard or add files under data/shankeshwaram/ or data/celebria/ on the server.</td></tr>';
       return;
     }
     tbody.innerHTML = rows.map(function (d) {
-      return "<tr><td>" + C.escapeHtml(d.store || "srpl") + "</td><td>" + C.escapeHtml(d.gender) + "</td><td>" + C.escapeHtml(d.edition) +
+      return "<tr><td>" + C.escapeHtml(d.store || "shankeshwaram") + "</td><td>" + C.escapeHtml(d.gender) + "</td><td>" + C.escapeHtml(d.edition) +
         "</td><td>" + C.escapeHtml(d.board) + "</td><td>" + C.escapeHtml(String(d.rowCount || 0)) +
         "</td><td><code>" + C.escapeHtml(d.v || "") + "</code></td><td>" + C.escapeHtml(d.sourceFile || "") +
         "</td><td>" + C.escapeHtml(C.formatDateTime(d.updatedAt)) + "</td></tr>";
